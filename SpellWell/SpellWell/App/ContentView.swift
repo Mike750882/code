@@ -67,6 +67,18 @@ struct ContentView: View {
             }
         }
         .background(Theme.background.ignoresSafeArea())
+        .preferredColorScheme(preferredColorScheme)
+    }
+
+    /// Reflects the appearance chosen on the Settings screen. "system"
+    /// (the default before a parent ever touches the picker) returns nil,
+    /// which leaves the device's own light/dark setting in charge.
+    private var preferredColorScheme: ColorScheme? {
+        switch children.first?.appearance {
+        case "dark": return .dark
+        case "light": return .light
+        default: return nil
+        }
     }
 
     /// Always shows the PIN gate — every visit to a grown-up screen requires
