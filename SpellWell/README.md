@@ -55,8 +55,10 @@ structural, but don't be surprised by a typo or an API signature mismatch.
 - **First-run PIN creation** — the mockups only show PIN *entry*; the app
   also needs a way to set the PIN the first time. `CreatePINView` (in
   `ParentGateView.swift`) is shown in place of the gate until a PIN exists.
-- **Auto re-lock** — `ParentGateManager` re-locks the grown-up screens after
-  2 minutes idle, so a PIN entered once doesn't stay open all day.
+- **Every visit is gated** — the PIN is checked on every entry into Add
+  List, Rewards, or Settings; unlocking one screen never carries over to
+  another or to a later visit to the same one (`ParentGate.verify`, called
+  fresh each time from `ContentView.requestGatedAccess`).
 
 ## What's stubbed / left for you to finish
 

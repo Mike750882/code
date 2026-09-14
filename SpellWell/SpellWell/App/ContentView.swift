@@ -4,7 +4,6 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var children: [Child]
-    @StateObject private var gate = ParentGateManager()
 
     @State private var path = NavigationPath()
     @State private var pendingDestination: GatedDestination?
@@ -49,11 +48,10 @@ struct ContentView: View {
                 }
             }
         }
-        .environmentObject(gate)
         .sheet(item: $pendingDestination) { destination in
             if KeychainService.hasPIN() {
                 ParentGateView { pin in
-                    let ok = gate.attemptUnlock(pin: pin)
+                    let ok = ParentGate.verify(pin: pin)
                     if ok {
                         pendingDestination = nil
                         path.append(destination)
@@ -63,7 +61,6 @@ struct ContentView: View {
             } else {
                 CreatePINView { pin in
                     KeychainService.savePIN(pin)
-                    gate.unlock()
                     pendingDestination = nil
                     path.append(destination)
                 }
@@ -72,12 +69,11 @@ struct ContentView: View {
         .background(Theme.background.ignoresSafeArea())
     }
 
+    /// Always shows the PIN gate — every visit to a grown-up screen requires
+    /// the PIN, even if one was just entered to reach a different one (or
+    /// the same one, moments ago).
     private func requestGatedAccess(_ destination: GatedDestination) {
-        if gate.isUnlocked {
-            path.append(destination)
-        } else {
-            pendingDestination = destination
-        }
+        pendingDestination = destination
     }
 
     private func createDefaultChildIfNeeded() {
