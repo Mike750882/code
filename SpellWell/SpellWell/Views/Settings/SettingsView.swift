@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.modelContext) private var modelContext
+    @StateObject private var syncMonitor = CloudSyncMonitor()
     let child: Child
 
     @State private var textScale: Double = 1.0
@@ -16,6 +18,8 @@ struct SettingsView: View {
             appearanceRow
             Divider().overlay(Theme.hairline)
             pinRow
+            Divider().overlay(Theme.hairline)
+            syncRow
             Divider().overlay(Theme.hairline)
             progressRow
             Spacer()
@@ -113,6 +117,56 @@ struct SettingsView: View {
                 .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
         }
         .padding(.vertical, 20)
+    }
+
+    private var syncRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Sync").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
+                Text("Keeps word lists, rewards, and progress the same on every family device.")
+                    .font(Theme.body(13))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .frame(width: 220, alignment: .leading)
+
+            Text(syncStatusText)
+                .font(Theme.body(14))
+                .foregroundStyle(syncStatusColor)
+
+            Spacer()
+
+            Button {
+                syncMonitor.requestSync(modelContext: modelContext)
+            } label: {
+                if syncMonitor.status == .syncing {
+                    ProgressView()
+                        .frame(width: 44)
+                } else {
+                    Text("Sync now")
+                }
+            }
+            .disabled(syncMonitor.status == .syncing)
+            .font(Theme.body(15, weight: .medium))
+            .foregroundStyle(Theme.blue)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+        }
+        .padding(.vertical, 20)
+    }
+
+    private var syncStatusText: String {
+        switch syncMonitor.status {
+        case .idle: return "Not synced yet"
+        case .syncing: return "Syncing…"
+        case .upToDate(let date): return "Up to date · \(date.formatted(.relative(presentation: .named)))"
+        case .failed(let message): return "Couldn't sync: \(message)"
+        }
+    }
+
+    private var syncStatusColor: Color {
+        if case .failed = syncMonitor.status { return Theme.coral }
+        return Theme.textSecondary
     }
 
     private var progressRow: some View {

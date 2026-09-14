@@ -46,8 +46,18 @@ structural, but don't be surprised by a typo or an API signature mismatch.
 - **Rewards** — per-weekday reward text + accuracy threshold slider, plus a
   weekly prize card with its own threshold.
 - **Settings** — text-size slider with a live preview using a real list word
-  ("friend"), light/dark picker, PIN change, and a one-line progress summary
-  computed from this week's `PracticeAttempt` records.
+  ("friend"), light/dark picker, PIN change, a Sync row, and a one-line
+  progress summary computed from this week's `PracticeAttempt` records.
+- **Sync status + "Sync now"** — `CloudSyncMonitor` (in
+  `Services/CloudSyncMonitor.swift`) observes
+  `NSPersistentCloudKitContainer.eventChangedNotification`, the notification
+  SwiftData's CloudKit integration posts under the hood, and shows it as
+  "Up to date · 2 min ago" / "Syncing…" / "Couldn't sync: …" on the Sync
+  row. There's no public API to force CloudKit to *pull* on demand — "Sync
+  now" calls `modelContext.save()`, which queues any pending local edits
+  for export right away instead of waiting for the system's own schedule.
+  Requires the iCloud capability to actually be signed and working (see
+  Setup above) to show anything other than "Not synced yet."
 - **Data model** — `Child`, `WeekList`, `SpellingWord`, `PracticeAttempt`,
   `DailyReward`, `WeeklyPrize`, all SwiftData `@Model` types configured for
   automatic CloudKit sync (`ModelConfiguration(cloudKitDatabase: .automatic)`
