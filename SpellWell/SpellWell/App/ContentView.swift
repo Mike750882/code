@@ -13,8 +13,14 @@ struct ContentView: View {
         var id: Self { self }
     }
 
+    /// Carries the WeekList object itself, not a PersistentIdentifier.
+    /// Capturing an identifier for a just-inserted, not-yet-saved model and
+    /// resolving it later crashes with "this model instance was invalidated"
+    /// -- new objects only get a temporary identifier until the context is
+    /// saved, and temporary identifiers don't survive being round-tripped
+    /// like that. Passing the object directly sidesteps the whole problem.
     struct PracticeRoute: Hashable {
-        let weekListID: PersistentIdentifier
+        let weekList: WeekList
     }
 
     var body: some View {
@@ -25,7 +31,7 @@ struct ContentView: View {
                         child: child,
                         onOpenGated: requestGatedAccess,
                         onStartPractice: { weekList in
-                            path.append(PracticeRoute(weekListID: weekList.persistentModelID))
+                            path.append(PracticeRoute(weekList: weekList))
                         }
                     )
                 } else {
@@ -44,9 +50,7 @@ struct ContentView: View {
                 }
             }
             .navigationDestination(for: PracticeRoute.self) { route in
-                if let weekList = modelContext.model(for: route.weekListID) as? WeekList {
-                    PracticeView(weekList: weekList)
-                }
+                PracticeView(weekList: route.weekList)
             }
         }
         .sheet(item: $pendingDestination) { destination in

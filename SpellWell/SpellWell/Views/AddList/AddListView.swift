@@ -152,5 +152,12 @@ struct AddListView: View {
         for word in oldWords {
             modelContext.delete(word)
         }
+
+        // Save explicitly rather than relying on autosave timing. Besides
+        // durability, this also matters for anything that captures this
+        // list's identity right after saving (e.g. tapping Practice on
+        // Home) -- a freshly inserted object only gets a permanent,
+        // resolvable identifier once its context has actually been saved.
+        try? modelContext.save()
     }
 }
