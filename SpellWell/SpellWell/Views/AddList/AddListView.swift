@@ -131,18 +131,26 @@ struct AddListView: View {
         }()
         list.targetWordCount = wordCount
 
-        for word in list.words ?? [] {
-            modelContext.delete(word)
-        }
+        // Capture the old words before touching anything, link the new
+        // ones in (which appends them into list.words via the inverse
+        // relationship -- no need to reassign the array), and only then
+        // delete the old ones. Deleting first and reassigning list.words
+        // in the same pass makes SwiftData diff the collection against
+        // objects it just deleted, which crashes with "this model instance
+        // was invalidated because its backing data could no longer be
+        // found."
+        let oldWords = list.words ?? []
 
-        var newWords: [SpellingWord] = []
         for (index, text) in wordFields.enumerated() {
             let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else { continue }
             let word = SpellingWord(text: trimmed, orderIndex: index)
+            modelContext.insert(word)
             word.weekList = list
-            newWords.append(word)
         }
-        list.words = newWords
+
+        for word in oldWords {
+            modelContext.delete(word)
+        }
     }
 }
