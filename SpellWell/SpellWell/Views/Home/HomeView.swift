@@ -71,24 +71,24 @@ struct HomeView: View {
                 showNoWordsAlert = true
             }
         } label: {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 24) {
                 HStack {
                     Image(systemName: "square.and.pencil")
-                        .font(.title2)
+                        .font(.system(size: 33))
                         .foregroundStyle(Theme.coral)
                     Spacer()
                     Text("\(todayCompletedCount) of \(thisWeekWords.count) today")
-                        .font(Theme.body(15))
+                        .font(Theme.body(22))
                         .foregroundStyle(Theme.textSecondary)
                 }
                 Text("Practice spelling list")
-                    .font(Theme.display(40))
+                    .font(Theme.display(60))
                     .foregroundStyle(Theme.textPrimary)
                 Text("Listen, then build each word from letter tiles.")
-                    .font(Theme.body(17))
+                    .font(Theme.body(26))
                     .foregroundStyle(Theme.textSecondary)
             }
-            .padding(28)
+            .padding(42)
             .frame(maxWidth: .infinity, alignment: .leading)
             .card(borderColor: Theme.coral, lineWidth: 1.5)
         }
