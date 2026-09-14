@@ -41,9 +41,18 @@ struct HomeView: View {
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Hello, \(child.name)")
-                    .font(Theme.display(32))
-                    .foregroundStyle(Theme.textPrimary)
+                HStack(spacing: 10) {
+                    Text("Hello, \(child.name)")
+                        .font(Theme.display(32))
+                        .foregroundStyle(Theme.textPrimary)
+                    Button {
+                        onOpenGated(.editName)
+                    } label: {
+                        Image(systemName: "pencil.circle")
+                            .font(.title3)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                }
                 if let list = thisWeekList {
                     Text("Week of \(list.weekOf.formatted(.dateTime.month(.wide).day())) · \(thisWeekWords.count) words")
                         .font(Theme.body(15))

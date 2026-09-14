@@ -9,7 +9,7 @@ struct ContentView: View {
     @State private var pendingDestination: GatedDestination?
 
     enum GatedDestination: Identifiable, Hashable {
-        case addList, rewards, settings
+        case addList, rewards, settings, editName
         var id: Self { self }
     }
 
@@ -39,6 +39,7 @@ struct ContentView: View {
                     case .addList: AddListView(child: child)
                     case .rewards: RewardsView(child: child)
                     case .settings: SettingsView(child: child)
+                    case .editName: EditNameView(child: child)
                     }
                 }
             }
