@@ -15,8 +15,9 @@ struct AddListView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             header
-            wordGrid
-            Spacer()
+            ScrollView {
+                wordGrid
+            }
             footer
         }
         .padding(28)
@@ -39,7 +40,7 @@ struct AddListView: View {
                 Text("How many words?")
                     .font(Theme.body(14))
                     .foregroundStyle(Theme.textSecondary)
-                Stepper(value: $wordCount, in: 5...20) {
+                Stepper(value: $wordCount, in: 5...30) {
                     Text("\(wordCount)").font(Theme.display(18)).frame(minWidth: 32)
                 }
                 .fixedSize()
