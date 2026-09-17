@@ -2,6 +2,11 @@ import SwiftUI
 
 /// The letter-tile word builder: hear the word, tap scrambled letters into
 /// the blanks in any order, undo with "Take one back", then check.
+///
+/// Checking a word -- right or wrong -- advances to the next one after a
+/// brief flash of feedback; there's no retrying a word once it's been
+/// checked. That's what makes a real right/wrong tally and grade at the end
+/// meaningful, the same way an actual spelling test works.
 struct PracticeView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -13,7 +18,10 @@ struct PracticeView: View {
     @State private var placedLetters: [Character] = []
     @State private var placedBankIndices: [Int] = []
     @State private var bankOrder: [Character] = []
-    @State private var showIncorrectHint = false
+    @State private var feedback: Feedback?
+    @State private var results: [WordResult] = []
+
+    enum Feedback { case correct, incorrect }
 
     private var words: [SpellingWord] {
         (weekList.words ?? []).sorted(by: { $0.orderIndex < $1.orderIndex })
@@ -27,7 +35,9 @@ struct PracticeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            topBar
+            if currentWord != nil {
+                topBar
+            }
             Spacer()
             if let word = currentWord {
                 hearWordSection(word: word)
@@ -35,7 +45,7 @@ struct PracticeView: View {
                 letterBank
                 actionButtons
             } else {
-                completionView
+                PracticeResultsView(results: results) { dismiss() }
             }
             Spacer()
         }
@@ -87,14 +97,21 @@ struct PracticeView: View {
     }
 
     private func answerSlots(wordLength: Int) -> some View {
-        HStack(spacing: 10) {
+        let borderColor: Color = {
+            switch feedback {
+            case .correct: return Theme.green
+            case .incorrect: return Theme.coral
+            case nil: return Theme.hairline
+            }
+        }()
+        return HStack(spacing: 10) {
             ForEach(0..<wordLength, id: \.self) { index in
                 let letter = index < placedLetters.count ? String(placedLetters[index]) : ""
                 Text(letter.uppercased())
                     .font(Theme.display(28))
                     .frame(width: 56, height: 64)
                     .background(Theme.surface)
-                    .overlay(Rectangle().stroke(showIncorrectHint ? Theme.coral : Theme.hairline, lineWidth: 1))
+                    .overlay(Rectangle().stroke(borderColor, lineWidth: feedback == nil ? 1 : 2))
             }
         }
         .padding(.bottom, 20)
@@ -120,6 +137,7 @@ struct PracticeView: View {
             }
         }
         .padding(.bottom, 32)
+        .allowsHitTesting(feedback == nil)
     }
 
     private var actionButtons: some View {
@@ -138,55 +156,44 @@ struct PracticeView: View {
                 .padding(.vertical, 12)
                 .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.coral, lineWidth: 1.5))
         }
-    }
-
-    private var completionView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(Theme.coral)
-            Text("All done for today!")
-                .font(Theme.display(28))
-                .foregroundStyle(Theme.textPrimary)
-            Button("Back to Home") { dismiss() }
-                .font(Theme.body(16, weight: .medium))
-                .foregroundStyle(Theme.blue)
-        }
+        .disabled(feedback != nil)
+        .opacity(feedback == nil ? 1 : 0.4)
     }
 
     private func setUpWord() {
         placedLetters = []
         placedBankIndices = []
-        showIncorrectHint = false
+        feedback = nil
         guard let word = currentWord else { return }
         bankOrder = Array(word.text.lowercased()).shuffled()
     }
 
     private func placeLetter(_ letter: Character, bankIndex: Int) {
-        guard let word = currentWord, placedLetters.count < word.text.count else { return }
+        guard feedback == nil, let word = currentWord, placedLetters.count < word.text.count else { return }
         placedLetters.append(letter)
         placedBankIndices.append(bankIndex)
-        showIncorrectHint = false
     }
 
     private func takeOneBack() {
         guard !placedLetters.isEmpty else { return }
         placedLetters.removeLast()
         placedBankIndices.removeLast()
-        showIncorrectHint = false
     }
 
     private func checkWord() {
-        guard let word = currentWord else { return }
+        guard feedback == nil, let word = currentWord else { return }
         let attempt = String(placedLetters)
         let isCorrect = attempt.lowercased() == word.text.lowercased()
+
         let record = PracticeAttempt(isCorrect: isCorrect)
         record.word = word
         modelContext.insert(record)
-        if isCorrect {
+        results.append(WordResult(word: word.text, isCorrect: isCorrect))
+
+        feedback = isCorrect ? .correct : .incorrect
+        Task {
+            try? await Task.sleep(nanoseconds: 700_000_000)
             currentIndex += 1
-        } else {
-            showIncorrectHint = true
         }
     }
 }

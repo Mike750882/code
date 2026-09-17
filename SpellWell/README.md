@@ -36,8 +36,14 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   parent PIN.
 - **Practice** — per-word flow: tap to hear the word (system TTS, or a
   parent-recorded clip if one exists), tap scrambled letters into blanks in
-  any order, undo one letter, check the word, advance on a correct answer.
-  Every check is recorded as a `PracticeAttempt` for progress tracking.
+  any order, undo a letter placement, then check. Checking a word — right
+  or wrong — shows a brief flash of feedback and advances to the next word;
+  there's no retrying a word once checked, same as a real test. Every check
+  is recorded as a `PracticeAttempt` for progress tracking.
+- **Results screen** (`Views/Practice/PracticeResultsView.swift`) — shown
+  after the last word: a letter grade (A-F on the usual 90/80/70/60 cutoffs)
+  and percentage, then every word with a green check or red x for right vs.
+  wrong.
 - **Grown-ups PIN gate** — 4-digit PIN pad matching the mockup, backed by
   Keychain (`kSecAttrSynchronizable`, so it follows the parent's iCloud
   Keychain across their own devices, not the child's data).

@@ -20,6 +20,8 @@ enum Theme {
     static let purple = Color(hex: 0x8257B5)
     static let gold = Color(hex: 0xC9A227)
     static let goldFill = Color.adaptive(light: 0xFBF6E3, dark: 0x332B12)
+    /// Correct-answer accent for the practice results screen.
+    static let green = Color(hex: 0x3F8B5D)
 
     static func display(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
         .system(size: size, weight: weight, design: .serif)
