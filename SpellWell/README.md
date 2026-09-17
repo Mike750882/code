@@ -31,19 +31,27 @@ structural, but don't be surprised by a typo or an API signature mismatch.
 
 ## What's implemented
 
-- **Home** — greeting, streak pill, big "Practice spelling list" CTA, and
-  three secondary cards (Add list / Rewards / Settings) gated behind the
-  parent PIN.
-- **Practice** — per-word flow: tap to hear the word (system TTS, or a
-  parent-recorded clip if one exists), tap scrambled letters into blanks in
-  any order, undo a letter placement, then check. Checking a word — right
-  or wrong — shows a brief flash of feedback and advances to the next word;
-  there's no retrying a word once checked, same as a real test. Every check
-  is recorded as a `PracticeAttempt` for progress tracking.
-- **Results screen** (`Views/Practice/PracticeResultsView.swift`) — shown
-  after the last word: a letter grade (A-F on the usual 90/80/70/60 cutoffs)
-  and percentage, then every word with a green check or red x for right vs.
-  wrong.
+- **Home** — greeting, streak pill, a Practice/Test mode toggle, big CTA
+  card (labeled "Practice spelling list" or "Take spelling test" to match
+  the chosen mode), and three secondary cards (Add list / Rewards /
+  Settings) gated behind the parent PIN.
+- **Practice / Test modes** (`PracticeMode` in
+  `Views/Practice/PracticeView.swift`) — the letter-tile flow (tap to hear
+  the word, tap scrambled letters into blanks, undo a placement, check) is
+  shared, but checking a word behaves differently per mode:
+  - **Practice** — a wrong answer just flashes red; the child can keep
+    editing and rechecking the same word until they get it. No grading at
+    the end, just the original "All done for today!" screen.
+  - **Test** — checking a word, right or wrong, flashes feedback and
+    advances to the next one; there's no retrying a word once checked.
+    Ends on `PracticeResultsView.swift`: a letter grade (A-F on the usual
+    90/80/70/60 cutoffs) and percentage, then every word with a green
+    check or red x for right vs. wrong.
+
+  Every check in either mode is recorded as a `PracticeAttempt` for
+  progress tracking. The mode picker resets to Practice each time Home
+  appears — it isn't persisted, so it's a real choice made right before
+  starting, not a sticky setting.
 - **Grown-ups PIN gate** — 4-digit PIN pad matching the mockup, backed by
   Keychain (`kSecAttrSynchronizable`, so it follows the parent's iCloud
   Keychain across their own devices, not the child's data).

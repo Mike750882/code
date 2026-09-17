@@ -21,6 +21,7 @@ struct ContentView: View {
     /// like that. Passing the object directly sidesteps the whole problem.
     struct PracticeRoute: Hashable {
         let weekList: WeekList
+        let mode: PracticeMode
     }
 
     var body: some View {
@@ -30,8 +31,8 @@ struct ContentView: View {
                     HomeView(
                         child: child,
                         onOpenGated: requestGatedAccess,
-                        onStartPractice: { weekList in
-                            path.append(PracticeRoute(weekList: weekList))
+                        onStartPractice: { weekList, mode in
+                            path.append(PracticeRoute(weekList: weekList, mode: mode))
                         }
                     )
                 } else {
@@ -50,7 +51,7 @@ struct ContentView: View {
                 }
             }
             .navigationDestination(for: PracticeRoute.self) { route in
-                PracticeView(weekList: route.weekList)
+                PracticeView(weekList: route.weekList, mode: route.mode)
             }
         }
         .sheet(item: $pendingDestination) { destination in

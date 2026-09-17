@@ -3,9 +3,10 @@ import SwiftUI
 struct HomeView: View {
     let child: Child
     var onOpenGated: (ContentView.GatedDestination) -> Void
-    var onStartPractice: (WeekList) -> Void
+    var onStartPractice: (WeekList, PracticeMode) -> Void
 
     @State private var showNoWordsAlert = false
+    @State private var mode: PracticeMode = .practice
 
     private var thisWeekList: WeekList? {
         child.weekLists?.sorted(by: { $0.weekOf > $1.weekOf }).first
@@ -30,6 +31,7 @@ struct HomeView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 header
+                modeToggle
                 practiceCard
                 secondaryCards
             }
@@ -72,10 +74,28 @@ struct HomeView: View {
         }
     }
 
+    private var modeToggle: some View {
+        HStack(spacing: 14) {
+            Picker("Mode", selection: $mode) {
+                ForEach(PracticeMode.allCases) { option in
+                    Text(option.rawValue).tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 240)
+
+            Text(mode.description)
+                .font(Theme.body(14))
+                .foregroundStyle(Theme.textSecondary)
+
+            Spacer()
+        }
+    }
+
     private var practiceCard: some View {
         Button {
             if let list = thisWeekList, !thisWeekWords.isEmpty {
-                onStartPractice(list)
+                onStartPractice(list, mode)
             } else {
                 showNoWordsAlert = true
             }
@@ -90,7 +110,7 @@ struct HomeView: View {
                         .font(Theme.body(22))
                         .foregroundStyle(Theme.textSecondary)
                 }
-                Text("Practice spelling list")
+                Text(mode == .test ? "Take spelling test" : "Practice spelling list")
                     .font(Theme.display(60))
                     .foregroundStyle(Theme.textPrimary)
                 Text("Listen, then build each word from letter tiles.")

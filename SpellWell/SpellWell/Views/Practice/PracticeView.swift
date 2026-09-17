@@ -1,24 +1,41 @@
 import SwiftUI
 
+enum PracticeMode: String, CaseIterable, Identifiable, Hashable {
+    case practice = "Practice"
+    case test = "Test"
+
+    var id: String { rawValue }
+
+    var description: String {
+        switch self {
+        case .practice: return "Try each word as many times as you like."
+        case .test: return "One try per word, then see your grade."
+        }
+    }
+}
+
 /// The letter-tile word builder: hear the word, tap scrambled letters into
 /// the blanks in any order, undo with "Take one back", then check.
 ///
-/// Checking a word -- right or wrong -- advances to the next one after a
-/// brief flash of feedback; there's no retrying a word once it's been
-/// checked. That's what makes a real right/wrong tally and grade at the end
-/// meaningful, the same way an actual spelling test works.
+/// Behavior branches on `mode`: in Test mode, checking a word -- right or
+/// wrong -- flashes feedback and advances to the next one, with no retries,
+/// so a right/wrong tally and grade at the end mean something. In Practice
+/// mode, a wrong answer just flashes red and lets the child keep trying the
+/// same word; there's no grading at the end.
 struct PracticeView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @StateObject private var speech = SpeechService()
 
     let weekList: WeekList
+    let mode: PracticeMode
 
     @State private var currentIndex = 0
     @State private var placedLetters: [Character] = []
     @State private var placedBankIndices: [Int] = []
     @State private var bankOrder: [Character] = []
     @State private var feedback: Feedback?
+    @State private var isAdvancing = false
     @State private var results: [WordResult] = []
 
     enum Feedback { case correct, incorrect }
@@ -44,8 +61,10 @@ struct PracticeView: View {
                 answerSlots(wordLength: word.text.count)
                 letterBank
                 actionButtons
-            } else {
+            } else if mode == .test {
                 PracticeResultsView(results: results) { dismiss() }
+            } else {
+                completionView
             }
             Spacer()
         }
@@ -137,7 +156,7 @@ struct PracticeView: View {
             }
         }
         .padding(.bottom, 32)
-        .allowsHitTesting(feedback == nil)
+        .allowsHitTesting(!isAdvancing)
     }
 
     private var actionButtons: some View {
@@ -156,8 +175,22 @@ struct PracticeView: View {
                 .padding(.vertical, 12)
                 .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.coral, lineWidth: 1.5))
         }
-        .disabled(feedback != nil)
-        .opacity(feedback == nil ? 1 : 0.4)
+        .disabled(isAdvancing)
+        .opacity(isAdvancing ? 0.4 : 1)
+    }
+
+    private var completionView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 48))
+                .foregroundStyle(Theme.coral)
+            Text("All done for today!")
+                .font(Theme.display(28))
+                .foregroundStyle(Theme.textPrimary)
+            Button("Back to Home") { dismiss() }
+                .font(Theme.body(16, weight: .medium))
+                .foregroundStyle(Theme.blue)
+        }
     }
 
     private func setUpWord() {
@@ -169,31 +202,45 @@ struct PracticeView: View {
     }
 
     private func placeLetter(_ letter: Character, bankIndex: Int) {
-        guard feedback == nil, let word = currentWord, placedLetters.count < word.text.count else { return }
+        guard !isAdvancing, let word = currentWord, placedLetters.count < word.text.count else { return }
         placedLetters.append(letter)
         placedBankIndices.append(bankIndex)
+        feedback = nil
     }
 
     private func takeOneBack() {
-        guard !placedLetters.isEmpty else { return }
+        guard !isAdvancing, !placedLetters.isEmpty else { return }
         placedLetters.removeLast()
         placedBankIndices.removeLast()
+        feedback = nil
     }
 
     private func checkWord() {
-        guard feedback == nil, let word = currentWord else { return }
+        guard !isAdvancing, let word = currentWord else { return }
         let attempt = String(placedLetters)
         let isCorrect = attempt.lowercased() == word.text.lowercased()
 
         let record = PracticeAttempt(isCorrect: isCorrect)
         record.word = word
         modelContext.insert(record)
-        results.append(WordResult(word: word.text, isCorrect: isCorrect))
-
         feedback = isCorrect ? .correct : .incorrect
-        Task {
-            try? await Task.sleep(nanoseconds: 700_000_000)
-            currentIndex += 1
+
+        switch mode {
+        case .test:
+            results.append(WordResult(word: word.text, isCorrect: isCorrect))
+            isAdvancing = true
+            Task {
+                try? await Task.sleep(nanoseconds: 700_000_000)
+                isAdvancing = false
+                currentIndex += 1
+            }
+        case .practice:
+            // Wrong answers just leave the red flash showing -- placeLetter
+            // and takeOneBack clear it as soon as the child edits again, so
+            // they can keep retrying the same word.
+            if isCorrect {
+                currentIndex += 1
+            }
         }
     }
 }
