@@ -34,6 +34,7 @@ struct HomeView: View {
                 modeToggle
                 practiceCard
                 secondaryCards
+                dailyGradeCards
             }
             .padding(24)
         }
@@ -182,6 +183,61 @@ struct HomeView: View {
         guard !attemptsThisWeek.isEmpty else { return 0 }
         let correct = attemptsThisWeek.filter(\.isCorrect).count
         return Double(correct) / Double(attemptsThisWeek.count)
+    }
+
+    private static let weekdayLabels: [(weekday: Int, label: String)] = [
+        (2, "Monday"), (3, "Tuesday"), (4, "Wednesday"), (5, "Thursday")
+    ]
+
+    private var dailyGradeCards: some View {
+        HStack(spacing: 16) {
+            ForEach(Self.weekdayLabels, id: \.weekday) { entry in
+                DayGradeCard(label: entry.label, percent: testPercent(onWeekday: entry.weekday))
+            }
+        }
+    }
+
+    /// Score for that weekday's Test-mode attempts this week, or nil if the
+    /// child hasn't taken a test that day yet. Practice-mode attempts are
+    /// excluded on purpose -- see the note on PracticeAttempt.mode.
+    private func testPercent(onWeekday weekday: Int) -> Int? {
+        let calendar = Calendar.current
+        let now = Date()
+        let attempts = thisWeekWords
+            .flatMap { $0.attempts ?? [] }
+            .filter {
+                $0.mode == "test"
+                    && calendar.component(.weekday, from: $0.date) == weekday
+                    && calendar.isDate($0.date, equalTo: now, toGranularity: .weekOfYear)
+            }
+        guard !attempts.isEmpty else { return nil }
+        let correct = attempts.filter(\.isCorrect).count
+        return Int((Double(correct) / Double(attempts.count) * 100).rounded())
+    }
+}
+
+private struct DayGradeCard: View {
+    let label: String
+    let percent: Int?
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Text(label)
+                .font(Theme.body(14))
+                .foregroundStyle(Theme.textSecondary)
+            Text(percent.map { "Grade: \(Grading.letter(forPercent: $0))" } ?? "No test yet")
+                .font(Theme.display(percent != nil ? 24 : 19))
+                .foregroundStyle(percent != nil ? Theme.textPrimary : Theme.textSecondary)
+            Text(percent.map(Grading.caption) ?? "Take a test to see a grade here.")
+                .font(Theme.body(13))
+                .foregroundStyle(Theme.textSecondary)
+                .multilineTextAlignment(.center)
+            ProgressView(value: Double(percent ?? 0) / 100)
+                .tint(Theme.gold)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity)
+        .card()
     }
 }
 

@@ -21,19 +21,8 @@ struct PracticeResultsView: View {
         return Int((Double(correctCount) / Double(results.count) * 100).rounded())
     }
 
-    private var grade: String {
-        switch percent {
-        case 90...: return "A"
-        case 80..<90: return "B"
-        case 70..<80: return "C"
-        case 60..<70: return "D"
-        default: return "F"
-        }
-    }
-
-    private var gradeColor: Color {
-        percent >= 70 ? Theme.green : Theme.coral
-    }
+    private var grade: String { Grading.letter(forPercent: percent) }
+    private var gradeColor: Color { Grading.color(forPercent: percent) }
 
     var body: some View {
         VStack(spacing: 24) {

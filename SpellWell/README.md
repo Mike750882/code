@@ -33,8 +33,9 @@ structural, but don't be surprised by a typo or an API signature mismatch.
 
 - **Home** — greeting, streak pill, a Practice/Test mode toggle, big CTA
   card (labeled "Practice spelling list" or "Take spelling test" to match
-  the chosen mode), and three secondary cards (Add list / Rewards /
-  Settings) gated behind the parent PIN.
+  the chosen mode), three secondary cards (Add list / Rewards / Settings)
+  gated behind the parent PIN, and a row of four daily grade cards
+  (Monday-Thursday) below them.
 - **Practice / Test modes** (`PracticeMode` in
   `Views/Practice/PracticeView.swift`) — the letter-tile flow (tap to hear
   the word, tap scrambled letters into blanks, undo a placement, check) is
@@ -44,14 +45,26 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     the end, just the original "All done for today!" screen.
   - **Test** — checking a word, right or wrong, flashes feedback and
     advances to the next one; there's no retrying a word once checked.
-    Ends on `PracticeResultsView.swift`: a letter grade (A-F on the usual
-    90/80/70/60 cutoffs) and percentage, then every word with a green
-    check or red x for right vs. wrong.
+    Ends on `PracticeResultsView.swift`: a letter grade and percentage,
+    then every word with a green check or red x for right vs. wrong.
 
-  Every check in either mode is recorded as a `PracticeAttempt` for
-  progress tracking. The mode picker resets to Practice each time Home
-  appears — it isn't persisted, so it's a real choice made right before
-  starting, not a sticky setting.
+  Every check in either mode is recorded as a `PracticeAttempt`, tagged
+  with `mode: "practice"` or `"test"` so the two can be told apart later.
+  The mode picker resets to Practice each time Home appears — it isn't
+  persisted, so it's a real choice made right before starting, not a
+  sticky setting.
+- **Daily grade cards** — one card per weekday (Monday-Thursday, matching
+  the Rewards screen's day range), each showing that day's grade,
+  percentage-based caption ("Excellent!" / "Good Job!" / "Getting Better" /
+  "Need More Practice!"), and a gold progress bar. Computed only from that
+  day's **Test**-mode attempts (`HomeView.testPercent(onWeekday:)`) —
+  Practice-mode attempts are deliberately excluded, since unlimited
+  retries would make every day read as 100%. A day with no test taken yet
+  shows "No test yet" instead of a grade.
+- **Shared grading scale** (`DesignSystem/Grading.swift`) — one place for
+  the percent-to-letter-grade logic (A+ through F, standard 97/93/90/…
+  cutoffs), used by both the results screen and the daily grade cards so
+  the same score never shows as two different grades in two places.
 - **Grown-ups PIN gate** — 4-digit PIN pad matching the mockup, backed by
   Keychain (`kSecAttrSynchronizable`, so it follows the parent's iCloud
   Keychain across their own devices, not the child's data).

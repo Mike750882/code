@@ -68,12 +68,18 @@ final class PracticeAttempt {
     var id: UUID = UUID()
     var date: Date = Date()
     var isCorrect: Bool = false
+    /// "practice" | "test" -- which PracticeMode this check happened under.
+    /// Home's daily grade cards only count "test" attempts: Practice mode
+    /// allows unlimited retries until correct, so mixing it in would make
+    /// every day read as 100%.
+    var mode: String = "practice"
 
     var word: SpellingWord?
 
-    init(isCorrect: Bool) {
+    init(isCorrect: Bool, mode: String) {
         self.date = Date()
         self.isCorrect = isCorrect
+        self.mode = mode
     }
 }
 

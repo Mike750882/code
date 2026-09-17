@@ -220,7 +220,7 @@ struct PracticeView: View {
         let attempt = String(placedLetters)
         let isCorrect = attempt.lowercased() == word.text.lowercased()
 
-        let record = PracticeAttempt(isCorrect: isCorrect)
+        let record = PracticeAttempt(isCorrect: isCorrect, mode: mode.rawValue.lowercased())
         record.word = word
         modelContext.insert(record)
         feedback = isCorrect ? .correct : .incorrect
