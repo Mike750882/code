@@ -83,7 +83,12 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   photo of a word list into the Simulator's Photos app first), and test
   "Take Photo" on a real device.
 - **Rewards** — per-weekday reward text + accuracy threshold slider, plus a
-  weekly prize card with its own threshold.
+  weekly prize card with its own threshold. The whole screen scrolls as one
+  unit (`.scrollDismissesKeyboard(.interactively)`) so a text field being
+  edited can scroll clear of the keyboard — this and Add List both used to
+  wrap only their middle section in a `ScrollView` while the header/footer
+  sat fixed outside it, which let the keyboard cover fields in landscape,
+  where there's much less vertical room.
 - **Settings** — text-size slider with a live preview using a real list word
   ("friend"), light/dark picker, PIN change, a Sync row, and a one-line
   progress summary computed from this week's `PracticeAttempt` records, with

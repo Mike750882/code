@@ -15,22 +15,27 @@ struct RewardsView: View {
     @State private var weeklyPrizeThreshold: Double = 80
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            header
-            ScrollView {
+        // Everything shares one ScrollView -- previously only the daily
+        // rows scrolled while the header, weekly prize card, and Save
+        // button sat in a fixed layout outside it, so nothing could scroll
+        // a field out from under the keyboard, especially in landscape
+        // where there's much less vertical space to begin with.
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                header
                 VStack(spacing: 0) {
                     ForEach(weekdayLabels, id: \.weekday) { entry in
                         dailyRow(weekday: entry.weekday, label: entry.label)
                         Divider().overlay(Theme.hairline)
                     }
                 }
+                weeklyPrizeCard
+                footer
             }
-            weeklyPrizeCard
-            Spacer()
-            footer
+            .padding(28)
         }
-        .padding(28)
         .background(Theme.background.ignoresSafeArea())
+        .scrollDismissesKeyboard(.interactively)
         .onAppear { loadExisting() }
     }
 

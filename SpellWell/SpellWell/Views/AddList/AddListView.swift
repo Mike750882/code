@@ -24,15 +24,21 @@ struct AddListView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            header
-            ScrollView {
+        // One shared ScrollView for header, word grid, and footer --
+        // previously only the grid scrolled while the header and footer
+        // (Save/Import buttons) sat outside it in a fixed layout, so
+        // nothing could scroll a field out from under the keyboard,
+        // especially in landscape.
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                header
                 wordGrid
+                footer
             }
-            footer
+            .padding(28)
         }
-        .padding(28)
         .background(Theme.background.ignoresSafeArea())
+        .scrollDismissesKeyboard(.interactively)
         .onAppear { loadExistingWords() }
         .overlay {
             if isImporting {
