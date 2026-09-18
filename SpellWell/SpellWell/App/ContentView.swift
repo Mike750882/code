@@ -65,7 +65,7 @@ struct ContentView: View {
                     return ok
                 }
             } else {
-                CreatePINView { pin in
+                SetPINView { pin in
                     KeychainService.savePIN(pin)
                     pendingDestination = nil
                     path.append(destination)

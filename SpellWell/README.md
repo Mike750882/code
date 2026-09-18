@@ -101,9 +101,16 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   `DailyReward`, `WeeklyPrize`, all SwiftData `@Model` types configured for
   automatic CloudKit sync (`ModelConfiguration(cloudKitDatabase: .automatic)`
   in `SpellWellApp.swift`).
-- **First-run PIN creation** — the mockups only show PIN *entry*; the app
-  also needs a way to set the PIN the first time. `CreatePINView` (in
-  `ParentGateView.swift`) is shown in place of the gate until a PIN exists.
+- **One keypad everywhere** — `PINPad.swift` is the single custom keypad
+  matching the mockup (masked dot row + number grid), shared by
+  `ParentGateView` (verifying a PIN) and `SetPINView` (setting one). Every
+  PIN entry screen in the app now looks identical; nothing falls back to
+  the system keyboard/SecureField.
+- **First-run PIN creation & "Change PIN"** — the mockups only show PIN
+  *entry*; the app also needs a way to set one. `SetPINView.swift` is a
+  shared two-step "enter it, then confirm it" flow built on `PINPad`, used
+  both in place of the gate the first time any grown-up screen is opened,
+  and from Settings' "Change PIN" button.
 - **Every visit is gated** — the PIN is checked on every entry into Add
   List, Rewards, or Settings; unlocking one screen never carries over to
   another or to a later visit to the same one (`ParentGate.verify`, called

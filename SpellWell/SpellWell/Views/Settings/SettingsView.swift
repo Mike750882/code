@@ -31,7 +31,14 @@ struct SettingsView: View {
             appearance = child.appearance == "system" ? "light" : child.appearance
         }
         .sheet(isPresented: $showChangePIN) {
-            ChangePINView()
+            SetPINView(
+                title: "Change your PIN",
+                subtitle: "Enter a new 4-digit PIN.",
+                onSet: { pin in
+                    KeychainService.savePIN(pin)
+                    showChangePIN = false
+                }
+            )
         }
     }
 
@@ -204,35 +211,5 @@ struct SettingsView: View {
         let thisWeek = attempts.filter { Calendar.current.isDate($0.date, equalTo: Date(), toGranularity: .weekOfYear) }
         let correct = thisWeek.filter(\.isCorrect).count
         return "This week · \(correct) of \(thisWeek.count) correct"
-    }
-}
-
-private struct ChangePINView: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var newPIN: String = ""
-    @State private var confirmPIN: String = ""
-
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("Set a new PIN")
-                .font(Theme.display(24))
-                .foregroundStyle(Theme.textPrimary)
-            SecureField("New 4-digit PIN", text: $newPIN)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
-            SecureField("Confirm PIN", text: $confirmPIN)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
-            Button("Save") {
-                guard newPIN.count == 4, newPIN == confirmPIN else { return }
-                KeychainService.savePIN(newPIN)
-                dismiss()
-            }
-            .disabled(newPIN.count != 4 || newPIN != confirmPIN)
-            .font(Theme.body(16, weight: .medium))
-            .foregroundStyle(Theme.blue)
-        }
-        .padding(32)
-        .frame(maxWidth: 360)
     }
 }
