@@ -1,12 +1,23 @@
 import SwiftUI
 import SwiftData
+import PhotosUI
+import UIKit
 
 struct AddListView: View {
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     let child: Child
 
     @State private var wordCount: Int = 12
     @State private var wordFields: [String] = Array(repeating: "", count: 12)
+
+    @State private var showImportSourceDialog = false
+    @State private var showCamera = false
+    @State private var showPhotoPicker = false
+    @State private var photoPickerItem: PhotosPickerItem?
+    @State private var isImporting = false
+    @State private var showImportError = false
+    @State private var importErrorMessage = ""
 
     private var currentWeekList: WeekList? {
         child.weekLists?.sorted(by: { $0.weekOf > $1.weekOf }).first
@@ -23,6 +34,51 @@ struct AddListView: View {
         .padding(28)
         .background(Theme.background.ignoresSafeArea())
         .onAppear { loadExistingWords() }
+        .overlay {
+            if isImporting {
+                ProgressView("Reading photo…")
+                    .padding(24)
+                    .background(Theme.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.cardCornerRadius))
+            }
+        }
+        .confirmationDialog("Import from a photo", isPresented: $showImportSourceDialog, titleVisibility: .visible) {
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                Button("Take Photo") { showCamera = true }
+            }
+            Button("Choose from Library") { showPhotoPicker = true }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Take or choose a photo of a printed or handwritten word list.")
+        }
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraCapture(
+                onCapture: { image in
+                    showCamera = false
+                    Task { await importWords(from: image) }
+                },
+                onCancel: { showCamera = false }
+            )
+            .ignoresSafeArea()
+        }
+        .photosPicker(isPresented: $showPhotoPicker, selection: $photoPickerItem, matching: .images)
+        .onChange(of: photoPickerItem) { _, newItem in
+            guard let newItem else { return }
+            Task {
+                if let data = try? await newItem.loadTransferable(type: Data.self), let image = UIImage(data: data) {
+                    await importWords(from: image)
+                } else {
+                    importErrorMessage = "Couldn't open that photo. Try a different one."
+                    showImportError = true
+                }
+                photoPickerItem = nil
+            }
+        }
+        .alert("Couldn't read that photo", isPresented: $showImportError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(importErrorMessage)
+        }
     }
 
     private var header: some View {
@@ -80,19 +136,22 @@ struct AddListView: View {
                     .foregroundStyle(Theme.textSecondary)
                 Spacer()
                 Button("Import a list") {
-                    // TODO: hook up a document/CSV importer.
+                    showImportSourceDialog = true
                 }
                 .font(Theme.body(15))
                 .padding(.horizontal, 18)
                 .padding(.vertical, 10)
                 .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
 
-                Button("Save list") { saveList() }
-                    .font(Theme.body(15, weight: .medium))
-                    .foregroundStyle(Theme.blue)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 10)
-                    .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+                Button("Save list") {
+                    saveList()
+                    dismiss()
+                }
+                .font(Theme.body(15, weight: .medium))
+                .foregroundStyle(Theme.blue)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
             }
         }
     }
@@ -109,6 +168,31 @@ struct AddListView: View {
             wordFields.append(contentsOf: Array(repeating: "", count: count - wordFields.count))
         } else {
             wordFields = Array(wordFields.prefix(count))
+        }
+    }
+
+    private func importWords(from image: UIImage) async {
+        isImporting = true
+        defer { isImporting = false }
+        do {
+            let words = try await TextRecognitionService.recognizeWords(in: image)
+            applyImportedWords(words)
+        } catch {
+            importErrorMessage = "We couldn't find any words in that photo. Try a clearer, well-lit picture with one word per line."
+            showImportError = true
+        }
+    }
+
+    /// Replaces the current draft with the words read from a photo. Caps at
+    /// 30 (the stepper's max) and raises the word count to fit them, same
+    /// as typing a longer list in by hand would.
+    private func applyImportedWords(_ words: [String]) {
+        let trimmed = Array(words.prefix(30))
+        guard !trimmed.isEmpty else { return }
+        wordCount = min(max(trimmed.count, 5), 30)
+        wordFields = Array(repeating: "", count: wordCount)
+        for (index, word) in trimmed.enumerated() where index < wordFields.count {
+            wordFields[index] = word
         }
     }
 

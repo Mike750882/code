@@ -68,8 +68,20 @@ structural, but don't be surprised by a typo or an API signature mismatch.
 - **Grown-ups PIN gate** — 4-digit PIN pad matching the mockup, backed by
   Keychain (`kSecAttrSynchronizable`, so it follows the parent's iCloud
   Keychain across their own devices, not the child's data).
-- **Add spelling list** — word-count stepper, numbered word grid, saves into
-  a `WeekList`/`SpellingWord` graph.
+- **Add spelling list** — word-count stepper, numbered word grid, "Save
+  list" writes the words and returns to Home. **"Import a list"** takes or
+  picks a photo of a printed or handwritten word list and reads it with
+  Apple's on-device Vision OCR (`Services/TextRecognitionService.swift`) —
+  no third-party library, no network call, the photo never leaves the
+  device. It offers "Take Photo" (via `Views/AddList/CameraCapture.swift`,
+  a `UIImagePickerController` wrapper since SwiftUI's own `PhotosPicker`
+  can only select existing photos, not capture new ones) and "Choose from
+  Library" (SwiftUI's native `PhotosPicker`); recognized words replace the
+  current draft. **The Simulator has no camera** — "Take Photo" only
+  appears when `UIImagePickerController.isSourceTypeAvailable(.camera)` is
+  true, so test the photo import via "Choose from Library" there (drag a
+  photo of a word list into the Simulator's Photos app first), and test
+  "Take Photo" on a real device.
 - **Rewards** — per-weekday reward text + accuracy threshold slider, plus a
   weekly prize card with its own threshold.
 - **Settings** — text-size slider with a live preview using a real list word
