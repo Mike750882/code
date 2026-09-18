@@ -10,6 +10,7 @@ struct AddListView: View {
 
     @State private var wordCount: Int = 12
     @State private var wordFields: [String] = Array(repeating: "", count: 12)
+    @FocusState private var focusedField: Int?
 
     @State private var showImportSourceDialog = false
     @State private var showCamera = false
@@ -39,6 +40,12 @@ struct AddListView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .scrollDismissesKeyboard(.interactively)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focusedField = nil }
+            }
+        }
         .onAppear { loadExistingWords() }
         .overlay {
             if isImporting {
@@ -128,6 +135,7 @@ struct AddListView: View {
                         .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline, lineWidth: 1))
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
+                        .focused($focusedField, equals: index)
                 }
             }
         }

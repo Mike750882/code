@@ -9,6 +9,7 @@ struct EditNameView: View {
     let child: Child
 
     @State private var name: String = ""
+    @FocusState private var isNameFocused: Bool
 
     var body: some View {
         VStack {
@@ -34,6 +35,7 @@ struct EditNameView: View {
                     .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline, lineWidth: 1))
                     .textInputAutocapitalization(.words)
                     .autocorrectionDisabled()
+                    .focused($isNameFocused)
 
                 Button("Save") { save() }
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -49,6 +51,12 @@ struct EditNameView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.background.ignoresSafeArea())
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { isNameFocused = false }
+            }
+        }
         .onAppear { name = child.name }
     }
 

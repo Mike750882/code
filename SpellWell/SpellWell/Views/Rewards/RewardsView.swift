@@ -14,6 +14,12 @@ struct RewardsView: View {
     @State private var weeklyPrizeTitle: String = ""
     @State private var weeklyPrizeThreshold: Double = 80
 
+    private enum Field: Hashable {
+        case reward(Int)
+        case weeklyPrize
+    }
+    @FocusState private var focusedField: Field?
+
     var body: some View {
         // Everything shares one ScrollView -- previously only the daily
         // rows scrolled while the header, weekly prize card, and Save
@@ -36,6 +42,12 @@ struct RewardsView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .scrollDismissesKeyboard(.interactively)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focusedField = nil }
+            }
+        }
         .onAppear { loadExisting() }
     }
 
@@ -75,6 +87,7 @@ struct RewardsView: View {
                 .padding(.vertical, 10)
                 .background(Theme.surface)
                 .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline, lineWidth: 1))
+                .focused($focusedField, equals: .reward(weekday))
 
             Slider(value: bindingForThreshold(weekday), in: 0...100, step: 5)
                 .tint(Theme.purple)
@@ -98,6 +111,7 @@ struct RewardsView: View {
                 TextField("Weekly prize", text: $weeklyPrizeTitle)
                     .font(Theme.display(20))
                     .foregroundStyle(Theme.textPrimary)
+                    .focused($focusedField, equals: .weeklyPrize)
             }
             Spacer()
             Slider(value: $weeklyPrizeThreshold, in: 0...100, step: 5)
