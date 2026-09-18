@@ -115,6 +115,13 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   List, Rewards, or Settings; unlocking one screen never carries over to
   another or to a later visit to the same one (`ParentGate.verify`, called
   fresh each time from `ContentView.requestGatedAccess`).
+- **"Forgot your PIN?"** now does something: it's gated by the device's own
+  Face ID/Touch ID/passcode (`Services/DeviceAuthService.swift`, Apple's
+  LocalAuthentication framework), not just a tap — otherwise a child could
+  reset the PIN themselves. Only once that verification succeeds does
+  `ContentView` swap the sheet over to `SetPINView` to choose a new PIN. If
+  the device has no passcode/biometric set up at all, it shows an alert
+  explaining that instead of silently doing nothing.
 
 ## What's stubbed / left for you to finish
 

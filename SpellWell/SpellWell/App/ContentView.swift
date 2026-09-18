@@ -7,6 +7,8 @@ struct ContentView: View {
 
     @State private var path = NavigationPath()
     @State private var pendingDestination: GatedDestination?
+    @State private var isResettingPIN = false
+    @State private var showForgotPINUnavailable = false
 
     enum GatedDestination: Identifiable, Hashable {
         case addList, rewards, settings, editName
@@ -55,25 +57,64 @@ struct ContentView: View {
             }
         }
         .sheet(item: $pendingDestination) { destination in
-            if KeychainService.hasPIN() {
-                ParentGateView { pin in
-                    let ok = ParentGate.verify(pin: pin)
-                    if ok {
+            if KeychainService.hasPIN() && !isResettingPIN {
+                ParentGateView(
+                    onSubmit: { pin in
+                        let ok = ParentGate.verify(pin: pin)
+                        if ok {
+                            pendingDestination = nil
+                            path.append(destination)
+                        }
+                        return ok
+                    },
+                    onForgotPIN: { requestPINReset() }
+                )
+            } else {
+                SetPINView(
+                    title: isResettingPIN ? "Set a new PIN" : "Create a grown-up PIN",
+                    subtitle: isResettingPIN
+                        ? "Choose a new 4-digit PIN for this device."
+                        : "This protects the spelling list, rewards, and settings.",
+                    onSet: { pin in
+                        KeychainService.savePIN(pin)
+                        isResettingPIN = false
                         pendingDestination = nil
                         path.append(destination)
                     }
-                    return ok
-                }
-            } else {
-                SetPINView { pin in
-                    KeychainService.savePIN(pin)
-                    pendingDestination = nil
-                    path.append(destination)
-                }
+                )
             }
+        }
+        .onChange(of: pendingDestination) { _, newValue in
+            // Don't let a reset in progress leak into an unrelated later visit.
+            if newValue == nil { isResettingPIN = false }
+        }
+        .alert("Can't verify it's you", isPresented: $showForgotPINUnavailable) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Set a passcode, Face ID, or Touch ID on this device in Settings to reset the grown-up PIN.")
         }
         .background(Theme.background.ignoresSafeArea())
         .preferredColorScheme(preferredColorScheme)
+    }
+
+    /// "Forgot your PIN?" is gated by the device's own passcode/Face ID/
+    /// Touch ID, not just a tap -- otherwise a child could reset the PIN
+    /// themselves. Only once that succeeds does the sheet switch over to
+    /// SetPINView to choose a new one.
+    private func requestPINReset() {
+        Task {
+            let result = await DeviceAuthService.authenticate(
+                reason: "Verify it's you to reset the grown-up PIN."
+            )
+            switch result {
+            case .success:
+                isResettingPIN = true
+            case .cancelled:
+                break
+            case .unavailable:
+                showForgotPINUnavailable = true
+            }
+        }
     }
 
     /// Reflects the appearance chosen on the Settings screen. "system"

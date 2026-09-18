@@ -4,6 +4,7 @@ import SwiftUI
 /// the Add List, Rewards, and Settings screens.
 struct ParentGateView: View {
     var onSubmit: (String) -> Bool
+    var onForgotPIN: () -> Void
 
     var body: some View {
         VStack(spacing: 24) {
@@ -21,13 +22,10 @@ struct ParentGateView: View {
 
             PINPad(onSubmit: onSubmit)
 
-            Button("Forgot your PIN?") {
-                // TODO: hook up to a real recovery flow (e.g. re-authenticate
-                // the parent's Apple ID / iCloud account and let them reset it).
-            }
-            .font(Theme.body(14))
-            .foregroundStyle(Theme.blue)
-            .underline()
+            Button("Forgot your PIN?", action: onForgotPIN)
+                .font(Theme.body(14))
+                .foregroundStyle(Theme.blue)
+                .underline()
         }
         .padding(32)
         .frame(maxWidth: 420)

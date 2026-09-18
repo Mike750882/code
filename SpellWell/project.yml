@@ -22,3 +22,4 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_NSMicrophoneUsageDescription: "SpellWell uses the microphone so a grown-up can record their own voice reading each spelling word."
         INFOPLIST_KEY_NSCameraUsageDescription: "SpellWell uses the camera so a grown-up can take a photo of a spelling list to import it."
+        INFOPLIST_KEY_NSFaceIDUsageDescription: "SpellWell uses Face ID to verify it's a grown-up before resetting the PIN."
