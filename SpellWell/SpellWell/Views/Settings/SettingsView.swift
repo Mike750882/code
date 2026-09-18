@@ -22,6 +22,10 @@ struct SettingsView: View {
             syncRow
             Divider().overlay(Theme.hairline)
             progressRow
+            #if DEBUG
+            Divider().overlay(Theme.hairline)
+            debugSampleDataRow
+            #endif
             Spacer()
         }
         .padding(28)
@@ -214,4 +218,64 @@ struct SettingsView: View {
         let correct = thisWeek.filter(\.isCorrect).count
         return "This week · \(correct) of \(thisWeek.count) correct"
     }
+
+    #if DEBUG
+    private var debugSampleDataRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Sample data").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
+                Text("Adds 3 past weeks of fake results to preview the report. Debug builds only -- never ships.")
+                    .font(Theme.body(13))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .frame(width: 220, alignment: .leading)
+
+            Spacer()
+
+            Button("Add sample weeks") { addSampleWeeks() }
+                .font(Theme.body(15))
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
+        }
+        .padding(.vertical, 20)
+    }
+
+    /// Debug-only helper to preview the progress report with real-looking
+    /// data. Seeds 3 *past* weeks (1, 2, 3 weeks ago) with their own words
+    /// and attempts -- it never touches the current week, so it won't
+    /// disturb whatever real list/results are already set up. Tapping it
+    /// more than once adds another batch rather than replacing the last.
+    private func addSampleWeeks() {
+        let calendar = Calendar.current
+        let sampleWords = [
+            "friend", "because", "thought", "beautiful", "whisper",
+            "garden", "shoulder", "quietly", "mountain", "journey"
+        ]
+        // (weeks ago, how many of the 10 sample words were correct) --
+        // oldest first, with accuracy improving over time for a nice demo.
+        let weekResults: [(weeksAgo: Int, correctCount: Int)] = [(3, 6), (2, 8), (1, 9)]
+
+        for (weeksAgo, correctCount) in weekResults {
+            guard let weekOf = calendar.date(byAdding: .weekOfYear, value: -weeksAgo, to: Date()) else { continue }
+
+            let list = WeekList(weekOf: weekOf, targetWordCount: sampleWords.count)
+            list.child = child
+            modelContext.insert(list)
+
+            for (index, text) in sampleWords.enumerated() {
+                let word = SpellingWord(text: text, orderIndex: index)
+                modelContext.insert(word)
+                word.weekList = list
+
+                let attempt = PracticeAttempt(isCorrect: index < correctCount, mode: "test")
+                attempt.date = weekOf
+                modelContext.insert(attempt)
+                attempt.word = word
+            }
+        }
+
+        try? modelContext.save()
+    }
+    #endif
 }
