@@ -227,7 +227,7 @@ struct PracticeView: View {
 
         switch mode {
         case .test:
-            results.append(WordResult(word: word.text, isCorrect: isCorrect))
+            results.append(WordResult(word: word.text, attempt: attempt, isCorrect: isCorrect))
             isAdvancing = true
             Task {
                 try? await Task.sleep(nanoseconds: 700_000_000)
