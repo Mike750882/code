@@ -192,8 +192,10 @@ struct SettingsView: View {
 
             Spacer()
 
-            Button("View report") {
-                // TODO: build a dedicated week-by-week report screen/chart.
+            NavigationLink {
+                ProgressReportView(child: child)
+            } label: {
+                Text("View report")
             }
             .font(Theme.body(15, weight: .medium))
             .foregroundStyle(Theme.blue)

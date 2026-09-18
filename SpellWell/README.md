@@ -86,7 +86,15 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   weekly prize card with its own threshold.
 - **Settings** — text-size slider with a live preview using a real list word
   ("friend"), light/dark picker, PIN change, a Sync row, and a one-line
-  progress summary computed from this week's `PracticeAttempt` records.
+  progress summary computed from this week's `PracticeAttempt` records, with
+  a **"View report"** link into `ProgressReportView.swift` — a full
+  week-by-week breakdown (one row per `WeekList`, correct/total and a
+  percentage) covering every week the child has had, not just this one.
+  Counts every `PracticeAttempt` regardless of Practice/Test mode, since
+  it's meant as an activity view rather than a graded score (that's what
+  the daily grade cards on Home are for). Reached with a plain
+  `NavigationLink` rather than another PIN prompt, since Settings itself is
+  already gated to get there.
 - **Sync status + "Sync now"** — `CloudSyncMonitor` (in
   `Services/CloudSyncMonitor.swift`) observes
   `NSPersistentCloudKitContainer.eventChangedNotification`, the notification
@@ -128,14 +136,10 @@ structural, but don't be surprised by a typo or an API signature mismatch.
 - **"Forgot your PIN?"** on the gate screen is a no-op. Needs a real
   recovery flow (e.g. re-verify via the parent's Apple ID/email, or a
   security question set at PIN creation).
-- **"Import a list"** on Add List is a no-op. Needs a document/CSV picker.
 - **Voice recording** ("tap a word to record your own voice") — the service
   layer exists (`AudioRecorderService.swift`) but isn't wired into any UI
   control yet. It should attach to each word row on the Add List screen and
   write into `SpellingWord.customAudioData`.
-- **"View report"** on Settings is a no-op. Needs a dedicated week-by-week
-  progress screen (the underlying `PracticeAttempt` data is already there to
-  build it from).
 - **Streak logic** — `Child.currentStreak` exists as a field but nothing
   increments it yet. Needs a daily job (e.g. on app launch, check whether
   yesterday's goal was met) to update it.
