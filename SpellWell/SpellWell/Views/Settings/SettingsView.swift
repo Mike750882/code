@@ -1,12 +1,15 @@
 import SwiftUI
+import AVFoundation
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var syncMonitor = CloudSyncMonitor()
+    @StateObject private var previewSpeech = SpeechService()
     let child: Child
 
     @State private var textScale: Double = 1.0
     @State private var appearance: String = "light"
+    @State private var selectedVoiceIdentifier: String = ""
     @State private var showChangePIN = false
 
     var body: some View {
@@ -14,6 +17,8 @@ struct SettingsView: View {
             header
             Divider().overlay(Theme.hairline)
             textSizeRow
+            Divider().overlay(Theme.hairline)
+            voiceRow
             Divider().overlay(Theme.hairline)
             appearanceRow
             Divider().overlay(Theme.hairline)
@@ -33,6 +38,7 @@ struct SettingsView: View {
         .onAppear {
             textScale = child.textScale
             appearance = child.appearance == "system" ? "light" : child.appearance
+            selectedVoiceIdentifier = child.voiceIdentifier
         }
         .sheet(isPresented: $showChangePIN) {
             SetPINView(
@@ -82,6 +88,60 @@ struct SettingsView: View {
                 .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline, lineWidth: 1))
         }
         .padding(.vertical, 20)
+    }
+
+    private var voiceRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Voice").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
+                Text("Which voice reads each spelling word.")
+                    .font(Theme.body(13))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .frame(width: 220, alignment: .leading)
+
+            Picker("", selection: $selectedVoiceIdentifier) {
+                Text("Default").tag("")
+                ForEach(availableVoices, id: \.identifier) { voice in
+                    Text(voiceLabel(voice)).tag(voice.identifier)
+                }
+            }
+            .pickerStyle(.menu)
+            .onChange(of: selectedVoiceIdentifier) { _, newValue in child.voiceIdentifier = newValue }
+
+            Spacer()
+
+            Button {
+                previewSpeech.speak("friend", voiceIdentifier: selectedVoiceIdentifier)
+            } label: {
+                Label("Preview", systemImage: "play.circle")
+            }
+            .font(Theme.body(15))
+            .foregroundStyle(Theme.blue)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+        }
+        .padding(.vertical, 20)
+    }
+
+    /// Voices installed on this device matching the current locale's
+    /// language -- there can be hundreds of voices across every language
+    /// Apple ships, so this narrows the picker to ones that would actually
+    /// make sense for reading English spelling words.
+    private var availableVoices: [AVSpeechSynthesisVoice] {
+        let languagePrefix = Locale.current.language.languageCode?.identifier ?? "en"
+        return AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language.hasPrefix(languagePrefix) }
+            .sorted { $0.name < $1.name }
+    }
+
+    private func voiceLabel(_ voice: AVSpeechSynthesisVoice) -> String {
+        switch voice.quality {
+        case .enhanced: return "\(voice.name) (Enhanced)"
+        case .premium: return "\(voice.name) (Premium)"
+        default: return voice.name
+        }
     }
 
     private var appearanceRow: some View {

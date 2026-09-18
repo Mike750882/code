@@ -12,6 +12,9 @@ final class Child {
     var textScale: Double = 1.0
     /// "system" | "light" | "dark"
     var appearance: String = "system"
+    /// An AVSpeechSynthesisVoice.identifier, or "" to use the device's
+    /// default voice for the current locale.
+    var voiceIdentifier: String = ""
 
     @Relationship(deleteRule: .cascade, inverse: \WeekList.child)
     var weekLists: [WeekList]? = []

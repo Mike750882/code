@@ -95,7 +95,7 @@ struct PracticeView: View {
     private func hearWordSection(word: SpellingWord) -> some View {
         HStack(spacing: 16) {
             Button {
-                speech.speak(word.text, customAudioData: word.customAudioData)
+                speech.speak(word.text, customAudioData: word.customAudioData, voiceIdentifier: weekList.child?.voiceIdentifier)
             } label: {
                 Image(systemName: "speaker.wave.2.fill")
                     .font(.title2)

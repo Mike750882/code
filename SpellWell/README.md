@@ -90,8 +90,9 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   sat fixed outside it, which let the keyboard cover fields in landscape,
   where there's much less vertical room.
 - **Settings** — text-size slider with a live preview using a real list word
-  ("friend"), light/dark picker, PIN change, a Sync row, and a one-line
-  progress summary computed from this week's `PracticeAttempt` records, with
+  ("friend"), a **Voice** picker (see below), light/dark picker, PIN change,
+  a Sync row, and a one-line progress summary computed from this week's
+  `PracticeAttempt` records, with
   a **"View report"** link into `ProgressReportView.swift` — a full
   week-by-week breakdown (one row per `WeekList`, correct/total and a
   percentage) covering every week the child has had, not just this one.
@@ -100,6 +101,15 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   the daily grade cards on Home are for). Reached with a plain
   `NavigationLink` rather than another PIN prompt, since Settings itself is
   already gated to get there.
+- **Voice picker** — lists every `AVSpeechSynthesisVoice` installed on the
+  device matching the current locale's language (there can be hundreds
+  across every language Apple ships, so this narrows it to ones that make
+  sense for English words), with a "Preview" button that speaks "friend" in
+  the selected voice before committing to it. The choice is stored as
+  `Child.voiceIdentifier` (an `AVSpeechSynthesisVoice.identifier`, syncing
+  like everything else) and used in `PracticeView`'s "tap to hear the word"
+  button; empty/unresolvable falls back to the device's default voice
+  (`SpeechService.speak(_:customAudioData:voiceIdentifier:)`).
 - **Sync status + "Sync now"** — `CloudSyncMonitor` (in
   `Services/CloudSyncMonitor.swift`) observes
   `NSPersistentCloudKitContainer.eventChangedNotification`, the notification
