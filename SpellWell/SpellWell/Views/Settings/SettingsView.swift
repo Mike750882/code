@@ -11,10 +11,13 @@ struct SettingsView: View {
     @State private var appearance: String = "light"
     @State private var selectedVoiceIdentifier: String = ""
     @State private var showChangePIN = false
+    @State private var showTour = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
+            Divider().overlay(Theme.hairline)
+            tourRow
             Divider().overlay(Theme.hairline)
             textSizeRow
             Divider().overlay(Theme.hairline)
@@ -50,6 +53,30 @@ struct SettingsView: View {
                 }
             )
         }
+        .sheet(isPresented: $showTour) {
+            TourView()
+        }
+    }
+
+    private var tourRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("App tour").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
+                Text("See how spelling practice, tests, and rewards work.")
+                    .font(Theme.body(13))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .frame(width: 220, alignment: .leading)
+
+            Spacer()
+
+            Button("Take a Tour") { showTour = true }
+                .font(Theme.body(15))
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
+        }
+        .padding(.vertical, 20)
     }
 
     private var header: some View {

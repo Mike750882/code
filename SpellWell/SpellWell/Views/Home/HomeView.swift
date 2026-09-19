@@ -7,6 +7,8 @@ struct HomeView: View {
 
     @State private var showNoWordsAlert = false
     @State private var mode: PracticeMode = .practice
+    @State private var showTourBanner = AppLaunchTracker.shouldShowTourBanner
+    @State private var showTour = false
 
     private var thisWeekList: WeekList? {
         child.weekLists?.sorted(by: { $0.weekOf > $1.weekOf }).first
@@ -39,6 +41,9 @@ struct HomeView: View {
             .padding(24)
         }
         .background(Theme.background)
+        .sheet(isPresented: $showTour) {
+            TourView()
+        }
     }
 
     private var header: some View {
@@ -63,6 +68,10 @@ struct HomeView: View {
                 }
             }
             Spacer()
+            if showTourBanner {
+                tourBanner
+                Spacer()
+            }
             HStack(spacing: 6) {
                 Image(systemName: "star").foregroundStyle(Theme.blue)
                 Text("\(child.currentStreak)-day streak")
@@ -73,6 +82,38 @@ struct HomeView: View {
             .padding(.vertical, 8)
             .overlay(Capsule().stroke(Theme.blue, lineWidth: 1))
         }
+    }
+
+    /// Only shown for the first two app launches (AppLaunchTracker), or
+    /// until dismissed -- "Take a Tour" always stays reachable from
+    /// Settings for anyone who wants it again later.
+    private var tourBanner: some View {
+        HStack(spacing: 10) {
+            Button {
+                showTour = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(Theme.purple)
+                    Text("Take a Tour")
+                        .font(Theme.body(15, weight: .medium))
+                        .foregroundStyle(Theme.textPrimary)
+                }
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                AppLaunchTracker.dismissTourBanner()
+                showTourBanner = false
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.purple, lineWidth: 1))
     }
 
     private var modeToggle: some View {

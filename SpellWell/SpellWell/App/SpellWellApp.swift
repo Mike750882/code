@@ -6,6 +6,7 @@ struct SpellWellApp: App {
     let container: ModelContainer
 
     init() {
+        AppLaunchTracker.recordLaunch()
         do {
             let schema = Schema([
                 Child.self, WeekList.self, SpellingWord.self,

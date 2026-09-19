@@ -1,0 +1,29 @@
+import Foundation
+
+/// Tracks how many times the app has been launched since install (or
+/// reinstall -- UserDefaults resets when the app is deleted), so Home's
+/// "Take a Tour" banner can show itself only for the first couple of
+/// launches. Also tracks an early dismissal so closing the banner sticks
+/// even within those first two launches.
+enum AppLaunchTracker {
+    private static let launchCountKey = "appLaunchCount"
+    private static let tourBannerDismissedKey = "tourBannerDismissed"
+
+    /// Call exactly once per process launch (from SpellWellApp.init()).
+    static func recordLaunch() {
+        let defaults = UserDefaults.standard
+        defaults.set(defaults.integer(forKey: launchCountKey) + 1, forKey: launchCountKey)
+    }
+
+    static var launchCount: Int {
+        UserDefaults.standard.integer(forKey: launchCountKey)
+    }
+
+    static var shouldShowTourBanner: Bool {
+        launchCount <= 2 && !UserDefaults.standard.bool(forKey: tourBannerDismissedKey)
+    }
+
+    static func dismissTourBanner() {
+        UserDefaults.standard.set(true, forKey: tourBannerDismissedKey)
+    }
+}

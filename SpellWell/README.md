@@ -36,6 +36,18 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   the chosen mode), three secondary cards (Add list / Rewards / Settings)
   gated behind the parent PIN, and a row of four daily grade cards
   (Monday-Thursday) below them.
+- **"Take a Tour"** — a dismissible banner between the greeting and the
+  streak pill, shown only for the app's first two launches
+  (`Services/AppLaunchTracker.swift`, backed by `UserDefaults` so it
+  resets on reinstall) or until dismissed early. Opens
+  `Views/Tour/TourView.swift`: a swipeable, six-page walkthrough covering
+  hearing/spelling a word, Practice vs. Test mode, grades/progress, the
+  parent PIN gate, and rewards. Pages are large-icon illustrations with a
+  title and a couple of sentences, **not real screenshots** — this project
+  has no way to capture actual running-app screenshots to ship as static
+  images, so this is the honest substitute. Also reachable any time from
+  **Settings → "Take a Tour"** (an "App tour" row, not launch-limited),
+  for anyone who dismissed it early or wants a refresher.
 - **Practice / Test modes** (`PracticeMode` in
   `Views/Practice/PracticeView.swift`) — the letter-tile flow (tap to hear
   the word, tap scrambled letters into blanks, undo a placement, check) is
