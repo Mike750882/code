@@ -40,14 +40,15 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   streak pill, shown only for the app's first two launches
   (`Services/AppLaunchTracker.swift`, backed by `UserDefaults` so it
   resets on reinstall) or until dismissed early. Opens
-  `Views/Tour/TourView.swift`: a swipeable, seven-page walkthrough, in the
+  `Views/Tour/TourView.swift`: a swipeable, eight-page walkthrough, in the
   order a new user actually encounters things — Welcome, Setting your PIN
   (the first-run PIN-creation flow), the Settings screen (PIN change,
-  voice picker, progress report, sync), Practice vs. Test mode (including
-  that retaking a test the same day keeps only the most recent grade —
-  see `PracticeAttempt.sessionID` below), Grades and progress (a grade
-  only counts for the day it's taken, no backfilling a missed day),
-  Grown-ups only, and Rewards (including the per-day accuracy sliders).
+  voice picker, progress report, sync), Hear it/spell it (the letter-tile
+  mechanic), Practice vs. Test mode (including that retaking a test the
+  same day keeps only the most recent grade — see
+  `PracticeAttempt.sessionID` below), Grades and progress (a grade only
+  counts for the day it's taken, no backfilling a missed day), Grown-ups
+  only, and Rewards (including the per-day accuracy sliders).
   Pages are large-icon illustrations with a title and a couple of
   sentences, **not real screenshots** — this project has no way to
   capture actual running-app screenshots to ship as static images, so

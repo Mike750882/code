@@ -38,6 +38,12 @@ struct TourView: View {
             body: "Settings is where a grown-up can change the PIN, pick which voice reads the words, view the weekly progress report, and sync data between family devices."
         ),
         TourPage(
+            icon: "speaker.wave.2.fill",
+            color: Theme.blue,
+            title: "Hear it, then spell it",
+            body: "Tap the speaker to hear a word, then tap scrambled letters to build it. \"Take one back\" undoes your last letter."
+        ),
+        TourPage(
             icon: "checkmark.seal.fill",
             color: Theme.green,
             title: "Practice or Test",
