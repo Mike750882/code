@@ -112,7 +112,7 @@ struct SettingsView: View {
             Spacer()
 
             Button {
-                previewSpeech.speak("friend", voiceIdentifier: selectedVoiceIdentifier)
+                previewSpeech.speak("Spell Well", voiceIdentifier: selectedVoiceIdentifier)
             } label: {
                 Label("Preview", systemImage: "play.circle")
             }
@@ -125,15 +125,24 @@ struct SettingsView: View {
         .padding(.vertical, 20)
     }
 
-    /// Voices installed on this device matching the current locale's
-    /// language -- there can be hundreds of voices across every language
-    /// Apple ships, so this narrows the picker to ones that would actually
-    /// make sense for reading English spelling words.
+    /// The only voices offered in the picker, in this specific order.
+    /// Apple ships hundreds of voices across every language/locale, so this
+    /// is a deliberately curated shortlist rather than "every installed
+    /// voice."
+    private static let allowedVoiceNames: [String] = [
+        "Tessa", "Superstar", "Samantha", "Rishi", "Moira",
+        "Kathy", "Karen", "Junior", "Fred", "Daniel"
+    ]
+
+    /// Whichever of `allowedVoiceNames` are actually installed on this
+    /// device, in that same order -- a name missing from the device (the
+    /// Simulator ships far fewer voices than a real device) is simply
+    /// skipped rather than shown as broken.
     private var availableVoices: [AVSpeechSynthesisVoice] {
-        let languagePrefix = Locale.current.language.languageCode?.identifier ?? "en"
-        return AVSpeechSynthesisVoice.speechVoices()
-            .filter { $0.language.hasPrefix(languagePrefix) }
-            .sorted { $0.name < $1.name }
+        let installed = AVSpeechSynthesisVoice.speechVoices()
+        return Self.allowedVoiceNames.compactMap { name in
+            installed.first(where: { $0.name == name })
+        }
     }
 
     private func voiceLabel(_ voice: AVSpeechSynthesisVoice) -> String {

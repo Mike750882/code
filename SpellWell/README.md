@@ -101,11 +101,12 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   the daily grade cards on Home are for). Reached with a plain
   `NavigationLink` rather than another PIN prompt, since Settings itself is
   already gated to get there.
-- **Voice picker** — lists every `AVSpeechSynthesisVoice` installed on the
-  device matching the current locale's language (there can be hundreds
-  across every language Apple ships, so this narrows it to ones that make
-  sense for English words), with a "Preview" button that speaks "friend" in
-  the selected voice before committing to it. The choice is stored as
+- **Voice picker** — a curated shortlist (`SettingsView.allowedVoiceNames`):
+  Tessa, Superstar, Samantha, Rishi, Moira, Kathy, Karen, Junior, Fred, and
+  Daniel, in that order, filtered down to whichever are actually installed
+  on the device (the Simulator ships far fewer voices than a real device,
+  so some may not appear there). "Preview" speaks "Spell Well" in the
+  selected voice before committing to it. The choice is stored as
   `Child.voiceIdentifier` (an `AVSpeechSynthesisVoice.identifier`, syncing
   like everything else) and used in `PracticeView`'s "tap to hear the word"
   button; empty/unresolvable falls back to the device's default voice
