@@ -38,22 +38,22 @@ struct TourView: View {
             body: "Settings is where a grown-up can change the PIN, pick which voice reads the words, view the weekly progress report, and sync data between family devices."
         ),
         TourPage(
+            icon: "checkmark.seal.fill",
+            color: Theme.green,
+            title: "Practice or Test",
+            body: "Practice mode lets you try a word again and again until you get it. Test mode is one try per word, then you get a real grade at the end. Take a test more than once in a day, and only your most recent grade is kept."
+        ),
+        TourPage(
             icon: "speaker.wave.2.fill",
             color: Theme.blue,
             title: "Hear it, then spell it",
             body: "Tap the speaker to hear a word, then tap scrambled letters to build it. \"Take one back\" undoes your last letter."
         ),
         TourPage(
-            icon: "checkmark.seal.fill",
-            color: Theme.green,
-            title: "Practice or Test",
-            body: "Practice mode lets you try a word again and again until you get it. Test mode is one try per word -- then you get a real grade at the end. Take a test more than once in a day, and only your most recent grade is kept."
-        ),
-        TourPage(
             icon: "chart.bar.fill",
             color: Theme.gold,
             title: "Grades and progress",
-            body: "After a test, see which words you got right and wrong. Daily grade cards on Home, and a full weekly report, track how you're doing over time. A grade only counts for the day you take the test -- miss a day, like Monday, and there's no way to go back and add one later."
+            body: "After a test, see which words you got right and wrong. Daily grade cards on Home, and a full weekly report, track how you're doing over time. A grade only counts for the day you take the test, miss a day, like Monday, and there's no way to go back and add one later."
         ),
         TourPage(
             icon: "lock.fill",
@@ -65,7 +65,7 @@ struct TourView: View {
             icon: "star.fill",
             color: Theme.gold,
             title: "Earn rewards",
-            body: "Grown-ups can set a reward for each day of the week and a bigger prize for the week. Each day has its own slider for how accurate you need to be to earn it -- for example, 70% on Monday and 90% by Thursday -- so the bar can be set exactly where a grown-up wants."
+            body: "Grown-ups can set a reward for each day of the week and a bigger prize for the week. Each day has its own slider for how accurate you need to be to earn it, for example, 70% on Monday and 90% by Thursday, so the bar can be set exactly where a grown-up wants."
         )
     ]
 

@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var mode: PracticeMode = .practice
     @State private var showTourBanner = AppLaunchTracker.shouldShowTourBanner
     @State private var showTour = false
+    @State private var isTourBannerPulsing = false
 
     private var thisWeekList: WeekList? {
         child.weekLists?.sorted(by: { $0.weekOf > $1.weekOf }).first
@@ -116,6 +117,13 @@ struct HomeView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
         .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.purple, lineWidth: 1.5))
+        .shadow(color: Theme.purple.opacity(isTourBannerPulsing ? 0.55 : 0.15), radius: isTourBannerPulsing ? 12 : 4)
+        .scaleEffect(isTourBannerPulsing ? 1.05 : 1.0)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
+                isTourBannerPulsing = true
+            }
+        }
     }
 
     private var modeToggle: some View {
