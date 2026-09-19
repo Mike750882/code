@@ -34,6 +34,8 @@ struct ProgressReportView: View {
         }
         .padding(28)
         .background(Theme.background.ignoresSafeArea())
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private var header: some View {

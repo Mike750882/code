@@ -40,6 +40,8 @@ struct SettingsView: View {
         }
         .padding(28)
         .background(Theme.background.ignoresSafeArea())
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             textScale = child.textScale
             appearance = child.appearance == "system" ? "light" : child.appearance

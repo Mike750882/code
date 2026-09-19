@@ -74,6 +74,9 @@ struct PracticeView: View {
         }
         .padding(24)
         .background(Theme.background.ignoresSafeArea())
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .onAppear { setUpWord() }
         .onChange(of: currentIndex) { _, _ in setUpWord() }
     }

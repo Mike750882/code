@@ -175,6 +175,16 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   `ContentView` swap the sheet over to `SetPINView` to choose a new PIN. If
   the device has no passcode/biometric set up at all, it shows an alert
   explaining that instead of silently doing nothing.
+- **Back button no longer overlaps the custom title** — none of the pushed
+  screens (Add List, Rewards, Settings, Progress Report, Edit Name,
+  Practice) ever set a `.navigationTitle`, so the system back button had
+  no navigation bar to sit in and floated as a bare circle directly over
+  each screen's own custom-drawn title text at the top. All six now set
+  `.navigationTitle("") .navigationBarTitleDisplayMode(.inline)` so the
+  system properly reserves bar space for the back button above the
+  content. Practice also sets `.navigationBarBackButtonHidden(true)`
+  since it already has its own "< Home" control — otherwise the app
+  would show two back buttons stacked there.
 
 ## What's stubbed / left for you to finish
 
