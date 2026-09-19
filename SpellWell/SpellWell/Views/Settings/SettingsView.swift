@@ -33,6 +33,8 @@ struct SettingsView: View {
             #if DEBUG
             Divider().overlay(Theme.hairline)
             debugSampleDataRow
+            Divider().overlay(Theme.hairline)
+            debugResetTourRow
             #endif
             Spacer()
         }
@@ -372,6 +374,27 @@ struct SettingsView: View {
         }
 
         try? modelContext.save()
+    }
+
+    private var debugResetTourRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Tour banner").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
+                Text("Resets the launch count so Home's \"Take a Tour\" banner shows again on the next launch. Debug builds only.")
+                    .font(Theme.body(13))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .frame(width: 220, alignment: .leading)
+
+            Spacer()
+
+            Button("Reset for next launch") { AppLaunchTracker.resetForTesting() }
+                .font(Theme.body(15))
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
+        }
+        .padding(.vertical, 20)
     }
     #endif
 }

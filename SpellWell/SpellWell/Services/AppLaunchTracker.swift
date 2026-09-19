@@ -26,4 +26,18 @@ enum AppLaunchTracker {
     static func dismissTourBanner() {
         UserDefaults.standard.set(true, forKey: tourBannerDismissedKey)
     }
+
+    #if DEBUG
+    /// Debug builds only: lets the "first two launches" banner be tested
+    /// by relaunching without deleting the whole app (which would also
+    /// wipe SwiftData test data). Takes effect on the *next* app launch --
+    /// AppLaunchTracker.recordLaunch() runs once per process start, so
+    /// resetting mid-session doesn't retroactively show the banner on an
+    /// already-running HomeView.
+    static func resetForTesting() {
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: launchCountKey)
+        defaults.removeObject(forKey: tourBannerDismissedKey)
+    }
+    #endif
 }
