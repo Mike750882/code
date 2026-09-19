@@ -100,7 +100,12 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   it's meant as an activity view rather than a graded score (that's what
   the daily grade cards on Home are for). Reached with a plain
   `NavigationLink` rather than another PIN prompt, since Settings itself is
-  already gated to get there.
+  already gated to get there. **Tapping a week expands it** (a chevron
+  rotates, tracked by `expandedWeekIDs: Set<UUID>` keyed off `WeekList.id`)
+  to list every word from that list with a green check/red x/gray dash for
+  correct/incorrect/never-attempted, using each word's *most recent*
+  attempt so a word retried until right shows as correct rather than
+  showing every retry.
 - **Voice picker** — a curated shortlist (`SettingsView.allowedVoiceNames`):
   Tessa, Superstar, Samantha, Rishi, Moira, Kathy, Karen, Junior, Fred, and
   Daniel, in that order, filtered down to whichever are actually installed
