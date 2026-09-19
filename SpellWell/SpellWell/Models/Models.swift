@@ -76,6 +76,11 @@ final class PracticeAttempt {
     /// allows unlimited retries until correct, so mixing it in would make
     /// every day read as 100%.
     var mode: String = "practice"
+    /// Shared by every attempt recorded during one PracticeView session
+    /// (see PracticeView.sessionID). Lets Home's daily grade compute only
+    /// the most recent test session's result for a day, rather than
+    /// blending together every time the test was retaken that day.
+    var sessionID: UUID = UUID()
 
     var word: SpellingWord?
 

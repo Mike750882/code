@@ -88,15 +88,16 @@ struct HomeView: View {
     /// until dismissed -- "Take a Tour" always stays reachable from
     /// Settings for anyone who wants it again later.
     private var tourBanner: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Button {
                 showTour = true
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     Image(systemName: "sparkles")
+                        .font(.system(size: 18))
                         .foregroundStyle(Theme.purple)
                     Text("Take a Tour")
-                        .font(Theme.body(15, weight: .medium))
+                        .font(Theme.body(17, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
                 }
             }
@@ -107,13 +108,14 @@ struct HomeView: View {
                 showTourBanner = false
             } label: {
                 Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 16))
                     .foregroundStyle(Theme.textSecondary)
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.purple, lineWidth: 1))
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.purple, lineWidth: 1.5))
     }
 
     private var modeToggle: some View {
@@ -240,7 +242,11 @@ struct HomeView: View {
 
     /// Score for that weekday's Test-mode attempts this week, or nil if the
     /// child hasn't taken a test that day yet. Practice-mode attempts are
-    /// excluded on purpose -- see the note on PracticeAttempt.mode.
+    /// excluded on purpose -- see the note on PracticeAttempt.mode. If the
+    /// test was taken more than once that day, only the most recent
+    /// session (PracticeAttempt.sessionID) counts, not a blend of every
+    /// attempt -- retaking a test replaces that day's grade rather than
+    /// averaging into it.
     private func testPercent(onWeekday weekday: Int) -> Int? {
         let calendar = Calendar.current
         let now = Date()
@@ -251,9 +257,11 @@ struct HomeView: View {
                     && calendar.component(.weekday, from: $0.date) == weekday
                     && calendar.isDate($0.date, equalTo: now, toGranularity: .weekOfYear)
             }
-        guard !attempts.isEmpty else { return nil }
-        let correct = attempts.filter(\.isCorrect).count
-        return Int((Double(correct) / Double(attempts.count) * 100).rounded())
+        guard let mostRecentSessionID = attempts.max(by: { $0.date < $1.date })?.sessionID else { return nil }
+        let latestSession = attempts.filter { $0.sessionID == mostRecentSessionID }
+        guard !latestSession.isEmpty else { return nil }
+        let correct = latestSession.filter(\.isCorrect).count
+        return Int((Double(correct) / Double(latestSession.count) * 100).rounded())
     }
 }
 

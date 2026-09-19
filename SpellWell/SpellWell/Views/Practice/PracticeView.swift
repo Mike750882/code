@@ -37,6 +37,10 @@ struct PracticeView: View {
     @State private var feedback: Feedback?
     @State private var isAdvancing = false
     @State private var results: [WordResult] = []
+    /// One ID for this whole session, stamped onto every PracticeAttempt
+    /// recorded here -- lets Home's daily grade use only the most recent
+    /// session's result for a day when a test is retaken.
+    @State private var sessionID = UUID()
 
     enum Feedback { case correct, incorrect }
 
@@ -221,6 +225,7 @@ struct PracticeView: View {
         let isCorrect = attempt.lowercased() == word.text.lowercased()
 
         let record = PracticeAttempt(isCorrect: isCorrect, mode: mode.rawValue.lowercased())
+        record.sessionID = sessionID
         record.word = word
         modelContext.insert(record)
         feedback = isCorrect ? .correct : .incorrect

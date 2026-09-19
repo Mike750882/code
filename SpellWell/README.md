@@ -40,12 +40,18 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   streak pill, shown only for the app's first two launches
   (`Services/AppLaunchTracker.swift`, backed by `UserDefaults` so it
   resets on reinstall) or until dismissed early. Opens
-  `Views/Tour/TourView.swift`: a swipeable, six-page walkthrough covering
-  hearing/spelling a word, Practice vs. Test mode, grades/progress, the
-  parent PIN gate, and rewards. Pages are large-icon illustrations with a
-  title and a couple of sentences, **not real screenshots** — this project
-  has no way to capture actual running-app screenshots to ship as static
-  images, so this is the honest substitute. Also reachable any time from
+  `Views/Tour/TourView.swift`: a swipeable, seven-page walkthrough, in the
+  order a new user actually encounters things — Welcome, Setting your PIN
+  (the first-run PIN-creation flow), the Settings screen (PIN change,
+  voice picker, progress report, sync), Practice vs. Test mode (including
+  that retaking a test the same day keeps only the most recent grade —
+  see `PracticeAttempt.sessionID` below), Grades and progress (a grade
+  only counts for the day it's taken, no backfilling a missed day),
+  Grown-ups only, and Rewards (including the per-day accuracy sliders).
+  Pages are large-icon illustrations with a title and a couple of
+  sentences, **not real screenshots** — this project has no way to
+  capture actual running-app screenshots to ship as static images, so
+  this is the honest substitute. Also reachable any time from
   **Settings → "Take a Tour"** (an "App tour" row, not launch-limited),
   for anyone who dismissed it early or wants a refresher.
 - **Practice / Test modes** (`PracticeMode` in
@@ -72,7 +78,11 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   day's **Test**-mode attempts (`HomeView.testPercent(onWeekday:)`) —
   Practice-mode attempts are deliberately excluded, since unlimited
   retries would make every day read as 100%. A day with no test taken yet
-  shows "No test yet" instead of a grade.
+  shows "No test yet" instead of a grade. If a test is retaken the same
+  day, only the most recent attempt counts, not a blend of both — every
+  `PracticeAttempt` recorded during one `PracticeView` session shares a
+  `sessionID`, and `testPercent` uses only the attempts from whichever
+  session has the latest timestamp for that day.
 - **Shared grading scale** (`DesignSystem/Grading.swift`) — one place for
   the percent-to-letter-grade logic (A+ through F, standard 97/93/90/…
   cutoffs), used by both the results screen and the daily grade cards so
