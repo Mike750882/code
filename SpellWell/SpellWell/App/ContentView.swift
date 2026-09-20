@@ -65,7 +65,8 @@ struct ContentView: View {
                         subtitle: "What's your student's name?",
                         onCreated: { child in
                             activeChildID = child.id.uuidString
-                        }
+                        },
+                        showsInitialSetupDelay: true
                     )
                 }
             }

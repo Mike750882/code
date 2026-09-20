@@ -12,8 +12,18 @@ struct AddChildView: View {
     var title: String = "Add a student"
     var subtitle: String = "Give them a name to get started."
     var onCreated: (Child) -> Void
+    /// True only for the very first launch's onboarding screen. A brand
+    /// new install briefly has real background work competing for the
+    /// main thread (iCloud provisioning the CloudKit container for the
+    /// first time), which can make the very first keyboard appearance
+    /// stutter if a child taps straight into the name field. Waiting a
+    /// beat before showing an interactive field avoids that -- not needed
+    /// once the app's already been running for a while, like when this
+    /// same view is reused from Settings to add a sibling.
+    var showsInitialSetupDelay = false
 
     @State private var name = ""
+    @State private var isReady = false
     @FocusState private var isNameFocused: Bool
 
     var body: some View {
@@ -32,24 +42,33 @@ struct AddChildView: View {
                     .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)
 
-                TextField("Student's name", text: $name)
-                    .font(Theme.display(22))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(Theme.surface)
-                    .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline, lineWidth: 1))
-                    .textInputAutocapitalization(.words)
-                    .autocorrectionDisabled()
-                    .focused($isNameFocused)
+                if isReady {
+                    TextField("Student's name", text: $name)
+                        .font(Theme.display(22))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(Theme.surface)
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline, lineWidth: 1))
+                        .textInputAutocapitalization(.words)
+                        .autocorrectionDisabled()
+                        .focused($isNameFocused)
 
-                Button("Create") { create() }
-                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
-                    .font(Theme.body(16, weight: .medium))
-                    .foregroundStyle(Theme.blue)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+                    Button("Create") { create() }
+                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .font(Theme.body(16, weight: .medium))
+                        .foregroundStyle(Theme.blue)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+                } else {
+                    ProgressView()
+                        .tint(Theme.blue)
+                        .padding(.vertical, 8)
+                    Text("Just a moment...")
+                        .font(Theme.body(13))
+                        .foregroundStyle(Theme.textSecondary)
+                }
             }
             .padding(32)
             .frame(maxWidth: 420)
@@ -63,6 +82,17 @@ struct AddChildView: View {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
                 Button("Done") { isNameFocused = false }
+            }
+        }
+        .onAppear {
+            guard !isReady else { return }
+            if showsInitialSetupDelay {
+                Task {
+                    try? await Task.sleep(nanoseconds: 1_200_000_000)
+                    isReady = true
+                }
+            } else {
+                isReady = true
             }
         }
     }

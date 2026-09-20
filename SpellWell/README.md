@@ -43,6 +43,15 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     directly, no PIN gate — there's nothing to protect yet, and a parent is
     clearly setting the app up for the first time. It replaces the old
     hardcoded "Connor" placeholder.
+    **`showsInitialSetupDelay: true`** only on this call site: a brand new
+    install briefly has real background work competing for the main
+    thread (iCloud provisioning the CloudKit container for the very first
+    time), which could make the very first keyboard appearance stutter if
+    a child taps straight into the name field. Shows a brief "Just a
+    moment..." spinner instead of the interactive field for ~1.2s on
+    appear before letting anyone tap in. Not needed (and not passed) when
+    this same view is reused from Settings to add a sibling, since the app
+    is already fully up and running by then.
   - **Settings → Student profiles → Manage** opens
     `Views/Profiles/ProfilesView.swift` (no separate PIN gate needed;
     Settings is already gated to get there): lists every profile, tap one
