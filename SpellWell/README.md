@@ -318,5 +318,6 @@ purple for the letter-tile game and reward sliders.
   nothing already on screen would otherwise know to re-read them when it
   changes — that `.id()` forces a full rebuild so every view picks up the
   new colors immediately, including ones currently visible.
-  `ColorProfile.all` currently lists only `.default`; more (a parent
-  supplies the hex values for each) get added there the same way.
+  `ColorProfile.all` currently lists `.default` and `.happy` (a vivid
+  orange/blue/yellow/red/green set); more (a parent supplies the hex
+  values for each) get added there the same way.

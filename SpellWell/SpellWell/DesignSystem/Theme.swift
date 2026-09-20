@@ -26,7 +26,7 @@ struct ColorProfile: Identifiable, Equatable {
     /// Correct-answer accent for the practice results screen.
     let green: UInt32
 
-    static let all: [ColorProfile] = [.default]
+    static let all: [ColorProfile] = [.default, .happy]
 
     static func profile(id: String) -> ColorProfile {
         all.first(where: { $0.id == id }) ?? .default
@@ -46,6 +46,27 @@ struct ColorProfile: Identifiable, Equatable {
         gold: 0xC9A227,
         goldFillLight: 0xFBF6E3, goldFillDark: 0x332B12,
         green: 0x3F8B5D
+    )
+
+    /// Vivid primary-color palette. No background was supplied for this
+    /// one, so it reuses Default's neutral background/surface/text tokens
+    /// and only swaps the five accent colors. No purple was supplied
+    /// either -- the orange filled that role since it was the one color
+    /// left over once red/blue/yellow/green matched coral/blue/gold/green.
+    static let happy = ColorProfile(
+        id: "happy",
+        name: "Happy",
+        backgroundLight: 0xF1EFEE, backgroundDark: 0x1C1B19,
+        surfaceLight: 0xFDFDFC, surfaceDark: 0x2A2825,
+        hairlineLight: 0xE2E0DB, hairlineDark: 0x3A3833,
+        textPrimaryLight: 0x2A2925, textPrimaryDark: 0xF1EFEA,
+        textSecondaryLight: 0x6E6C66, textSecondaryDark: 0xA8A49C,
+        coral: 0xF50A00,
+        blue: 0x00A1FC,
+        purple: 0xE68600,
+        gold: 0xFFD903,
+        goldFillLight: 0xFBF6E3, goldFillDark: 0x332B12,
+        green: 0x28BA1D
     )
 }
 
