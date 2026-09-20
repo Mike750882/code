@@ -13,6 +13,7 @@ struct SettingsView: View {
 
     @State private var textScale: Double = 1.0
     @State private var appearance: String = "light"
+    @State private var selectedColorProfile: String = "default"
     @State private var selectedVoiceIdentifier: String = ""
     @State private var showChangePIN = false
     @State private var showTour = false
@@ -30,6 +31,8 @@ struct SettingsView: View {
             voiceRow
             Divider().overlay(Theme.hairline)
             appearanceRow
+            Divider().overlay(Theme.hairline)
+            colorProfileRow
             Divider().overlay(Theme.hairline)
             pinRow
             Divider().overlay(Theme.hairline)
@@ -52,6 +55,7 @@ struct SettingsView: View {
         .onAppear {
             textScale = child.textScale
             appearance = child.appearance == "system" ? "light" : child.appearance
+            selectedColorProfile = child.colorProfile
             selectedVoiceIdentifier = child.voiceIdentifier
         }
         .sheet(isPresented: $showChangePIN) {
@@ -238,6 +242,51 @@ struct SettingsView: View {
             Spacer()
         }
         .padding(.vertical, 20)
+    }
+
+    private var colorProfileRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Color theme").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
+                Text("Changes the colors used throughout the whole app.")
+                    .font(Theme.body(13))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .frame(width: 220, alignment: .leading)
+
+            HStack(spacing: 14) {
+                ForEach(ColorProfile.all) { profile in
+                    colorProfileSwatch(profile)
+                }
+            }
+
+            Spacer()
+        }
+        .padding(.vertical, 20)
+    }
+
+    private func colorProfileSwatch(_ profile: ColorProfile) -> some View {
+        let isSelected = selectedColorProfile == profile.id
+        return VStack(spacing: 6) {
+            ZStack {
+                if isSelected {
+                    Circle()
+                        .strokeBorder(Theme.textPrimary, lineWidth: 2)
+                        .frame(width: 44, height: 44)
+                }
+                Circle()
+                    .fill(Color(hex: profile.coral))
+                    .frame(width: 36, height: 36)
+            }
+            Text(profile.name)
+                .font(Theme.body(12))
+                .foregroundStyle(Theme.textSecondary)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            selectedColorProfile = profile.id
+            child.colorProfile = profile.id
+        }
     }
 
     private var pinRow: some View {

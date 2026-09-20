@@ -300,3 +300,23 @@ mockups: a serif display face (`design: .serif`, i.e. Apple's New York) for
 headlines, system sans for body/UI text, an off-white background, and three
 accent colors — coral for primary actions, blue for streak/audio/info,
 purple for the letter-tile game and reward sliders.
+
+- **Color themes** — Settings → "Color theme" lets a parent pick a whole
+  background+accent color set for that student, applied everywhere in the
+  app. `Theme`'s colors used to be hardcoded `static let` constants; now
+  each one (`Theme.background`, `Theme.coral`, etc.) is a computed
+  `static var` that reads from `Theme.currentProfile`, a `ColorProfile`
+  (`DesignSystem/Theme.swift`) bundling a background/surface/hairline/text
+  pair (each still light+dark adaptive) plus the coral/blue/purple/gold/
+  green accents. Every existing `Theme.xxx` call site across the app kept
+  working untouched — only `Theme.swift` itself changed.
+  `Child.colorProfile` stores which one (`ColorProfile.id`) a student has
+  picked, defaulting to `"default"` (today's original palette, unchanged).
+  `ContentView.body` applies it each render (`Theme.apply(profileID:)`,
+  called as a `let _ =` side effect) and keys `.id()` on the whole tree to
+  the profile, since static properties aren't environment-driven and
+  nothing already on screen would otherwise know to re-read them when it
+  changes — that `.id()` forces a full rebuild so every view picks up the
+  new colors immediately, including ones currently visible.
+  `ColorProfile.all` currently lists only `.default`; more (a parent
+  supplies the hex values for each) get added there the same way.

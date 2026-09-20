@@ -45,6 +45,7 @@ struct ContentView: View {
     }
 
     var body: some View {
+        let _ = Theme.apply(profileID: activeChild?.colorProfile)
         NavigationStack(path: $path) {
             Group {
                 if let child = activeChild {
@@ -121,6 +122,11 @@ struct ContentView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .preferredColorScheme(preferredColorScheme)
+        // Forces the whole tree to rebuild when the active child's color
+        // profile changes -- Theme's colors are plain static properties,
+        // not environment-driven, so nothing already on screen would
+        // otherwise know to re-read them.
+        .id(activeChild?.colorProfile ?? "default")
     }
 
     /// "Forgot your PIN?" is gated by the device's own passcode/Face ID/
