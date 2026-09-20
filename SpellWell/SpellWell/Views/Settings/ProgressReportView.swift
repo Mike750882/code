@@ -7,9 +7,11 @@ import SwiftUI
 /// the place for Test-only accuracy. Tapping a week expands it to show
 /// every word from that list with its most recent attempt's result.
 struct ProgressReportView: View {
+    @Environment(\.modelContext) private var modelContext
     let child: Child
 
     @State private var expandedWeekIDs: Set<UUID> = []
+    @State private var weekPendingDeletion: WeeklyReportRow?
 
     private var rows: [WeeklyReportRow] {
         (child.weekLists ?? [])
@@ -18,7 +20,14 @@ struct ProgressReportView: View {
                 let words = (list.words ?? []).sorted(by: { $0.orderIndex < $1.orderIndex })
                 let attempts = words.flatMap { $0.attempts ?? [] }
                 let correct = attempts.filter(\.isCorrect).count
-                return WeeklyReportRow(id: list.id, weekOf: list.weekOf, words: words, correct: correct, total: attempts.count)
+                return WeeklyReportRow(
+                    id: list.id,
+                    weekList: list,
+                    weekOf: list.weekOf,
+                    words: words,
+                    correct: correct,
+                    total: attempts.count
+                )
             }
     }
 
@@ -37,6 +46,25 @@ struct ProgressReportView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .alert(
+            "Remove week of \((weekPendingDeletion?.weekOf ?? Date()).formatted(.dateTime.month(.wide).day()))?",
+            isPresented: Binding(
+                get: { weekPendingDeletion != nil },
+                set: { if !$0 { weekPendingDeletion = nil } }
+            )
+        ) {
+            Button("Cancel", role: .cancel) { weekPendingDeletion = nil }
+            Button("Remove", role: .destructive) { deletePending() }
+        } message: {
+            Text("This permanently deletes this week's spelling list and progress. This can't be undone.")
+        }
+    }
+
+    private func deletePending() {
+        guard let row = weekPendingDeletion else { return }
+        expandedWeekIDs.remove(row.id)
+        modelContext.delete(row.weekList)
+        weekPendingDeletion = nil
     }
 
     private var header: some View {
@@ -77,18 +105,19 @@ struct ProgressReportView: View {
     private func weekSection(_ row: WeeklyReportRow) -> some View {
         let isExpanded = expandedWeekIDs.contains(row.id)
         return VStack(alignment: .leading, spacing: 0) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    if isExpanded {
-                        expandedWeekIDs.remove(row.id)
-                    } else {
-                        expandedWeekIDs.insert(row.id)
+            // A tap gesture on the row (not a Button wrapping it) so the
+            // trash button can be a sibling inside it rather than a Button
+            // nested inside a Button, which SwiftUI doesn't handle well.
+            weekRow(row, isExpanded: isExpanded)
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        if isExpanded {
+                            expandedWeekIDs.remove(row.id)
+                        } else {
+                            expandedWeekIDs.insert(row.id)
+                        }
                     }
                 }
-            } label: {
-                weekRow(row, isExpanded: isExpanded)
-            }
-            .buttonStyle(.plain)
 
             if isExpanded {
                 wordBreakdown(row.words)
@@ -123,6 +152,14 @@ struct ProgressReportView: View {
                         .frame(width: 100)
                 }
             }
+
+            Button {
+                weekPendingDeletion = row
+            } label: {
+                Image(systemName: "trash")
+                    .foregroundStyle(Theme.coral)
+            }
+            .padding(.leading, 16)
         }
         .padding(.vertical, 16)
         .contentShape(Rectangle())
@@ -196,6 +233,7 @@ struct ProgressReportView: View {
 
 private struct WeeklyReportRow: Identifiable {
     let id: UUID
+    let weekList: WeekList
     let weekOf: Date
     let words: [SpellingWord]
     let correct: Int

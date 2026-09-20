@@ -165,7 +165,15 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   to list every word from that list with a green check/red x/gray dash for
   correct/incorrect/never-attempted, using each word's *most recent*
   attempt so a word retried until right shows as correct rather than
-  showing every retry.
+  showing every retry. **Each week also has a trash icon**, matching the
+  same delete pattern as Student profiles: a confirmation alert warning
+  it permanently deletes that week's spelling list and progress, then
+  `modelContext.delete(weekList)` — the existing cascade delete rules
+  clean up its `SpellingWord`s and their `PracticeAttempt`s too. (Rewards
+  aren't affected: `DailyReward`/`WeeklyPrize` belong directly to `Child`,
+  not to a `WeekList`.) The row's tap-to-expand uses `.onTapGesture`
+  rather than wrapping the row in a `Button`, so the trash button can sit
+  as a sibling inside it instead of a `Button` nested inside a `Button`.
 - **Voice picker** — a curated shortlist (`SettingsView.allowedVoiceNames`):
   Tessa, Superstar, Samantha, Rishi, Moira, Kathy, Karen, Junior, Fred, and
   Daniel, in that order, filtered down to whichever are actually installed
