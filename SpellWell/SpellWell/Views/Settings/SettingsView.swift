@@ -126,9 +126,6 @@ struct SettingsView: View {
                 .foregroundStyle(Theme.textSecondary)
         }
         .padding(.bottom, 16)
-        // TEMP DIAGNOSTIC: remove once we've confirmed a fresh build shows this.
-        .padding(8)
-        .background(Color.red)
     }
 
     private var textSizeRow: some View {
