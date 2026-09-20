@@ -119,6 +119,12 @@ struct PracticeView: View {
     /// set up -- on a `.halfAndHalf` day this is where that resolves to
     /// either tiles or typed for this particular word.
     @State private var currentWordMode: WordInputMode = .tilesFull
+    /// Practice allows retrying a word after a miss (see `checkWord`), so
+    /// this tracks whether the *first* attempt at the current word has
+    /// already gone into `results` -- retries after that update `feedback`
+    /// and can still advance on a correct answer, but don't add duplicate
+    /// entries to the end-of-session results screen.
+    @State private var recordedFirstAttempt = false
     @State private var typedAnswer: String = ""
     @FocusState private var isTypedFieldFocused: Bool
     @State private var feedback: Feedback?
@@ -174,10 +180,8 @@ struct PracticeView: View {
                     letterBank
                 }
                 actionButtons
-            } else if mode == .test {
-                PracticeResultsView(results: results) { dismiss() }
             } else {
-                completionView
+                PracticeResultsView(results: results) { dismiss() }
             }
             Spacer()
         }
@@ -395,23 +399,10 @@ struct PracticeView: View {
         .opacity(isAdvancing ? 0.4 : 1)
     }
 
-    private var completionView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(Theme.coral)
-            Text("All done for today!")
-                .font(Theme.display(28))
-                .foregroundStyle(Theme.textPrimary)
-            Button("Back to Home") { dismiss() }
-                .font(Theme.body(16, weight: .medium))
-                .foregroundStyle(Theme.blue)
-        }
-    }
-
     private func setUpWord() {
         feedback = nil
         typedAnswer = ""
+        recordedFirstAttempt = false
         guard let word = currentWord else {
             slotContents = []
             fillOrder = []
@@ -488,15 +479,18 @@ struct PracticeView: View {
         guard !isAdvancing, let word = currentWord else { return }
         let attempt = currentAttemptString
         let isCorrect = attempt.lowercased() == word.text.lowercased()
-
-        let record = PracticeAttempt(isCorrect: isCorrect, mode: mode.rawValue.lowercased())
-        record.sessionID = sessionID
-        record.word = word
-        modelContext.insert(record)
         feedback = isCorrect ? .correct : .incorrect
 
         switch mode {
         case .test:
+            // Every check is a fresh word (no retries), recorded both into
+            // this session's results and permanently as a PracticeAttempt
+            // -- Test is what daily grades and the Progress Report are
+            // built from.
+            let record = PracticeAttempt(isCorrect: isCorrect, mode: mode.rawValue.lowercased())
+            record.sessionID = sessionID
+            record.word = word
+            modelContext.insert(record)
             results.append(WordResult(word: word.text, attempt: attempt, isCorrect: isCorrect))
             isAdvancing = true
             Task {
@@ -507,7 +501,16 @@ struct PracticeView: View {
         case .practice:
             // Wrong answers just leave the red flash showing -- placing or
             // clearing a letter clears it as soon as the child edits again,
-            // so they can keep retrying the same word.
+            // so they can keep retrying the same word until they get it.
+            // Only the first attempt goes into this session's end-of-
+            // practice results, and nothing here is ever persisted as a
+            // PracticeAttempt -- practice is just for rehearsing, and
+            // shouldn't show up later in the Progress Report or count
+            // toward any grade.
+            if !recordedFirstAttempt {
+                results.append(WordResult(word: word.text, attempt: attempt, isCorrect: isCorrect))
+                recordedFirstAttempt = true
+            }
             if isCorrect {
                 currentIndex += 1
             }

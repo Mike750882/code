@@ -1,11 +1,13 @@
 import SwiftUI
 
 /// Week-by-week breakdown of every spelling list the child has had, reached
-/// from Settings' "View report" button. Counts every PracticeAttempt
-/// (Practice and Test mode alike) since this is meant as an activity/
-/// progress view, not a graded score -- the daily grade cards on Home are
-/// the place for Test-only accuracy. Tapping a week expands it to show
-/// every word from that list with its most recent attempt's result.
+/// from Settings' "View report" button. Counts every PracticeAttempt, which
+/// in practice (no pun intended) means Test-mode attempts only -- Practice
+/// mode shows its own results right at the end of the session
+/// (PracticeResultsView) but never persists a PracticeAttempt, since it's
+/// just for rehearsing and shouldn't follow the child into their permanent
+/// progress history. Tapping a week expands it to show every word from
+/// that list with its most recent attempt's result.
 struct ProgressReportView: View {
     @Environment(\.modelContext) private var modelContext
     let child: Child

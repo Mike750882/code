@@ -88,12 +88,19 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   placement, check) is shared, but checking a word behaves differently per
   mode:
   - **Practice** — a wrong answer just flashes red; the child can keep
-    editing and rechecking the same word until they get it. No grading at
-    the end, just the original "All done for today!" screen.
+    editing and rechecking the same word until they get it, so nothing
+    blocks progress. Only the *first* attempt at each word (right or
+    wrong) counts toward the end-of-session results, tracked separately
+    from Test's (`recordedFirstAttempt`, reset per word in `setUpWord`) so
+    retries afterward don't add duplicate rows.
   - **Test** — checking a word, right or wrong, flashes feedback and
     advances to the next one; there's no retrying a word once checked.
-    Ends on `PracticeResultsView.swift`: a letter grade and percentage,
-    then every word with a green check or red x for right vs. wrong.
+
+  Both modes end on the same `PracticeResultsView.swift`: a letter grade
+  and percentage, then every word with a green check or red x, and for
+  anything wrong, what the child actually spelled next to the correct
+  word. Practice's results are purely a same-session recap, though --
+  see below for why they're never saved anywhere.
 
   Letter placement is slot-indexed (`slotContents: [SlotState]`, one entry
   per blank, `.empty`/`.filled(bankIndex:)`/`.prefilled(Character)` -- see
@@ -114,9 +121,12 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   recently (`fillOrder`, a stack of slot indices), regardless of tap vs.
   drag or which slot it was.
 
-  Every check in either mode is recorded as a `PracticeAttempt`, tagged
-  with `mode: "practice"` or `"test"` so the two can be told apart later.
-  The mode picker resets to Practice each time Home appears — it isn't
+  Only **Test** checks are recorded as a `PracticeAttempt` (`mode:
+  "test"`) -- Practice never persists anything, since it's just for
+  rehearsing and shouldn't follow the child into their permanent progress
+  history or count toward any grade; its results screen is built purely
+  from this session's local `results` array. The mode picker resets to
+  Practice each time Home appears — it isn't
   persisted, so it's a real choice made right before starting, not a
   sticky setting.
 - **Practice schedule** — a per-weekday difficulty progression, set by a
