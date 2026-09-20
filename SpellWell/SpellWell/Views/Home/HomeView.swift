@@ -97,9 +97,15 @@ struct HomeView: View {
                 Button {
                     showWordList = true
                 } label: {
-                    Text("This week's words")
-                        .font(Theme.body(13, weight: .medium))
-                        .foregroundStyle(Theme.purple)
+                    HStack(spacing: 6) {
+                        Image(systemName: "list.bullet").foregroundStyle(Theme.purple)
+                        Text("This week's words")
+                            .font(Theme.body(15, weight: .medium))
+                            .foregroundStyle(Theme.purple)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .overlay(Capsule().stroke(Theme.purple, lineWidth: 1))
                 }
             }
         }

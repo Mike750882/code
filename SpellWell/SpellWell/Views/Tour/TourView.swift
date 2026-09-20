@@ -44,6 +44,12 @@ struct TourView: View {
             body: "Have more than one kid using this iPad? From Settings, tap \"Manage\" under Student profiles to add another student or switch between them. Each student gets their own spelling list, grades, and rewards."
         ),
         TourPage(
+            icon: "list.bullet",
+            color: Theme.purple,
+            title: "This week's words",
+            body: "Tap the \"This week's words\" button under your streak on Home anytime to see the full list of words before you practice or take the test. No PIN needed, it's just there to help you study."
+        ),
+        TourPage(
             icon: "checkmark.seal.fill",
             color: Theme.green,
             title: "Practice or Test",

@@ -71,26 +71,29 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   gated behind the parent PIN, and a row of four daily grade cards
   (Monday-Thursday) below them.
   A **"This week's words"** button sits right under the streak pill,
-  deliberately ungated (unlike the secondary cards) since it's just a
-  study aid for the child, not something that needs a grown-up's PIN.
-  Opens `Views/Home/WordListView.swift`: a plain numbered list of this
-  week's words, no correct/incorrect info at all -- that lives in the
-  results screen and Progress Report, not here.
+  styled to match it (same capsule/stroke look), deliberately ungated
+  (unlike the secondary cards) since it's just a study aid for the child,
+  not something that needs a grown-up's PIN. Opens
+  `Views/Home/WordListView.swift`: a plain numbered list of this week's
+  words, no correct/incorrect info at all -- that lives in the results
+  screen and Progress Report, not here.
 - **"Take a Tour"** — a dismissible banner between the greeting and the
   streak pill, shown only for the app's first two launches
   (`Services/AppLaunchTracker.swift`, backed by `UserDefaults` so it
   resets on reinstall) or until dismissed early. Pulses continuously
   (scale + purple glow, `.repeatForever`) to draw the eye to it. Opens
-  `Views/Tour/TourView.swift`: a swipeable, nine-page walkthrough, in the
+  `Views/Tour/TourView.swift`: a swipeable, ten-page walkthrough, in the
   order a new user actually encounters things — Welcome, Setting your PIN
   (the first-run PIN-creation flow), the Settings screen (PIN change,
   voice picker, progress report, sync), More than one student (adding and
-  switching profiles from Settings → Student profiles → Manage), Practice
-  vs. Test mode (including that retaking a test the same day keeps only
-  the most recent grade — see `PracticeAttempt.sessionID` below), Hear
-  it/spell it (the letter-tile mechanic), Grades and progress (a grade
-  only counts for the day it's taken, no backfilling a missed day),
-  Grown-ups only, and Rewards (including the per-day accuracy sliders).
+  switching profiles from Settings → Student profiles → Manage), This
+  week's words (the ungated preview button under the streak pill),
+  Practice vs. Test mode (including that retaking a test the same day
+  keeps only the most recent grade — see `PracticeAttempt.sessionID`
+  below), Hear it/spell it (the letter-tile mechanic), Grades and progress
+  (a grade only counts for the day it's taken, no backfilling a missed
+  day), Grown-ups only, and Rewards (including the per-day accuracy
+  sliders).
   Pages are large-icon illustrations with a title and a couple of
   sentences, **not real screenshots** — this project has no way to
   capture actual running-app screenshots to ship as static images, so
