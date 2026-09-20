@@ -5,6 +5,12 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var children: [Child]
 
+    /// Device-local (not synced): each iPad remembers its own active
+    /// student even though every Child record itself syncs via CloudKit,
+    /// so a family with one iPad per kid can have each default to a
+    /// different profile.
+    @AppStorage("activeChildID") private var activeChildID: String = ""
+
     @State private var path = NavigationPath()
     @State private var pendingDestination: GatedDestination?
     @State private var isResettingPIN = false
@@ -26,10 +32,22 @@ struct ContentView: View {
         let mode: PracticeMode
     }
 
+    /// Falls back to the first child (in creation order isn't guaranteed
+    /// here, just @Query's default order) if the stored ID doesn't match
+    /// any current profile -- e.g. it was removed, or this is a fresh
+    /// device that hasn't picked one yet. nil only when there are no
+    /// children at all.
+    private var activeChild: Child? {
+        if let id = UUID(uuidString: activeChildID), let match = children.first(where: { $0.id == id }) {
+            return match
+        }
+        return children.first
+    }
+
     var body: some View {
         NavigationStack(path: $path) {
             Group {
-                if let child = children.first {
+                if let child = activeChild {
                     HomeView(
                         child: child,
                         onOpenGated: requestGatedAccess,
@@ -38,16 +56,24 @@ struct ContentView: View {
                         }
                     )
                 } else {
-                    ProgressView()
-                        .task { createDefaultChildIfNeeded() }
+                    // No profiles exist yet at all -- no PIN gate here,
+                    // since there's nothing to protect and a parent is
+                    // clearly setting up the app for the first time.
+                    AddChildView(
+                        title: "Welcome to SpellWell",
+                        subtitle: "What's your student's name?",
+                        onCreated: { child in
+                            activeChildID = child.id.uuidString
+                        }
+                    )
                 }
             }
             .navigationDestination(for: GatedDestination.self) { destination in
-                if let child = children.first {
+                if let child = activeChild {
                     switch destination {
                     case .addList: AddListView(child: child)
                     case .rewards: RewardsView(child: child)
-                    case .settings: SettingsView(child: child)
+                    case .settings: SettingsView(child: child, onProfileSwitched: resetToHome)
                     case .editName: EditNameView(child: child)
                     }
                 }
@@ -121,7 +147,7 @@ struct ContentView: View {
     /// (the default before a parent ever touches the picker) returns nil,
     /// which leaves the device's own light/dark setting in charge.
     private var preferredColorScheme: ColorScheme? {
-        switch children.first?.appearance {
+        switch activeChild?.appearance {
         case "dark": return .dark
         case "light": return .light
         default: return nil
@@ -135,9 +161,10 @@ struct ContentView: View {
         pendingDestination = destination
     }
 
-    private func createDefaultChildIfNeeded() {
-        guard children.isEmpty else { return }
-        let child = Child(name: "Connor")
-        modelContext.insert(child)
+    /// Pops all the way back to Home -- used after switching or removing
+    /// the active student profile, so the newly active one shows right
+    /// away instead of leaving the parent stranded on Settings/Profiles.
+    private func resetToHome() {
+        path = NavigationPath()
     }
 }

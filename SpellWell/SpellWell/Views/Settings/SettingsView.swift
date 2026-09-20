@@ -6,6 +6,10 @@ struct SettingsView: View {
     @StateObject private var syncMonitor = CloudSyncMonitor()
     @StateObject private var previewSpeech = SpeechService()
     let child: Child
+    /// Called after switching or removing the active profile in
+    /// "Student profiles," so ContentView can pop back to Home and show
+    /// whichever student is now active.
+    var onProfileSwitched: () -> Void
 
     @State private var textScale: Double = 1.0
     @State private var appearance: String = "light"
@@ -16,6 +20,8 @@ struct SettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
+            Divider().overlay(Theme.hairline)
+            profilesRow
             Divider().overlay(Theme.hairline)
             tourRow
             Divider().overlay(Theme.hairline)
@@ -61,6 +67,32 @@ struct SettingsView: View {
         .sheet(isPresented: $showTour) {
             TourView()
         }
+    }
+
+    private var profilesRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Student profiles").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
+                Text("Switch between students, or add another.")
+                    .font(Theme.body(13))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .frame(width: 220, alignment: .leading)
+
+            Spacer()
+
+            NavigationLink {
+                ProfilesView(onSwitchedProfile: onProfileSwitched)
+            } label: {
+                Text("Manage")
+            }
+            .font(Theme.body(15, weight: .medium))
+            .foregroundStyle(Theme.blue)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+        }
+        .padding(.vertical, 20)
     }
 
     private var tourRow: some View {

@@ -15,6 +15,8 @@ final class Child {
     /// An AVSpeechSynthesisVoice.identifier, or "" to use the device's
     /// default voice for the current locale.
     var voiceIdentifier: String = ""
+    /// Used to order profiles in the student switcher.
+    var createdAt: Date = Date()
 
     @Relationship(deleteRule: .cascade, inverse: \WeekList.child)
     var weekLists: [WeekList]? = []

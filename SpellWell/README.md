@@ -31,6 +31,31 @@ structural, but don't be surprised by a typo or an API signature mismatch.
 
 ## What's implemented
 
+- **Multiple student profiles on one iPad** — `Child` was always a
+  standalone SwiftData model (each with its own `WeekList`s,
+  `DailyReward`s, `WeeklyPrize`s, fully isolated), but the UI only ever
+  showed `children.first` with no way to add or switch between them. Now:
+  - `ContentView.activeChild` resolves which profile is showing, backed by
+    `@AppStorage("activeChildID")` — **device-local, not synced**, so a
+    family with one iPad per kid can have each default to a different
+    student even though every `Child` record itself syncs via CloudKit.
+  - First-ever launch (zero children) shows `Views/Profiles/AddChildView.swift`
+    directly, no PIN gate — there's nothing to protect yet, and a parent is
+    clearly setting the app up for the first time. It replaces the old
+    hardcoded "Connor" placeholder.
+  - **Settings → Student profiles → Manage** opens
+    `Views/Profiles/ProfilesView.swift` (no separate PIN gate needed;
+    Settings is already gated to get there): lists every profile, tap one
+    to switch, "Add a student" to create another (reuses `AddChildView`),
+    and a trash icon to remove one (never the last one) with a
+    confirmation alert warning it permanently deletes that student's
+    lists/rewards/progress via the existing cascade delete rules.
+    Switching or removing the active profile pops the navigation stack
+    back to Home (`onProfileSwitched`) so the newly active student shows
+    immediately.
+  - The parent PIN itself stays **shared across all profiles on the
+    device** (one Keychain entry) rather than per-child — one parent, one
+    PIN, regardless of which kid's data they're editing.
 - **Home** — greeting, streak pill, a Practice/Test mode toggle, big CTA
   card (labeled "Practice spelling list" or "Take spelling test" to match
   the chosen mode), three secondary cards (Add list / Rewards / Settings)
