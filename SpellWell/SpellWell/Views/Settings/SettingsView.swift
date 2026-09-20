@@ -279,9 +279,8 @@ struct SettingsView: View {
                         .frame(width: 44, height: 44)
                 }
                 Circle()
-                    .fill(Color.adaptive(light: profile.backgroundLight, dark: profile.backgroundDark))
+                    .fill(Color(hex: profile.coral))
                     .frame(width: 36, height: 36)
-                    .overlay(Circle().stroke(Theme.hairline, lineWidth: 1))
             }
             Text(profile.name)
                 .font(Theme.body(12))

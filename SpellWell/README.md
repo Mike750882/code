@@ -362,10 +362,9 @@ purple for the letter-tile game and reward sliders.
   nothing already on screen would otherwise know to re-read them when it
   changes — that `.id()` forces a full rebuild so every view picks up the
   new colors immediately, including ones currently visible.
-  `ColorProfile.all` currently lists `.default`, `.happy` (an orange
-  background with explicitly assigned accents -- revised from an earlier
-  guess where accent roles were matched to colors by hue), `.circus`
-  (red/indigo/magenta/orange/green), and `.focus` (a muted, low-distraction
-  near-white/near-black/gray background with two deep reds standing in for
-  all five accent roles, rather than five distinct hues); more (a parent
-  supplies the hex values for each) get added there the same way.
+  `ColorProfile.all` currently lists `.default`, `.happy` (a vivid orange/
+  blue/yellow/red/green set), `.circus` (red/indigo/magenta/orange/
+  green), and `.focus` (a muted, low-distraction near-white/near-black/
+  gray background with two deep reds standing in for all five accent
+  roles, rather than five distinct hues); more (a parent supplies the hex
+  values for each) get added there the same way.

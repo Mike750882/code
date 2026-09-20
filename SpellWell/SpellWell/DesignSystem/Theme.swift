@@ -48,24 +48,24 @@ struct ColorProfile: Identifiable, Equatable {
         green: 0x3F8B5D
     )
 
-    /// A vivid orange background with explicitly assigned accents (revised
-    /// from an earlier guess). No surface/text/hairline/dark-mode colors
-    /// were specified, so these are derived: a warm cream surface for
-    /// cards to stand out against the orange, dark warm-brown text, and no
-    /// separate dark-mode look (light values reused for dark too).
+    /// Vivid primary-color palette. No background was supplied for this
+    /// one, so it reuses Default's neutral background/surface/text tokens
+    /// and only swaps the five accent colors. No purple was supplied
+    /// either -- the orange filled that role since it was the one color
+    /// left over once red/blue/yellow/green matched coral/blue/gold/green.
     static let happy = ColorProfile(
         id: "happy",
         name: "Happy",
-        backgroundLight: 0xE68600, backgroundDark: 0xE68600,
-        surfaceLight: 0xFFF6EC, surfaceDark: 0xFFF6EC,
-        hairlineLight: 0xE8D9C5, hairlineDark: 0xE8D9C5,
-        textPrimaryLight: 0x2A1D0F, textPrimaryDark: 0x2A1D0F,
-        textSecondaryLight: 0x8A6F52, textSecondaryDark: 0x8A6F52,
-        coral: 0x00A1FC,
-        blue: 0xFFD903,
-        purple: 0xF50A00,
+        backgroundLight: 0xF1EFEE, backgroundDark: 0x1C1B19,
+        surfaceLight: 0xFDFDFC, surfaceDark: 0x2A2825,
+        hairlineLight: 0xE2E0DB, hairlineDark: 0x3A3833,
+        textPrimaryLight: 0x2A2925, textPrimaryDark: 0xF1EFEA,
+        textSecondaryLight: 0x6E6C66, textSecondaryDark: 0xA8A49C,
+        coral: 0xF50A00,
+        blue: 0x00A1FC,
+        purple: 0xE68600,
         gold: 0xFFD903,
-        goldFillLight: 0xFFF6D6, goldFillDark: 0xFFF6D6,
+        goldFillLight: 0xFBF6E3, goldFillDark: 0x332B12,
         green: 0x28BA1D
     )
 
