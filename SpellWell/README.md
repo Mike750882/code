@@ -70,6 +70,12 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   the chosen mode), three secondary cards (Add list / Rewards / Settings)
   gated behind the parent PIN, and a row of four daily grade cards
   (Monday-Thursday) below them.
+  A **"This week's words"** button sits right under the streak pill,
+  deliberately ungated (unlike the secondary cards) since it's just a
+  study aid for the child, not something that needs a grown-up's PIN.
+  Opens `Views/Home/WordListView.swift`: a plain numbered list of this
+  week's words, no correct/incorrect info at all -- that lives in the
+  results screen and Progress Report, not here.
 - **"Take a Tour"** — a dismissible banner between the greeting and the
   streak pill, shown only for the app's first two launches
   (`Services/AppLaunchTracker.swift`, backed by `UserDefaults` so it
@@ -96,12 +102,16 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   the word, **tap or drag** scrambled letters into blanks, undo a
   placement, check) is shared, but checking a word behaves differently per
   mode:
-  - **Practice** — a wrong answer just flashes red; the child can keep
-    editing and rechecking the same word until they get it, so nothing
-    blocks progress. Only the *first* attempt at each word (right or
-    wrong) counts toward the end-of-session results, tracked separately
-    from Test's (`recordedFirstAttempt`, reset per word in `setUpWord`) so
-    retries afterward don't add duplicate rows.
+  - **Practice** — a wrong answer just flashes red and the child can keep
+    editing and rechecking the same word, but a "Skip word" button (mode
+    `== .practice` only -- Test never needs it, since checking there
+    always advances) means getting it right is never required to move
+    on. Only the *first* attempt at each word (right or wrong, whether
+    from a check or a skip) counts toward the end-of-session results
+    (`recordedFirstAttempt`, reset per word in `setUpWord`), so retries
+    afterward don't add duplicate rows, and skipping a word that was
+    never checked at all records whatever was arranged/typed so far
+    (`skipWord`).
   - **Test** — checking a word, right or wrong, flashes feedback and
     advances to the next one; there's no retrying a word once checked.
 

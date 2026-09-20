@@ -10,6 +10,7 @@ struct HomeView: View {
     @State private var showTourBanner = AppLaunchTracker.shouldShowTourBanner
     @State private var showTour = false
     @State private var isTourBannerPulsing = false
+    @State private var showWordList = false
 
     private var thisWeekList: WeekList? {
         child.weekLists?.sorted(by: { $0.weekOf > $1.weekOf }).first
@@ -51,6 +52,9 @@ struct HomeView: View {
         .sheet(isPresented: $showTour) {
             TourView()
         }
+        .sheet(isPresented: $showWordList) {
+            WordListView(words: thisWeekWords)
+        }
     }
 
     private var header: some View {
@@ -79,15 +83,25 @@ struct HomeView: View {
                 tourBanner
                 Spacer()
             }
-            HStack(spacing: 6) {
-                Image(systemName: "star").foregroundStyle(Theme.blue)
-                Text("\(child.currentStreak)-day streak")
-                    .font(Theme.body(15, weight: .medium))
-                    .foregroundStyle(Theme.blue)
+            VStack(spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "star").foregroundStyle(Theme.blue)
+                    Text("\(child.currentStreak)-day streak")
+                        .font(Theme.body(15, weight: .medium))
+                        .foregroundStyle(Theme.blue)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .overlay(Capsule().stroke(Theme.blue, lineWidth: 1))
+
+                Button {
+                    showWordList = true
+                } label: {
+                    Text("This week's words")
+                        .font(Theme.body(13, weight: .medium))
+                        .foregroundStyle(Theme.purple)
+                }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .overlay(Capsule().stroke(Theme.blue, lineWidth: 1))
         }
     }
 

@@ -79,7 +79,8 @@ private enum SlotState: Equatable {
 /// wrong -- flashes feedback and advances to the next one, with no retries,
 /// so a right/wrong tally and grade at the end mean something. In Practice
 /// mode, a wrong answer just flashes red and lets the child keep trying the
-/// same word; there's no grading at the end.
+/// same word -- "Skip word" is there for when they'd rather move on without
+/// getting it right first, so nothing can leave them stuck on one word.
 struct PracticeView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -388,6 +389,18 @@ struct PracticeView: View {
                     .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
             }
 
+            // Test mode already always advances on check, right or wrong,
+            // so there's nothing to get stuck on -- only Practice, which
+            // holds a word until it's correct, needs a way out.
+            if mode == .practice {
+                Button("Skip word") { skipWord() }
+                    .font(Theme.body(16))
+                    .foregroundStyle(Theme.textSecondary)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
+            }
+
             Button("Check my word") { checkWord() }
                 .font(Theme.body(16, weight: .medium))
                 .foregroundStyle(Theme.coral)
@@ -515,5 +528,22 @@ struct PracticeView: View {
                 currentIndex += 1
             }
         }
+    }
+
+    /// Practice only, for a word the child wants to move past without
+    /// getting it right first -- whatever they'd arranged or typed so far
+    /// (possibly blank) counts as their attempt if they hadn't checked
+    /// this word yet at all; if they'd already checked it (and gotten it
+    /// wrong, since a right check already advances), that first attempt
+    /// stands and this doesn't add a second entry.
+    private func skipWord() {
+        guard !isAdvancing, let word = currentWord else { return }
+        if !recordedFirstAttempt {
+            let attempt = currentAttemptString
+            let isCorrect = attempt.lowercased() == word.text.lowercased()
+            results.append(WordResult(word: word.text, attempt: attempt, isCorrect: isCorrect))
+            recordedFirstAttempt = true
+        }
+        currentIndex += 1
     }
 }
