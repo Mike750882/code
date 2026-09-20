@@ -33,6 +33,13 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                // TEMP DIAGNOSTIC: remove once we've confirmed a fresh build shows this.
+                Text("BUILD TEST MARKER")
+                    .font(.system(size: 28, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.red)
                 header
                 modeToggle
                 practiceCard
