@@ -21,6 +21,18 @@ final class Child {
     /// Used to order profiles in the student switcher.
     var createdAt: Date = Date()
 
+    /// Which `WordInputMode.rawValue` (see `PracticeView.swift`) each
+    /// weekday uses for Practice/Test, so a parent can ease a child from
+    /// scaffolded tiles up to typing from memory across the week. Defaults
+    /// match the built-in progression: some tiles given Monday, all tiles
+    /// Tuesday, half tiles/half typed Wednesday, fully typed Thursday.
+    /// Four flat fields rather than a dictionary, matching every other
+    /// per-child setting on this model.
+    var mondayInputMode: String = "tilesScaffolded"
+    var tuesdayInputMode: String = "tilesFull"
+    var wednesdayInputMode: String = "halfAndHalf"
+    var thursdayInputMode: String = "typed"
+
     @Relationship(deleteRule: .cascade, inverse: \WeekList.child)
     var weekLists: [WeekList]? = []
 
@@ -32,6 +44,34 @@ final class Child {
 
     init(name: String) {
         self.name = name
+    }
+}
+
+extension Child {
+    /// weekday matches `Calendar.component(.weekday, from:)`: 2 = Monday
+    /// ... 5 = Thursday, same convention Home's daily grade cards use.
+    /// Anything else (a weekend) falls back to `.tilesFull` since there's
+    /// no weekend slot to configure.
+    func inputMode(forWeekday weekday: Int) -> WordInputMode {
+        let raw: String
+        switch weekday {
+        case 2: raw = mondayInputMode
+        case 3: raw = tuesdayInputMode
+        case 4: raw = wednesdayInputMode
+        case 5: raw = thursdayInputMode
+        default: raw = WordInputMode.tilesFull.rawValue
+        }
+        return WordInputMode(rawValue: raw) ?? .tilesFull
+    }
+
+    func setInputMode(_ mode: WordInputMode, forWeekday weekday: Int) {
+        switch weekday {
+        case 2: mondayInputMode = mode.rawValue
+        case 3: tuesdayInputMode = mode.rawValue
+        case 4: wednesdayInputMode = mode.rawValue
+        case 5: thursdayInputMode = mode.rawValue
+        default: break
+        }
     }
 }
 

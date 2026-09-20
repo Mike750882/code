@@ -47,7 +47,7 @@ struct TourView: View {
             icon: "checkmark.seal.fill",
             color: Theme.green,
             title: "Practice or Test",
-            body: "Practice mode lets you try a word again and again until you get it. Test mode is one try per word, then you get a real grade at the end. Take a test more than once in a day, and only your most recent grade is kept."
+            body: "Practice mode lets you try a word again and again until you get it. Test mode is one try per word, then you get a real grade at the end. Take a test more than once in a day, and only your most recent grade is kept. Each day can also work a little differently, some letters already filled in, all the letters up to you, or typing the word from memory, set in Settings under \"Practice schedule.\""
         ),
         TourPage(
             icon: "speaker.wave.2.fill",

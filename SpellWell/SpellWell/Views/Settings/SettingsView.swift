@@ -34,6 +34,8 @@ struct SettingsView: View {
             Divider().overlay(Theme.hairline)
             colorProfileRow
             Divider().overlay(Theme.hairline)
+            practiceScheduleRow
+            Divider().overlay(Theme.hairline)
             pinRow
             Divider().overlay(Theme.hairline)
             syncRow
@@ -287,6 +289,52 @@ struct SettingsView: View {
             selectedColorProfile = profile.id
             child.colorProfile = profile.id
         }
+    }
+
+    private static let scheduleWeekdays: [(weekday: Int, label: String)] = [
+        (2, "Monday"), (3, "Tuesday"), (4, "Wednesday"), (5, "Thursday")
+    ]
+
+    /// Reads/writes straight through to the model with a computed Binding
+    /// rather than a local @State mirror (unlike appearance/voice above) --
+    /// there's no shared "the schedule" value to keep in sync with an
+    /// onAppear, just four independent per-day pickers, so a direct
+    /// Binding per day is simpler and can't drift out of sync.
+    private func inputModeBinding(forWeekday weekday: Int) -> Binding<WordInputMode> {
+        Binding(
+            get: { child.inputMode(forWeekday: weekday) },
+            set: { child.setInputMode($0, forWeekday: weekday) }
+        )
+    }
+
+    private var practiceScheduleRow: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Practice schedule").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
+                Text("Choose how spelling words are practiced each day.")
+                    .font(Theme.body(13))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+
+            ForEach(Self.scheduleWeekdays, id: \.weekday) { entry in
+                HStack {
+                    Text(entry.label)
+                        .font(Theme.body(15))
+                        .foregroundStyle(Theme.textPrimary)
+                        .frame(width: 100, alignment: .leading)
+
+                    Picker("", selection: inputModeBinding(forWeekday: entry.weekday)) {
+                        ForEach(WordInputMode.allCases) { inputMode in
+                            Text(inputMode.label).tag(inputMode)
+                        }
+                    }
+                    .pickerStyle(.menu)
+
+                    Spacer()
+                }
+            }
+        }
+        .padding(.vertical, 20)
     }
 
     private var pinRow: some View {

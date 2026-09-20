@@ -95,11 +95,13 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     Ends on `PracticeResultsView.swift`: a letter grade and percentage,
     then every word with a green check or red x for right vs. wrong.
 
-  Letter placement is slot-indexed (`slotContents: [Int?]`, one entry per
-  blank), not append-order, so a tile can land in *any* blank, not just
-  the next one in line: tapping an unused bank tile fills the first empty
-  slot, and a tile can also be dragged straight into a specific blank
-  instead, with a purple highlight on whichever slot is under the drag.
+  Letter placement is slot-indexed (`slotContents: [SlotState]`, one entry
+  per blank, `.empty`/`.filled(bankIndex:)`/`.prefilled(Character)` -- see
+  "Practice schedule" below), not append-order, so a tile can land in *any*
+  blank, not just the next one in line: tapping an unused bank tile fills
+  the first empty slot, and a tile can also be dragged straight into a
+  specific blank instead, with a purple highlight on whichever slot is
+  under the drag.
   Dragging is a plain `DragGesture(minimumDistance: 0)` tracked by hand
   (each slot publishes its frame via a `PreferenceKey`, checked against
   the finger's location) rather than the system `.draggable`/
@@ -117,6 +119,36 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   The mode picker resets to Practice each time Home appears — it isn't
   persisted, so it's a real choice made right before starting, not a
   sticky setting.
+- **Practice schedule** — a per-weekday difficulty progression, set by a
+  parent in Settings and applied to **both** Practice and Test (they share
+  whatever the day says; only the retry/grading behavior above differs
+  between the two). Each weekday (`Child.inputMode(forWeekday:)`, same
+  Monday-Thursday range as the daily grade cards) picks a `WordInputMode`:
+  - **Tiles: some letters given** — about half of each word's letters
+    start pre-filled and locked (`SlotState.prefilled`, chosen as a random
+    half of that word's positions each time); the letter bank only
+    contains the *remaining* letters, so there's exactly one tile per
+    still-empty blank.
+  - **Tiles: fill in every letter** — today's original behavior, unchanged:
+    every blank starts empty, the full word's letters are in the bank.
+  - **Half tiles, half typed** — each word is independently and randomly
+    resolved to one of the other two treatments (`WordInputMode.
+    resolvedForWord`), fresh every time that word comes up, so it's not
+    always the same words in each half.
+  - **Type from memory** — no letter-tile UI at all; a plain text field
+    instead (`typedAnswerField`), checked the same case-insensitive way.
+    "Take one back" hides itself on these words since there's nothing to
+    undo tile-by-tile.
+
+  Defaults match the progression a parent would set up for a typical week
+  (Monday: some letters given, Tuesday: fill in every letter, Wednesday:
+  half tiles/half typed, Thursday: type from memory), stored as four flat
+  `Child` fields (`mondayInputMode`, etc.) rather than a dictionary, same
+  as every other per-child setting on that model — but every day is
+  freely reassignable to any of the four modes from Settings, independent
+  of the others. Home's practice card subtitle
+  (`WordInputMode.homeCardSubtitle`) reflects today's mode too, so a child
+  knows what kind of challenge they're in for before they start.
 - **Daily grade cards** — one card per weekday (Monday-Thursday, matching
   the Rewards screen's day range), each showing that day's grade,
   percentage-based caption ("Excellent!" / "Good Job!" / "Getting Better" /

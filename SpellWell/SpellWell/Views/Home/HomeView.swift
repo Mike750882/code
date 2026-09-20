@@ -19,6 +19,10 @@ struct HomeView: View {
         (thisWeekList?.words ?? []).sorted(by: { $0.orderIndex < $1.orderIndex })
     }
 
+    private var todaysWordInputMode: WordInputMode {
+        child.inputMode(forWeekday: Calendar.current.component(.weekday, from: Date()))
+    }
+
     private var todayCompletedCount: Int {
         let calendar = Calendar.current
         let correctToday = Set(
@@ -167,7 +171,7 @@ struct HomeView: View {
                 Text(mode == .test ? "Take spelling test" : "Practice spelling list")
                     .font(Theme.display(60))
                     .foregroundStyle(Theme.textPrimary)
-                Text("Listen, then build each word from letter tiles.")
+                Text(todaysWordInputMode.homeCardSubtitle)
                     .font(Theme.body(26))
                     .foregroundStyle(Theme.textSecondary)
             }

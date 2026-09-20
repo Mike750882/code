@@ -21,8 +21,59 @@ enum PracticeMode: String, CaseIterable, Identifiable, Hashable {
     }
 }
 
-/// The letter-tile word builder: hear the word, tap scrambled letters into
-/// the blanks in any order, undo with "Take one back", then check.
+/// Which challenge a word uses. Chosen per weekday in Settings
+/// (`Child.inputMode(forWeekday:)`) so a parent can ease a child from
+/// scaffolded tiles up to typing from memory across the week, independent
+/// of the Practice/Test toggle -- both modes share whatever the day says.
+enum WordInputMode: String, CaseIterable, Identifiable, Hashable {
+    case tilesScaffolded
+    case tilesFull
+    case halfAndHalf
+    case typed
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .tilesScaffolded: return "Tiles: some letters given"
+        case .tilesFull: return "Tiles: fill in every letter"
+        case .halfAndHalf: return "Half tiles, half typed"
+        case .typed: return "Type from memory"
+        }
+    }
+
+    /// A short line for Home's practice card, so a child knows what kind
+    /// of challenge today's words use before they start.
+    var homeCardSubtitle: String {
+        switch self {
+        case .tilesScaffolded: return "Listen, then fill in the missing letters, some are already there."
+        case .tilesFull: return "Listen, then build each word from letter tiles."
+        case .halfAndHalf: return "Listen, some words use letter tiles, others you'll type from memory."
+        case .typed: return "Listen, then type each word from memory."
+        }
+    }
+
+    /// `.halfAndHalf` isn't a real per-word mode -- it resolves to one of
+    /// the other two, fresh per word, so which words land in each half
+    /// changes on every attempt rather than always being the same ones.
+    var resolvedForWord: WordInputMode {
+        self == .halfAndHalf ? (Bool.random() ? .tilesFull : .typed) : self
+    }
+}
+
+/// One answer blank's state. Separate from the letter bank's tiles because
+/// a scaffolded word's given letters aren't drawn from the bank at all --
+/// they're just shown, locked, from the start.
+private enum SlotState: Equatable {
+    case prefilled(Character)
+    case empty
+    case filled(bankIndex: Int)
+}
+
+/// The letter-tile word builder: hear the word, tap or drag scrambled
+/// letters into the blanks in any order, undo with "Take one back," then
+/// check. On a day set to "Type from memory," there's no tile UI at all --
+/// just a text field.
 ///
 /// Behavior branches on `mode`: in Test mode, checking a word -- right or
 /// wrong -- flashes feedback and advances to the next one, with no retries,
@@ -38,14 +89,17 @@ struct PracticeView: View {
     let mode: PracticeMode
 
     @State private var currentIndex = 0
-    /// Per answer-slot: which letter-bank index is placed there, or nil if
-    /// empty. Indexed by slot position, not fill order, so a letter can be
-    /// dragged into any blank rather than only the next empty one in line.
-    @State private var slotContents: [Int?] = []
+    /// Per answer-slot state, indexed by slot position, not fill order, so
+    /// a letter can be dragged into any blank rather than only the next
+    /// empty one in line. Empty for the current word when its day's mode
+    /// is `.typed` -- there's nothing to render here then.
+    @State private var slotContents: [SlotState] = []
     /// Slot indices in the order they were filled (by tap or drag), so
     /// "Take one back" can undo the most recent placement regardless of
     /// which slot it landed in.
     @State private var fillOrder: [Int] = []
+    /// Only the letters still needed for this word's empty slots -- on a
+    /// scaffolded word, the already-given letters never enter the bank.
     @State private var bankOrder: [Character] = []
     /// Which slot a dragged letter is currently hovering over, for a
     /// highlight while dropping -- nil when nothing is being dragged onto
@@ -61,6 +115,12 @@ struct PracticeView: View {
     /// Each answer slot's frame in the shared "practiceArea" coordinate
     /// space, so a drag's release point can be tested against them.
     @State private var slotFrames: [Int: CGRect] = [:]
+    /// This word's challenge type, resolved fresh each time a new word is
+    /// set up -- on a `.halfAndHalf` day this is where that resolves to
+    /// either tiles or typed for this particular word.
+    @State private var currentWordMode: WordInputMode = .tilesFull
+    @State private var typedAnswer: String = ""
+    @FocusState private var isTypedFieldFocused: Bool
     @State private var feedback: Feedback?
     @State private var isAdvancing = false
     @State private var results: [WordResult] = []
@@ -79,10 +139,24 @@ struct PracticeView: View {
         currentIndex < words.count ? words[currentIndex] : nil
     }
 
-    private var usedBankIndices: Set<Int> { Set(slotContents.compactMap { $0 }) }
+    private var usedBankIndices: Set<Int> {
+        Set(slotContents.compactMap { slot in
+            if case .filled(let index) = slot { return index }
+            return nil
+        })
+    }
 
     private var currentAttemptString: String {
-        slotContents.compactMap { $0.map { String(bankOrder[$0]) } }.joined()
+        if currentWordMode == .typed {
+            return typedAnswer
+        }
+        return slotContents.map { slot -> String in
+            switch slot {
+            case .prefilled(let character): return String(character)
+            case .filled(let index): return index < bankOrder.count ? String(bankOrder[index]) : ""
+            case .empty: return ""
+            }
+        }.joined()
     }
 
     var body: some View {
@@ -93,8 +167,12 @@ struct PracticeView: View {
             Spacer()
             if let word = currentWord {
                 hearWordSection(word: word)
-                answerSlots(wordLength: word.text.count)
-                letterBank
+                if currentWordMode == .typed {
+                    typedAnswerField
+                } else {
+                    answerSlots(wordLength: word.text.count)
+                    letterBank
+                }
                 actionButtons
             } else if mode == .test {
                 PracticeResultsView(results: results) { dismiss() }
@@ -111,6 +189,12 @@ struct PracticeView: View {
         .navigationBarBackButtonHidden(true)
         .coordinateSpace(name: "practiceArea")
         .onPreferenceChange(SlotFramesKey.self) { slotFrames = $0 }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { isTypedFieldFocused = false }
+            }
+        }
         .onAppear { setUpWord() }
         .onChange(of: currentIndex) { _, _ in setUpWord() }
     }
@@ -166,28 +250,61 @@ struct PracticeView: View {
         }()
         return HStack(spacing: 10) {
             ForEach(0..<wordLength, id: \.self) { slotIndex in
-                let bankIndex = slotIndex < slotContents.count ? slotContents[slotIndex] : nil
-                let letter = bankIndex.map { String(bankOrder[$0]) } ?? ""
+                let slot: SlotState = slotIndex < slotContents.count ? slotContents[slotIndex] : .empty
                 let isTargeted = dragTargetSlot == slotIndex
-                Text(letter.uppercased())
-                    .font(Theme.display(28))
-                    .frame(width: 56, height: 64)
-                    .background(isTargeted ? Theme.purple.opacity(0.15) : Theme.surface)
-                    .overlay(
-                        Rectangle().stroke(isTargeted ? Theme.purple : borderColor, lineWidth: isTargeted ? 2 : (feedback == nil ? 1 : 2))
-                    )
-                    .background(
-                        GeometryReader { geo in
-                            Color.clear.preference(
-                                key: SlotFramesKey.self,
-                                value: [slotIndex: geo.frame(in: .named("practiceArea"))]
-                            )
-                        }
-                    )
-                    .onTapGesture { clearSlot(slotIndex) }
+
+                switch slot {
+                case .prefilled(let character):
+                    Text(String(character).uppercased())
+                        .font(Theme.display(28))
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 56, height: 64)
+                        .background(Theme.hairline.opacity(0.3))
+                        .overlay(Rectangle().stroke(Theme.hairline, lineWidth: 1))
+                default:
+                    let letter: String = {
+                        if case .filled(let index) = slot, index < bankOrder.count { return String(bankOrder[index]) }
+                        return ""
+                    }()
+                    Text(letter.uppercased())
+                        .font(Theme.display(28))
+                        .frame(width: 56, height: 64)
+                        .background(isTargeted ? Theme.purple.opacity(0.15) : Theme.surface)
+                        .overlay(
+                            Rectangle().stroke(isTargeted ? Theme.purple : borderColor, lineWidth: isTargeted ? 2 : (feedback == nil ? 1 : 2))
+                        )
+                        .background(
+                            GeometryReader { geo in
+                                Color.clear.preference(
+                                    key: SlotFramesKey.self,
+                                    value: [slotIndex: geo.frame(in: .named("practiceArea"))]
+                                )
+                            }
+                        )
+                        .onTapGesture { clearSlot(slotIndex) }
+                }
             }
         }
         .padding(.bottom, 20)
+    }
+
+    private var typedAnswerField: some View {
+        TextField("Type the word", text: $typedAnswer)
+            .font(Theme.display(28))
+            .multilineTextAlignment(.center)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .focused($isTypedFieldFocused)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+            .frame(maxWidth: 360)
+            .background(Theme.surface)
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.controlCornerRadius)
+                    .stroke(feedback == .incorrect ? Theme.coral : Theme.hairline, lineWidth: feedback == nil ? 1 : 2)
+            )
+            .onSubmit { checkWord() }
+            .padding(.bottom, 20)
     }
 
     private var letterBank: some View {
@@ -252,18 +369,20 @@ struct PracticeView: View {
 
     private func emptySlot(at location: CGPoint) -> Int? {
         slotFrames.first { slotIndex, frame in
-            frame.contains(location) && slotIndex < slotContents.count && slotContents[slotIndex] == nil
+            frame.contains(location) && slotIndex < slotContents.count && slotContents[slotIndex] == .empty
         }?.key
     }
 
     private var actionButtons: some View {
         HStack(spacing: 16) {
-            Button("Take one back") { takeOneBack() }
-                .font(Theme.body(16))
-                .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
+            if currentWordMode != .typed {
+                Button("Take one back") { takeOneBack() }
+                    .font(Theme.body(16))
+                    .foregroundStyle(Theme.textPrimary)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
+            }
 
             Button("Check my word") { checkWord() }
                 .font(Theme.body(16, weight: .medium))
@@ -292,42 +411,76 @@ struct PracticeView: View {
 
     private func setUpWord() {
         feedback = nil
+        typedAnswer = ""
         guard let word = currentWord else {
             slotContents = []
             fillOrder = []
+            bankOrder = []
             return
         }
-        bankOrder = Array(word.text.lowercased()).shuffled()
-        slotContents = Array(repeating: nil, count: word.text.count)
+
+        let dayMode = weekList.child?.inputMode(forWeekday: Calendar.current.component(.weekday, from: Date())) ?? .tilesFull
+        currentWordMode = dayMode.resolvedForWord
+        let letters = Array(word.text.lowercased())
+
+        switch currentWordMode {
+        case .typed:
+            bankOrder = []
+            slotContents = []
+
+        case .tilesScaffolded:
+            let prefilledCount = letters.count / 2
+            let prefilledPositions = Set(letters.indices.shuffled().prefix(prefilledCount))
+            var remainingLetters: [Character] = []
+            var slots: [SlotState] = []
+            for (position, character) in letters.enumerated() {
+                if prefilledPositions.contains(position) {
+                    slots.append(.prefilled(character))
+                } else {
+                    slots.append(.empty)
+                    remainingLetters.append(character)
+                }
+            }
+            bankOrder = remainingLetters.shuffled()
+            slotContents = slots
+
+        case .tilesFull, .halfAndHalf:
+            // .halfAndHalf never actually reaches here -- currentWordMode
+            // was already resolved above -- but the switch has to be
+            // exhaustive, and this is the right fallback behavior anyway.
+            bankOrder = letters.shuffled()
+            slotContents = Array(repeating: .empty, count: letters.count)
+        }
+
         fillOrder = []
     }
 
     private func place(bankIndex: Int, inSlot slotIndex: Int) {
         guard !isAdvancing,
               slotIndex < slotContents.count,
-              slotContents[slotIndex] == nil,
+              slotContents[slotIndex] == .empty,
               !usedBankIndices.contains(bankIndex)
         else { return }
-        slotContents[slotIndex] = bankIndex
+        slotContents[slotIndex] = .filled(bankIndex: bankIndex)
         fillOrder.append(slotIndex)
         feedback = nil
     }
 
     private func placeInFirstEmptySlot(bankIndex: Int) {
-        guard !isAdvancing, let firstEmpty = slotContents.firstIndex(where: { $0 == nil }) else { return }
+        guard !isAdvancing, let firstEmpty = slotContents.firstIndex(where: { $0 == .empty }) else { return }
         place(bankIndex: bankIndex, inSlot: firstEmpty)
     }
 
     private func clearSlot(_ slotIndex: Int) {
-        guard !isAdvancing, slotIndex < slotContents.count, slotContents[slotIndex] != nil else { return }
-        slotContents[slotIndex] = nil
+        guard !isAdvancing, slotIndex < slotContents.count, case .filled = slotContents[slotIndex] else { return }
+        slotContents[slotIndex] = .empty
         fillOrder.removeAll { $0 == slotIndex }
         feedback = nil
     }
 
     private func takeOneBack() {
         guard !isAdvancing, let lastSlot = fillOrder.popLast() else { return }
-        slotContents[lastSlot] = nil
+        slotContents[lastSlot] = .empty
         feedback = nil
     }
 
