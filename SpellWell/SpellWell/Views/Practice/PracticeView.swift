@@ -31,9 +31,19 @@ struct PracticeView: View {
     let mode: PracticeMode
 
     @State private var currentIndex = 0
-    @State private var placedLetters: [Character] = []
-    @State private var placedBankIndices: [Int] = []
+    /// Per answer-slot: which letter-bank index is placed there, or nil if
+    /// empty. Indexed by slot position, not fill order, so a letter can be
+    /// dragged into any blank rather than only the next empty one in line.
+    @State private var slotContents: [Int?] = []
+    /// Slot indices in the order they were filled (by tap or drag), so
+    /// "Take one back" can undo the most recent placement regardless of
+    /// which slot it landed in.
+    @State private var fillOrder: [Int] = []
     @State private var bankOrder: [Character] = []
+    /// Which slot a dragged letter is currently hovering over, for a
+    /// highlight while dropping -- nil when nothing is being dragged onto
+    /// a slot.
+    @State private var dragTargetSlot: Int?
     @State private var feedback: Feedback?
     @State private var isAdvancing = false
     @State private var results: [WordResult] = []
@@ -52,7 +62,11 @@ struct PracticeView: View {
         currentIndex < words.count ? words[currentIndex] : nil
     }
 
-    private var usedBankIndices: Set<Int> { Set(placedBankIndices) }
+    private var usedBankIndices: Set<Int> { Set(slotContents.compactMap { $0 }) }
+
+    private var currentAttemptString: String {
+        slotContents.compactMap { $0.map { String(bankOrder[$0]) } }.joined()
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -131,13 +145,28 @@ struct PracticeView: View {
             }
         }()
         return HStack(spacing: 10) {
-            ForEach(0..<wordLength, id: \.self) { index in
-                let letter = index < placedLetters.count ? String(placedLetters[index]) : ""
+            ForEach(0..<wordLength, id: \.self) { slotIndex in
+                let bankIndex = slotIndex < slotContents.count ? slotContents[slotIndex] : nil
+                let letter = bankIndex.map { String(bankOrder[$0]) } ?? ""
+                let isTargeted = dragTargetSlot == slotIndex
                 Text(letter.uppercased())
                     .font(Theme.display(28))
                     .frame(width: 56, height: 64)
-                    .background(Theme.surface)
-                    .overlay(Rectangle().stroke(borderColor, lineWidth: feedback == nil ? 1 : 2))
+                    .background(isTargeted ? Theme.purple.opacity(0.15) : Theme.surface)
+                    .overlay(
+                        Rectangle().stroke(isTargeted ? Theme.purple : borderColor, lineWidth: isTargeted ? 2 : (feedback == nil ? 1 : 2))
+                    )
+                    .onTapGesture { clearSlot(slotIndex) }
+                    .dropDestination(for: String.self) { items, _ in
+                        guard let raw = items.first,
+                              raw.hasPrefix("bank:"),
+                              let draggedIndex = Int(raw.dropFirst(5))
+                        else { return false }
+                        place(bankIndex: draggedIndex, inSlot: slotIndex)
+                        return true
+                    } isTargeted: { targeted in
+                        dragTargetSlot = targeted ? slotIndex : nil
+                    }
             }
         }
         .padding(.bottom, 20)
@@ -146,24 +175,39 @@ struct PracticeView: View {
     private var letterBank: some View {
         HStack(spacing: 10) {
             ForEach(Array(bankOrder.enumerated()), id: \.offset) { index, letter in
-                let used = usedBankIndices.contains(index)
-                Button {
-                    placeLetter(letter, bankIndex: index)
-                } label: {
-                    Text(String(letter).uppercased())
-                        .font(Theme.display(24))
-                        .frame(width: 56, height: 64)
-                        .background(Theme.surface)
-                        .overlay(
-                            Rectangle().stroke(used ? Theme.purple.opacity(0.25) : Theme.purple, lineWidth: used ? 1 : 2)
-                        )
-                        .opacity(used ? 0.4 : 1)
-                }
-                .disabled(used)
+                bankTile(index: index, letter: letter)
             }
         }
         .padding(.bottom, 32)
         .allowsHitTesting(!isAdvancing)
+    }
+
+    /// A letter tile can be tapped (fills the first empty slot) or dragged
+    /// (drops into whichever slot the child chooses) -- drag is only
+    /// attached to unused tiles, so an already-placed one can't be dragged
+    /// again from the bank.
+    private func bankTile(index: Int, letter: Character) -> some View {
+        let used = usedBankIndices.contains(index)
+        let tile = Text(String(letter).uppercased())
+            .font(Theme.display(24))
+            .frame(width: 56, height: 64)
+            .background(Theme.surface)
+            .overlay(
+                Rectangle().stroke(used ? Theme.purple.opacity(0.25) : Theme.purple, lineWidth: used ? 1 : 2)
+            )
+            .opacity(used ? 0.4 : 1)
+            .onTapGesture {
+                guard !used else { return }
+                placeInFirstEmptySlot(bankIndex: index)
+            }
+
+        return Group {
+            if used {
+                tile
+            } else {
+                tile.draggable("bank:\(index)")
+            }
+        }
     }
 
     private var actionButtons: some View {
@@ -201,30 +245,49 @@ struct PracticeView: View {
     }
 
     private func setUpWord() {
-        placedLetters = []
-        placedBankIndices = []
         feedback = nil
-        guard let word = currentWord else { return }
+        guard let word = currentWord else {
+            slotContents = []
+            fillOrder = []
+            return
+        }
         bankOrder = Array(word.text.lowercased()).shuffled()
+        slotContents = Array(repeating: nil, count: word.text.count)
+        fillOrder = []
     }
 
-    private func placeLetter(_ letter: Character, bankIndex: Int) {
-        guard !isAdvancing, let word = currentWord, placedLetters.count < word.text.count else { return }
-        placedLetters.append(letter)
-        placedBankIndices.append(bankIndex)
+    private func place(bankIndex: Int, inSlot slotIndex: Int) {
+        guard !isAdvancing,
+              slotIndex < slotContents.count,
+              slotContents[slotIndex] == nil,
+              !usedBankIndices.contains(bankIndex)
+        else { return }
+        slotContents[slotIndex] = bankIndex
+        fillOrder.append(slotIndex)
+        feedback = nil
+    }
+
+    private func placeInFirstEmptySlot(bankIndex: Int) {
+        guard !isAdvancing, let firstEmpty = slotContents.firstIndex(where: { $0 == nil }) else { return }
+        place(bankIndex: bankIndex, inSlot: firstEmpty)
+    }
+
+    private func clearSlot(_ slotIndex: Int) {
+        guard !isAdvancing, slotIndex < slotContents.count, slotContents[slotIndex] != nil else { return }
+        slotContents[slotIndex] = nil
+        fillOrder.removeAll { $0 == slotIndex }
         feedback = nil
     }
 
     private func takeOneBack() {
-        guard !isAdvancing, !placedLetters.isEmpty else { return }
-        placedLetters.removeLast()
-        placedBankIndices.removeLast()
+        guard !isAdvancing, let lastSlot = fillOrder.popLast() else { return }
+        slotContents[lastSlot] = nil
         feedback = nil
     }
 
     private func checkWord() {
         guard !isAdvancing, let word = currentWord else { return }
-        let attempt = String(placedLetters)
+        let attempt = currentAttemptString
         let isCorrect = attempt.lowercased() == word.text.lowercased()
 
         let record = PracticeAttempt(isCorrect: isCorrect, mode: mode.rawValue.lowercased())
@@ -243,9 +306,9 @@ struct PracticeView: View {
                 currentIndex += 1
             }
         case .practice:
-            // Wrong answers just leave the red flash showing -- placeLetter
-            // and takeOneBack clear it as soon as the child edits again, so
-            // they can keep retrying the same word.
+            // Wrong answers just leave the red flash showing -- placing or
+            // clearing a letter clears it as soon as the child edits again,
+            // so they can keep retrying the same word.
             if isCorrect {
                 currentIndex += 1
             }

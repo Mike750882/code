@@ -58,8 +58,9 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   for anyone who dismissed it early or wants a refresher.
 - **Practice / Test modes** (`PracticeMode` in
   `Views/Practice/PracticeView.swift`) — the letter-tile flow (tap to hear
-  the word, tap scrambled letters into blanks, undo a placement, check) is
-  shared, but checking a word behaves differently per mode:
+  the word, **tap or drag** scrambled letters into blanks, undo a
+  placement, check) is shared, but checking a word behaves differently per
+  mode:
   - **Practice** — a wrong answer just flashes red; the child can keep
     editing and rechecking the same word until they get it. No grading at
     the end, just the original "All done for today!" screen.
@@ -67,6 +68,16 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     advances to the next one; there's no retrying a word once checked.
     Ends on `PracticeResultsView.swift`: a letter grade and percentage,
     then every word with a green check or red x for right vs. wrong.
+
+  Letter placement is slot-indexed (`slotContents: [Int?]`, one entry per
+  blank), not append-order, so a tile can land in *any* blank, not just
+  the next one in line: tapping an unused bank tile fills the first empty
+  slot, and `.draggable`/`.dropDestination` (iOS 16+) let a tile be
+  dragged straight into a specific blank instead, with a purple highlight
+  on whichever slot is under the drag. Tapping a filled slot clears just
+  that letter; "Take one back" undoes whichever slot was filled most
+  recently (`fillOrder`, a stack of slot indices), regardless of tap vs.
+  drag or which slot it was.
 
   Every check in either mode is recorded as a `PracticeAttempt`, tagged
   with `mode: "practice"` or `"test"` so the two can be told apart later.
