@@ -240,6 +240,22 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   now explicitly add `.frame(maxWidth: .infinity, maxHeight: .infinity)`
   before their `.background(...)`, so the background always fills the full
   screen regardless of how little content is on it.
+- **Fixed: Settings and Progress Report titles pushed off-screen** — the
+  fix above didn't specify an `alignment` on that `.frame(...)`, and
+  SwiftUI's default is `.center`. For a bare, top-anchored `VStack`
+  (header first, then rows, with a trailing `Spacer()` to soak up leftover
+  space) that centering happens *after* the VStack has already been sized
+  to its padded content height, so the whole block — including the header
+  — got shoved down toward the middle of the screen instead of staying
+  pinned to the top. Only Settings and Progress Report use that exact
+  bare-VStack-with-trailing-Spacer shape, so those were the only two
+  affected; the other five screens are unaffected either because they're
+  `ScrollView`-based (which always claims full height as its own ideal
+  size, so it never gets "shrunk then centered") or because they were
+  already meant to be centered (Edit Name, and Practice's empty/complete
+  states use a `Spacer()` on both ends). Fixed by adding
+  `alignment: .topLeading` to Settings' and Progress Report's `.frame(...)`
+  calls.
 
 ## What's stubbed / left for you to finish
 
