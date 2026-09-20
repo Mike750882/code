@@ -38,6 +38,12 @@ struct TourView: View {
             body: "Settings is where a grown-up can change the PIN, pick which voice reads the words, view the weekly progress report, and sync data between family devices."
         ),
         TourPage(
+            icon: "person.2.fill",
+            color: Theme.purple,
+            title: "More than one student",
+            body: "Have more than one kid using this iPad? From Settings, tap \"Manage\" under Student profiles to add another student or switch between them. Each student gets their own spelling list, grades, and rewards."
+        ),
+        TourPage(
             icon: "checkmark.seal.fill",
             color: Theme.green,
             title: "Practice or Test",
