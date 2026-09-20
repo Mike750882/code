@@ -26,7 +26,7 @@ struct ColorProfile: Identifiable, Equatable {
     /// Correct-answer accent for the practice results screen.
     let green: UInt32
 
-    static let all: [ColorProfile] = [.default, .happy]
+    static let all: [ColorProfile] = [.default, .happy, .circus]
 
     static func profile(id: String) -> ColorProfile {
         all.first(where: { $0.id == id }) ?? .default
@@ -67,6 +67,26 @@ struct ColorProfile: Identifiable, Equatable {
         gold: 0xFFD903,
         goldFillLight: 0xFBF6E3, goldFillDark: 0x332B12,
         green: 0x28BA1D
+    )
+
+    /// Two purples were supplied and no blue/gold -- indigo filled the
+    /// "blue" role as the coolest color in the set, magenta filled
+    /// "purple," and orange filled "gold." No background was supplied
+    /// either, so this reuses Default's neutral background/surface/text.
+    static let circus = ColorProfile(
+        id: "circus",
+        name: "Circus",
+        backgroundLight: 0xF1EFEE, backgroundDark: 0x1C1B19,
+        surfaceLight: 0xFDFDFC, surfaceDark: 0x2A2825,
+        hairlineLight: 0xE2E0DB, hairlineDark: 0x3A3833,
+        textPrimaryLight: 0x2A2925, textPrimaryDark: 0xF1EFEA,
+        textSecondaryLight: 0x6E6C66, textSecondaryDark: 0xA8A49C,
+        coral: 0xE61000,
+        blue: 0x6C00E6,
+        purple: 0xC948E6,
+        gold: 0xE65B00,
+        goldFillLight: 0xFBF6E3, goldFillDark: 0x332B12,
+        green: 0x00E606
     )
 }
 
