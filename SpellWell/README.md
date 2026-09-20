@@ -196,6 +196,17 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   content. Practice also sets `.navigationBarBackButtonHidden(true)`
   since it already has its own "< Home" control — otherwise the app
   would show two back buttons stacked there.
+- **Background no longer shrinks to fit sparse content** — a bare
+  `VStack`/`ScrollView` sizes itself to its content's own width unless
+  something forces it wider, so a screen with little horizontal content
+  (most visibly Practice's "All done for today!" and Test-results screens,
+  which have almost none) only got a background painted behind that
+  narrow column, leaving the rest of the screen showing the system's
+  default white instead of `Theme.background`. All seven top-level screens
+  (Home, Add List, Rewards, Settings, Progress Report, Edit Name, Practice)
+  now explicitly add `.frame(maxWidth: .infinity, maxHeight: .infinity)`
+  before their `.background(...)`, so the background always fills the full
+  screen regardless of how little content is on it.
 
 ## What's stubbed / left for you to finish
 

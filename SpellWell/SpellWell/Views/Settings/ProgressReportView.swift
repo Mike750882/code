@@ -33,6 +33,7 @@ struct ProgressReportView: View {
             Spacer()
         }
         .padding(28)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)

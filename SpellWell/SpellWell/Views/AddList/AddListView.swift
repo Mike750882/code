@@ -37,7 +37,9 @@ struct AddListView: View {
                 footer
             }
             .padding(28)
+            .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.background.ignoresSafeArea())
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle("")

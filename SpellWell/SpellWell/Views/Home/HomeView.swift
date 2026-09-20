@@ -40,7 +40,9 @@ struct HomeView: View {
                 dailyGradeCards
             }
             .padding(24)
+            .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.background)
         .sheet(isPresented: $showTour) {
             TourView()
