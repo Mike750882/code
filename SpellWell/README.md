@@ -302,6 +302,18 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   states use a `Spacer()` on both ends). Fixed by adding
   `alignment: .topLeading` to Settings' and Progress Report's `.frame(...)`
   calls.
+- **Fixed: Settings unreachable rows** — Settings grew past one screen's
+  worth of content (color themes, then the four-row practice schedule)
+  while still being a bare `VStack`, not a `ScrollView`, so anything that
+  didn't fit was simply drawn off the bottom of the screen with no way to
+  reach it -- including "Student profiles" once there was enough above it
+  to push it past the fold on some devices/text sizes. Converted to the
+  same `ScrollView`-wrapped-`VStack` shape every other long screen already
+  uses (Profiles, Home, Add List, Rewards), which also means the
+  `alignment: .topLeading` workaround from the fix above is no longer
+  needed here -- a `ScrollView` never gets "shrunk to content" and
+  centered the way a bare `VStack` does, so it was never actually a fix
+  for the *layout*, just a workaround for that one bug.
 
 ## What's stubbed / left for you to finish
 

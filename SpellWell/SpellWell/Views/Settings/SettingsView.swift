@@ -19,38 +19,40 @@ struct SettingsView: View {
     @State private var showTour = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header
-            Divider().overlay(Theme.hairline)
-            profilesRow
-            Divider().overlay(Theme.hairline)
-            tourRow
-            Divider().overlay(Theme.hairline)
-            textSizeRow
-            Divider().overlay(Theme.hairline)
-            voiceRow
-            Divider().overlay(Theme.hairline)
-            appearanceRow
-            Divider().overlay(Theme.hairline)
-            colorProfileRow
-            Divider().overlay(Theme.hairline)
-            practiceScheduleRow
-            Divider().overlay(Theme.hairline)
-            pinRow
-            Divider().overlay(Theme.hairline)
-            syncRow
-            Divider().overlay(Theme.hairline)
-            progressRow
-            #if DEBUG
-            Divider().overlay(Theme.hairline)
-            debugSampleDataRow
-            Divider().overlay(Theme.hairline)
-            debugResetTourRow
-            #endif
-            Spacer()
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                header
+                Divider().overlay(Theme.hairline)
+                profilesRow
+                Divider().overlay(Theme.hairline)
+                tourRow
+                Divider().overlay(Theme.hairline)
+                textSizeRow
+                Divider().overlay(Theme.hairline)
+                voiceRow
+                Divider().overlay(Theme.hairline)
+                appearanceRow
+                Divider().overlay(Theme.hairline)
+                colorProfileRow
+                Divider().overlay(Theme.hairline)
+                practiceScheduleRow
+                Divider().overlay(Theme.hairline)
+                pinRow
+                Divider().overlay(Theme.hairline)
+                syncRow
+                Divider().overlay(Theme.hairline)
+                progressRow
+                #if DEBUG
+                Divider().overlay(Theme.hairline)
+                debugSampleDataRow
+                Divider().overlay(Theme.hairline)
+                debugResetTourRow
+                #endif
+            }
+            .padding(28)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(28)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
