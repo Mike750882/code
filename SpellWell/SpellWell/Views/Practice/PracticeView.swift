@@ -1,5 +1,12 @@
 import SwiftUI
 
+private struct SlotFramesKey: PreferenceKey {
+    static var defaultValue: [Int: CGRect] = [:]
+    static func reduce(value: inout [Int: CGRect], nextValue: () -> [Int: CGRect]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, new in new })
+    }
+}
+
 enum PracticeMode: String, CaseIterable, Identifiable, Hashable {
     case practice = "Practice"
     case test = "Test"
@@ -44,6 +51,16 @@ struct PracticeView: View {
     /// highlight while dropping -- nil when nothing is being dragged onto
     /// a slot.
     @State private var dragTargetSlot: Int?
+    /// Which bank tile is actively being dragged, and by how much, so it
+    /// can be drawn following the finger. A plain DragGesture (rather than
+    /// the system .draggable/.dropDestination pair) starts moving the tile
+    /// the instant a finger slides, with no "hold to lift" delay first --
+    /// a tap is just a drag that ends with almost no movement.
+    @State private var draggingBankIndex: Int?
+    @State private var dragTranslation: CGSize = .zero
+    /// Each answer slot's frame in the shared "practiceArea" coordinate
+    /// space, so a drag's release point can be tested against them.
+    @State private var slotFrames: [Int: CGRect] = [:]
     @State private var feedback: Feedback?
     @State private var isAdvancing = false
     @State private var results: [WordResult] = []
@@ -92,6 +109,8 @@ struct PracticeView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .coordinateSpace(name: "practiceArea")
+        .onPreferenceChange(SlotFramesKey.self) { slotFrames = $0 }
         .onAppear { setUpWord() }
         .onChange(of: currentIndex) { _, _ in setUpWord() }
     }
@@ -157,17 +176,15 @@ struct PracticeView: View {
                     .overlay(
                         Rectangle().stroke(isTargeted ? Theme.purple : borderColor, lineWidth: isTargeted ? 2 : (feedback == nil ? 1 : 2))
                     )
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear.preference(
+                                key: SlotFramesKey.self,
+                                value: [slotIndex: geo.frame(in: .named("practiceArea"))]
+                            )
+                        }
+                    )
                     .onTapGesture { clearSlot(slotIndex) }
-                    .dropDestination(for: String.self) { items, _ in
-                        guard let raw = items.first,
-                              raw.hasPrefix("bank:"),
-                              let draggedIndex = Int(raw.dropFirst(5))
-                        else { return false }
-                        place(bankIndex: draggedIndex, inSlot: slotIndex)
-                        return true
-                    } isTargeted: { targeted in
-                        dragTargetSlot = targeted ? slotIndex : nil
-                    }
             }
         }
         .padding(.bottom, 20)
@@ -183,12 +200,15 @@ struct PracticeView: View {
         .allowsHitTesting(!isAdvancing)
     }
 
-    /// A letter tile can be tapped (fills the first empty slot) or dragged
-    /// (drops into whichever slot the child chooses) -- drag is only
-    /// attached to unused tiles, so an already-placed one can't be dragged
-    /// again from the bank.
+    /// A letter tile slides with the finger the instant it moves -- no
+    /// hold-to-lift delay like the system drag-and-drop APIs require -- and
+    /// drops into whichever empty slot it's released over. A tap (a "drag"
+    /// that ends with barely any movement) still fills the first empty
+    /// slot. Only attached to unused tiles, so an already-placed one can't
+    /// be picked up again from the bank.
     private func bankTile(index: Int, letter: Character) -> some View {
         let used = usedBankIndices.contains(index)
+        let isDragging = draggingBankIndex == index
         let tile = Text(String(letter).uppercased())
             .font(Theme.display(24))
             .frame(width: 56, height: 64)
@@ -197,18 +217,43 @@ struct PracticeView: View {
                 Rectangle().stroke(used ? Theme.purple.opacity(0.25) : Theme.purple, lineWidth: used ? 1 : 2)
             )
             .opacity(used ? 0.4 : 1)
-            .onTapGesture {
-                guard !used else { return }
-                placeInFirstEmptySlot(bankIndex: index)
-            }
+            .scaleEffect(isDragging ? 1.08 : 1)
+            .shadow(color: isDragging ? Color.black.opacity(0.2) : .clear, radius: isDragging ? 6 : 0, y: isDragging ? 3 : 0)
+            .offset(isDragging ? dragTranslation : .zero)
+            .zIndex(isDragging ? 1 : 0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDragging)
 
         return Group {
             if used {
                 tile
             } else {
-                tile.draggable("bank:\(index)")
+                tile.gesture(
+                    DragGesture(minimumDistance: 0, coordinateSpace: .named("practiceArea"))
+                        .onChanged { value in
+                            draggingBankIndex = index
+                            dragTranslation = value.translation
+                            dragTargetSlot = emptySlot(at: value.location)
+                        }
+                        .onEnded { value in
+                            let distance = hypot(value.translation.width, value.translation.height)
+                            if distance < 8 {
+                                placeInFirstEmptySlot(bankIndex: index)
+                            } else if let target = emptySlot(at: value.location) {
+                                place(bankIndex: index, inSlot: target)
+                            }
+                            draggingBankIndex = nil
+                            dragTranslation = .zero
+                            dragTargetSlot = nil
+                        }
+                )
             }
         }
+    }
+
+    private func emptySlot(at location: CGPoint) -> Int? {
+        slotFrames.first { slotIndex, frame in
+            frame.contains(location) && slotIndex < slotContents.count && slotContents[slotIndex] == nil
+        }?.key
     }
 
     private var actionButtons: some View {

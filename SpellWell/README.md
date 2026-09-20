@@ -98,10 +98,17 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   Letter placement is slot-indexed (`slotContents: [Int?]`, one entry per
   blank), not append-order, so a tile can land in *any* blank, not just
   the next one in line: tapping an unused bank tile fills the first empty
-  slot, and `.draggable`/`.dropDestination` (iOS 16+) let a tile be
-  dragged straight into a specific blank instead, with a purple highlight
-  on whichever slot is under the drag. Tapping a filled slot clears just
-  that letter; "Take one back" undoes whichever slot was filled most
+  slot, and a tile can also be dragged straight into a specific blank
+  instead, with a purple highlight on whichever slot is under the drag.
+  Dragging is a plain `DragGesture(minimumDistance: 0)` tracked by hand
+  (each slot publishes its frame via a `PreferenceKey`, checked against
+  the finger's location) rather than the system `.draggable`/
+  `.dropDestination` pair -- those need a brief "hold to lift" press
+  before a drag is recognized, which felt sticky for kids just trying to
+  slide a tile over. With `minimumDistance: 0` the tile starts moving the
+  instant a finger slides, and a tap is handled as the same gesture, just
+  one that ends with barely any movement. Tapping a filled slot clears
+  just that letter; "Take one back" undoes whichever slot was filled most
   recently (`fillOrder`, a stack of slot indices), regardless of tap vs.
   drag or which slot it was.
 
