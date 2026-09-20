@@ -26,7 +26,7 @@ struct ColorProfile: Identifiable, Equatable {
     /// Correct-answer accent for the practice results screen.
     let green: UInt32
 
-    static let all: [ColorProfile] = [.default, .happy, .circus]
+    static let all: [ColorProfile] = [.default, .happy, .circus, .focus]
 
     static func profile(id: String) -> ColorProfile {
         all.first(where: { $0.id == id }) ?? .default
@@ -87,6 +87,29 @@ struct ColorProfile: Identifiable, Equatable {
         gold: 0xE65B00,
         goldFillLight: 0xFBF6E3, goldFillDark: 0x332B12,
         green: 0x00E606
+    )
+
+    /// A muted, low-distraction palette: near-white/near-black/gray for
+    /// the neutral tokens (unlike Happy and Circus, this one did supply
+    /// its own background, so it doesn't reuse Default's), with the two
+    /// deep reds standing in for every accent color instead of five
+    /// distinct hues. The brighter red covers coral and purple -- the two
+    /// most visually prominent roles (primary buttons, the letter-tile
+    /// game) -- and the muted maroon covers blue, gold, and green.
+    static let focus = ColorProfile(
+        id: "focus",
+        name: "Focus",
+        backgroundLight: 0xF2F2F2, backgroundDark: 0x0D0D0D,
+        surfaceLight: 0xF2F2F2, surfaceDark: 0x0D0D0D,
+        hairlineLight: 0x8C8C8C, hairlineDark: 0x8C8C8C,
+        textPrimaryLight: 0x0D0D0D, textPrimaryDark: 0xF2F2F2,
+        textSecondaryLight: 0x8C8C8C, textSecondaryDark: 0x8C8C8C,
+        coral: 0x73030D,
+        blue: 0x732F3B,
+        purple: 0x73030D,
+        gold: 0x732F3B,
+        goldFillLight: 0xFBF6E3, goldFillDark: 0x332B12,
+        green: 0x732F3B
     )
 }
 
