@@ -10,7 +10,7 @@ import UIKit
 /// wash) are adaptive so they respond to the appearance chosen in Settings;
 /// the saturated accents read fine unchanged in both modes.
 enum Theme {
-    static let background = Color.adaptive(light: 0xF1F0EE, dark: 0x1C1B19)
+    static let background = Color.adaptive(light: 0xF1EFEE, dark: 0x1C1B19)
     static let surface = Color.adaptive(light: 0xFDFDFC, dark: 0x2A2825)
     static let hairline = Color.adaptive(light: 0xE2E0DB, dark: 0x3A3833)
     static let textPrimary = Color.adaptive(light: 0x2A2925, dark: 0xF1EFEA)
