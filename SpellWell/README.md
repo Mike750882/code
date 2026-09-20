@@ -126,8 +126,14 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   cutoffs), used by both the results screen and the daily grade cards so
   the same score never shows as two different grades in two places.
 - **Grown-ups PIN gate** — 4-digit PIN pad matching the mockup, backed by
-  Keychain (`kSecAttrSynchronizable`, so it follows the parent's iCloud
-  Keychain across their own devices, not the child's data).
+  Keychain, local to this device (not iCloud-synced -- each iPad has its
+  own PIN, the same way each iPad keeps its own active student profile).
+  It used to be synced via iCloud Keychain, but the very first PIN check
+  after a fresh install or device restart had to make a synchronous
+  round-trip to iCloud before it could answer, which could freeze the app
+  for a long time since the check runs right on the main thread from a
+  button tap. Not worth it for a PIN that's really just meant to keep a
+  kid out of one shared iPad's grown-up screens.
 - **Add spelling list** — word-count stepper, numbered word grid, "Save
   list" writes the words and returns to Home. **"Import a list"** takes or
   picks a photo of a printed or handwritten word list and reads it with
