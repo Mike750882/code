@@ -253,7 +253,15 @@ struct PracticeView: View {
             case nil: return Theme.hairline
             }
         }()
-        return HStack(spacing: 10) {
+        // A LazyVGrid rather than a plain HStack -- a long word's tiles
+        // (one 56pt-wide slot per letter, all in a row) can easily add up
+        // to more than an iPhone's screen width, where an HStack would
+        // just run off the edge. The grid wraps to as many rows as it
+        // needs instead, keeping every slot the same fixed size (the
+        // matching min/max on the column) rather than stretching to fill
+        // whatever width is available.
+        let tileColumn = [GridItem(.adaptive(minimum: 56, maximum: 56), spacing: 10)]
+        return LazyVGrid(columns: tileColumn, spacing: 10) {
             ForEach(0..<wordLength, id: \.self) { slotIndex in
                 let slot: SlotState = slotIndex < slotContents.count ? slotContents[slotIndex] : .empty
                 let isTargeted = dragTargetSlot == slotIndex
@@ -313,7 +321,10 @@ struct PracticeView: View {
     }
 
     private var letterBank: some View {
-        HStack(spacing: 10) {
+        // Same reasoning as answerSlots -- wraps to more rows instead of
+        // running off a narrow screen's edge for a long word.
+        let tileColumn = [GridItem(.adaptive(minimum: 56, maximum: 56), spacing: 10)]
+        return LazyVGrid(columns: tileColumn, spacing: 10) {
             ForEach(Array(bankOrder.enumerated()), id: \.offset) { index, letter in
                 bankTile(index: index, letter: letter)
             }

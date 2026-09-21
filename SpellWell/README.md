@@ -346,6 +346,46 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   needed here -- a `ScrollView` never gets "shrunk to content" and
   centered the way a bare `VStack` does, so it was never actually a fix
   for the *layout*, just a workaround for that one bug.
+- **iPhone-adaptive layouts** — this app was designed from iPad mockups,
+  and several screens used layouts that assumed iPad-width space: fixed
+  220pt (or wider) label columns next to a control in Settings, three or
+  four cards side by side on Home, a full row of label + text field +
+  slider + percent in Rewards, and (worst of all) fixed-size letter tiles
+  in a plain `HStack` in Practice, which for a longer word could genuinely
+  run off the edge of an iPhone screen rather than just look cramped.
+  Fixed via `@Environment(\.horizontalSizeClass)` (`.compact` on iPhone
+  portrait and most iPhone landscape, `.regular` on iPad in both
+  orientations) throughout:
+  - **Settings** — every row now goes through a shared `SettingsRow`
+    wrapper: label beside a fixed-width control on regular width, label
+    stacked above a full-width control on compact. The color theme
+    swatches sit in a horizontal `ScrollView` rather than assuming they
+    all fit in one row.
+  - **Home** — the greeting/tour-banner/streak-pill header stacks
+    vertically on compact instead of squeezing into one row; the practice
+    card's very large iPad-sized fonts (a 60pt title down to 32pt) and
+    padding scale down; the three secondary cards and four daily grade
+    cards switched from fixed-count `HStack`s to `LazyVGrid(columns:
+    [GridItem(.adaptive(minimum:))])`, which wraps to fewer columns
+    automatically based on whatever width is actually available, iPhone
+    or iPad, without needing a compact/regular branch at all.
+  - **Practice** — `answerSlots` and `letterBank` also switched from
+    `HStack` to an adaptive `LazyVGrid` (min/max both set to the tile's
+    56pt width, so tiles wrap to more rows at a fixed size rather than
+    stretching or overflowing) -- this was the one functionally broken
+    case, not just a cosmetic one, since a long enough word's tiles could
+    exceed an iPhone's screen width entirely with no way to reach the
+    rest of them.
+  - **Add List** — the header (title + word-count stepper) and footer
+    (caption + Import/Save buttons) stack on compact instead of forcing
+    one wide row; the word grid's column width shrinks from 200pt to
+    140pt minimum on compact so more of them fit per row.
+  - **Rewards** — the biggest offender: each daily row's fixed 160pt
+    label + 180pt slider + 70pt percent text (all beside a text field)
+    added up to far more than an iPhone's width. On compact, the label
+    and percent share a row, then the text field and slider each get
+    their own full-width row below. The weekly prize card and footer
+    stack similarly.
 
 ## What's stubbed / left for you to finish
 

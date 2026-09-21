@@ -1,9 +1,17 @@
 import SwiftUI
 
 struct HomeView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     let child: Child
     var onOpenGated: (ContentView.GatedDestination) -> Void
     var onStartPractice: (WeekList, PracticeMode) -> Void
+
+    /// iPhone portrait (and most iPhone landscape) is "compact"; iPad is
+    /// "regular" in both orientations. Several layouts below were built
+    /// for the iPad mockups' width and need to reflow -- stacking instead
+    /// of sitting side by side, smaller text, cards that wrap to fewer
+    /// columns -- to still look right on a much narrower phone screen.
+    private var isCompact: Bool { horizontalSizeClass == .compact }
 
     @State private var showNoWordsAlert = false
     @State private var mode: PracticeMode = .practice
@@ -58,55 +66,76 @@ struct HomeView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 10) {
-                    Text("Hello, \(child.name)")
-                        .font(Theme.display(32))
-                        .foregroundStyle(Theme.textPrimary)
-                    Button {
-                        onOpenGated(.editName)
-                    } label: {
-                        Image(systemName: "pencil.circle")
-                            .font(.title3)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
+        Group {
+            if isCompact {
+                VStack(alignment: .leading, spacing: 16) {
+                    greeting
+                    if showTourBanner { tourBanner }
+                    streakAndWordListPills
                 }
-                if let list = thisWeekList {
-                    Text("Week of \(list.weekOf.formatted(.dateTime.month(.wide).day())) · \(thisWeekWords.count) words")
-                        .font(Theme.body(15))
+            } else {
+                HStack(alignment: .top) {
+                    greeting
+                    Spacer()
+                    if showTourBanner {
+                        tourBanner
+                        Spacer()
+                    }
+                    streakAndWordListPills
+                }
+            }
+        }
+    }
+
+    private var greeting: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 10) {
+                Text("Hello, \(child.name)")
+                    .font(Theme.display(isCompact ? 26 : 32))
+                    .foregroundStyle(Theme.textPrimary)
+                Button {
+                    onOpenGated(.editName)
+                } label: {
+                    Image(systemName: "pencil.circle")
+                        .font(.title3)
                         .foregroundStyle(Theme.textSecondary)
                 }
             }
-            Spacer()
-            if showTourBanner {
-                tourBanner
-                Spacer()
+            if let list = thisWeekList {
+                Text("Week of \(list.weekOf.formatted(.dateTime.month(.wide).day())) · \(thisWeekWords.count) words")
+                    .font(Theme.body(15))
+                    .foregroundStyle(Theme.textSecondary)
             }
-            VStack(spacing: 8) {
+        }
+    }
+
+    /// Always stacked vertically, even in compact mode -- two pills side
+    /// by side would be tight on the narrowest iPhone widths, and there's
+    /// no shortage of vertical room to stack them in instead.
+    private var streakAndWordListPills: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "star").foregroundStyle(Theme.blue)
+                Text("\(child.currentStreak)-day streak")
+                    .font(Theme.body(15, weight: .medium))
+                    .foregroundStyle(Theme.blue)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .overlay(Capsule().stroke(Theme.blue, lineWidth: 1))
+
+            Button {
+                showWordList = true
+            } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "star").foregroundStyle(Theme.blue)
-                    Text("\(child.currentStreak)-day streak")
+                    Image(systemName: "list.bullet").foregroundStyle(Theme.purple)
+                    Text("This week's words")
                         .font(Theme.body(15, weight: .medium))
-                        .foregroundStyle(Theme.blue)
+                        .foregroundStyle(Theme.purple)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
-                .overlay(Capsule().stroke(Theme.blue, lineWidth: 1))
-
-                Button {
-                    showWordList = true
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "list.bullet").foregroundStyle(Theme.purple)
-                        Text("This week's words")
-                            .font(Theme.body(15, weight: .medium))
-                            .foregroundStyle(Theme.purple)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .overlay(Capsule().stroke(Theme.purple, lineWidth: 1))
-                }
+                .overlay(Capsule().stroke(Theme.purple, lineWidth: 1))
             }
         }
     }
@@ -153,20 +182,31 @@ struct HomeView: View {
     }
 
     private var modeToggle: some View {
-        HStack(spacing: 14) {
-            Picker("Mode", selection: $mode) {
-                ForEach(PracticeMode.allCases) { option in
-                    Text(option.rawValue).tag(option)
+        let picker = Picker("Mode", selection: $mode) {
+            ForEach(PracticeMode.allCases) { option in
+                Text(option.rawValue).tag(option)
+            }
+        }
+        .pickerStyle(.segmented)
+        .frame(width: 240)
+
+        let description = Text(mode.description)
+            .font(Theme.body(14))
+            .foregroundStyle(Theme.textSecondary)
+
+        return Group {
+            if isCompact {
+                VStack(alignment: .leading, spacing: 8) {
+                    picker
+                    description
+                }
+            } else {
+                HStack(spacing: 14) {
+                    picker
+                    description
+                    Spacer()
                 }
             }
-            .pickerStyle(.segmented)
-            .frame(width: 240)
-
-            Text(mode.description)
-                .font(Theme.body(14))
-                .foregroundStyle(Theme.textSecondary)
-
-            Spacer()
         }
     }
 
@@ -178,24 +218,24 @@ struct HomeView: View {
                 showNoWordsAlert = true
             }
         } label: {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: isCompact ? 16 : 24) {
                 HStack {
                     Image(systemName: "square.and.pencil")
-                        .font(.system(size: 33))
+                        .font(.system(size: isCompact ? 24 : 33))
                         .foregroundStyle(Theme.coral)
                     Spacer()
                     Text("\(todayCompletedCount) of \(thisWeekWords.count) today")
-                        .font(Theme.body(22))
+                        .font(Theme.body(isCompact ? 15 : 22))
                         .foregroundStyle(Theme.textSecondary)
                 }
                 Text(mode == .test ? "Take spelling test" : "Practice spelling list")
-                    .font(Theme.display(60))
+                    .font(Theme.display(isCompact ? 32 : 60))
                     .foregroundStyle(Theme.textPrimary)
                 Text(todaysWordInputMode.homeCardSubtitle)
-                    .font(Theme.body(26))
+                    .font(Theme.body(isCompact ? 15 : 26))
                     .foregroundStyle(Theme.textSecondary)
             }
-            .padding(42)
+            .padding(isCompact ? 24 : 42)
             .frame(maxWidth: .infinity, alignment: .leading)
             .card(borderColor: Theme.coral, lineWidth: 1.5)
         }
@@ -207,8 +247,12 @@ struct HomeView: View {
         }
     }
 
+    /// Adaptive rather than a fixed 3-wide HStack -- naturally wraps to
+    /// fewer columns (down to one) on a narrow phone screen instead of
+    /// squeezing all three cards into a width they were never designed
+    /// to fit in.
     private var secondaryCards: some View {
-        HStack(spacing: 16) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 16)], spacing: 16) {
             SecondaryCard(
                 icon: "line.3.horizontal",
                 badge: "Grown-ups",
@@ -266,8 +310,10 @@ struct HomeView: View {
         (2, "Monday"), (3, "Tuesday"), (4, "Wednesday"), (5, "Thursday")
     ]
 
+    /// Same adaptive treatment as `secondaryCards` -- four cards wrap down
+    /// to two, or one, per row instead of overflowing a narrow screen.
     private var dailyGradeCards: some View {
-        HStack(spacing: 16) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 16)], spacing: 16) {
             ForEach(Self.weekdayLabels, id: \.weekday) { entry in
                 DayGradeCard(label: entry.label, percent: testPercent(onWeekday: entry.weekday))
             }

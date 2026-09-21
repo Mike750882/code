@@ -6,7 +6,10 @@ import UIKit
 struct AddListView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     let child: Child
+
+    private var isCompact: Bool { horizontalSizeClass == .compact }
 
     @State private var wordCount: Int = 12
     @State private var wordFields: [String] = Array(repeating: "", count: 12)
@@ -99,31 +102,47 @@ struct AddListView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("This week's spelling list")
-                    .font(Theme.display(30))
-                    .foregroundStyle(Theme.textPrimary)
-                Text("\(child.name) · week of \(Date().formatted(.dateTime.month(.wide).day()))")
-                    .font(Theme.body(14))
-                    .foregroundStyle(Theme.textSecondary)
+        let title = VStack(alignment: .leading, spacing: 4) {
+            Text("This week's spelling list")
+                .font(Theme.display(30))
+                .foregroundStyle(Theme.textPrimary)
+            Text("\(child.name) · week of \(Date().formatted(.dateTime.month(.wide).day()))")
+                .font(Theme.body(14))
+                .foregroundStyle(Theme.textSecondary)
+        }
+
+        let stepper = HStack(spacing: 12) {
+            Text("How many words?")
+                .font(Theme.body(14))
+                .foregroundStyle(Theme.textSecondary)
+            Stepper(value: $wordCount, in: 5...30) {
+                Text("\(wordCount)").font(Theme.display(18)).frame(minWidth: 32)
             }
-            Spacer()
-            HStack(spacing: 12) {
-                Text("How many words?")
-                    .font(Theme.body(14))
-                    .foregroundStyle(Theme.textSecondary)
-                Stepper(value: $wordCount, in: 5...30) {
-                    Text("\(wordCount)").font(Theme.display(18)).frame(minWidth: 32)
+            .fixedSize()
+            .onChange(of: wordCount) { _, newValue in resizeFields(to: newValue) }
+        }
+
+        return Group {
+            if isCompact {
+                VStack(alignment: .leading, spacing: 12) {
+                    title
+                    stepper
                 }
-                .fixedSize()
-                .onChange(of: wordCount) { _, newValue in resizeFields(to: newValue) }
+            } else {
+                HStack(alignment: .firstTextBaseline) {
+                    title
+                    Spacer()
+                    stepper
+                }
             }
         }
     }
 
     private var wordGrid: some View {
-        let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
+        // .adaptive rather than a fixed 3 columns -- narrower on an
+        // iPhone, where 3 columns of number + text field would otherwise
+        // be squeezed uncomfortably tight.
+        let columns = [GridItem(.adaptive(minimum: isCompact ? 140 : 200), spacing: 16)]
         return LazyVGrid(columns: columns, spacing: 16) {
             ForEach(0..<wordFields.count, id: \.self) { index in
                 HStack {
@@ -146,30 +165,43 @@ struct AddListView: View {
     }
 
     private var footer: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Divider().overlay(Theme.hairline)
-            HStack {
-                Text("Words are read aloud with the iPad voice. Tap a word to record your own voice.")
-                    .font(Theme.body(13))
-                    .foregroundStyle(Theme.textSecondary)
-                Spacer()
-                Button("Import a list") {
-                    showImportSourceDialog = true
-                }
-                .font(Theme.body(15))
-                .padding(.horizontal, 18)
-                .padding(.vertical, 10)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
+        let caption = Text("Words are read aloud with the iPad voice. Tap a word to record your own voice.")
+            .font(Theme.body(13))
+            .foregroundStyle(Theme.textSecondary)
 
-                Button("Save list") {
-                    saveList()
-                    dismiss()
+        let buttons = HStack {
+            Button("Import a list") {
+                showImportSourceDialog = true
+            }
+            .font(Theme.body(15))
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
+
+            Button("Save list") {
+                saveList()
+                dismiss()
+            }
+            .font(Theme.body(15, weight: .medium))
+            .foregroundStyle(Theme.blue)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+        }
+
+        return VStack(alignment: .leading, spacing: 16) {
+            Divider().overlay(Theme.hairline)
+            if isCompact {
+                VStack(alignment: .leading, spacing: 12) {
+                    caption
+                    buttons
                 }
-                .font(Theme.body(15, weight: .medium))
-                .foregroundStyle(Theme.blue)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 10)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+            } else {
+                HStack {
+                    caption
+                    Spacer()
+                    buttons
+                }
             }
         }
     }

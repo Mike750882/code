@@ -1,6 +1,46 @@
 import SwiftUI
 import AVFoundation
 
+/// One label+control row shared by every Settings section. Side-by-side
+/// with a fixed-width label on a regular-width screen (iPad), or stacked
+/// (label above control, using the row's full width) on a compact-width
+/// one (iPhone portrait) -- there isn't room for both a 220pt label and a
+/// control next to it on a phone-width screen.
+private struct SettingsRow<Content: View>: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    let title: String
+    let subtitle: String
+    @ViewBuilder let content: Content
+
+    private var isCompact: Bool { horizontalSizeClass == .compact }
+
+    var body: some View {
+        Group {
+            if isCompact {
+                VStack(alignment: .leading, spacing: 12) {
+                    label
+                    content
+                }
+            } else {
+                HStack {
+                    label.frame(width: 220, alignment: .leading)
+                    content
+                }
+            }
+        }
+        .padding(.vertical, 20)
+    }
+
+    private var label: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
+            Text(subtitle)
+                .font(Theme.body(13))
+                .foregroundStyle(Theme.textSecondary)
+        }
+    }
+}
+
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var syncMonitor = CloudSyncMonitor()
@@ -78,50 +118,34 @@ struct SettingsView: View {
     }
 
     private var profilesRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Student profiles").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
-                Text("Switch between students, or add another.")
-                    .font(Theme.body(13))
-                    .foregroundStyle(Theme.textSecondary)
+        SettingsRow(title: "Student profiles", subtitle: "Switch between students, or add another.") {
+            HStack {
+                Spacer()
+                NavigationLink {
+                    ProfilesView(onSwitchedProfile: onProfileSwitched)
+                } label: {
+                    Text("Manage")
+                }
+                .font(Theme.body(15, weight: .medium))
+                .foregroundStyle(Theme.blue)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
             }
-            .frame(width: 220, alignment: .leading)
-
-            Spacer()
-
-            NavigationLink {
-                ProfilesView(onSwitchedProfile: onProfileSwitched)
-            } label: {
-                Text("Manage")
-            }
-            .font(Theme.body(15, weight: .medium))
-            .foregroundStyle(Theme.blue)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 10)
-            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
         }
-        .padding(.vertical, 20)
     }
 
     private var tourRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("App tour").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
-                Text("See how spelling practice, tests, and rewards work.")
-                    .font(Theme.body(13))
-                    .foregroundStyle(Theme.textSecondary)
+        SettingsRow(title: "App tour", subtitle: "See how spelling practice, tests, and rewards work.") {
+            HStack {
+                Spacer()
+                Button("Take a Tour") { showTour = true }
+                    .font(Theme.body(15))
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 10)
+                    .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
             }
-            .frame(width: 220, alignment: .leading)
-
-            Spacer()
-
-            Button("Take a Tour") { showTour = true }
-                .font(Theme.body(15))
-                .padding(.horizontal, 18)
-                .padding(.vertical, 10)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
         }
-        .padding(.vertical, 20)
     }
 
     private var header: some View {
@@ -137,64 +161,50 @@ struct SettingsView: View {
     }
 
     private var textSizeRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Text size").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
-                Text("How big words look while spelling.")
-                    .font(Theme.body(13))
-                    .foregroundStyle(Theme.textSecondary)
+        SettingsRow(title: "Text size", subtitle: "How big words look while spelling.") {
+            HStack {
+                Slider(value: $textScale, in: 0.8...1.6)
+                    .tint(Theme.blue)
+                    .onChange(of: textScale) { _, newValue in child.textScale = newValue }
+
+                Text("friend")
+                    .font(Theme.display(17 * textScale))
+                    .foregroundStyle(Theme.textPrimary)
+                    .frame(width: 120)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Theme.surface)
+                    .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline, lineWidth: 1))
             }
-            .frame(width: 220, alignment: .leading)
-
-            Slider(value: $textScale, in: 0.8...1.6)
-                .tint(Theme.blue)
-                .onChange(of: textScale) { _, newValue in child.textScale = newValue }
-
-            Text("friend")
-                .font(Theme.display(17 * textScale))
-                .foregroundStyle(Theme.textPrimary)
-                .frame(width: 160)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(Theme.surface)
-                .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline, lineWidth: 1))
         }
-        .padding(.vertical, 20)
     }
 
     private var voiceRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Voice").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
-                Text("Which voice reads each spelling word.")
-                    .font(Theme.body(13))
-                    .foregroundStyle(Theme.textSecondary)
-            }
-            .frame(width: 220, alignment: .leading)
-
-            Picker("", selection: $selectedVoiceIdentifier) {
-                Text("Default").tag("")
-                ForEach(availableVoices, id: \.identifier) { voice in
-                    Text(voiceLabel(voice)).tag(voice.identifier)
+        SettingsRow(title: "Voice", subtitle: "Which voice reads each spelling word.") {
+            HStack {
+                Picker("", selection: $selectedVoiceIdentifier) {
+                    Text("Default").tag("")
+                    ForEach(availableVoices, id: \.identifier) { voice in
+                        Text(voiceLabel(voice)).tag(voice.identifier)
+                    }
                 }
-            }
-            .pickerStyle(.menu)
-            .onChange(of: selectedVoiceIdentifier) { _, newValue in child.voiceIdentifier = newValue }
+                .pickerStyle(.menu)
+                .onChange(of: selectedVoiceIdentifier) { _, newValue in child.voiceIdentifier = newValue }
 
-            Spacer()
+                Spacer()
 
-            Button {
-                previewSpeech.speak("Spell Well", voiceIdentifier: selectedVoiceIdentifier)
-            } label: {
-                Label("Preview", systemImage: "play.circle")
+                Button {
+                    previewSpeech.speak("Spell Well", voiceIdentifier: selectedVoiceIdentifier)
+                } label: {
+                    Label("Preview", systemImage: "play.circle")
+                }
+                .font(Theme.body(15))
+                .foregroundStyle(Theme.blue)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
             }
-            .font(Theme.body(15))
-            .foregroundStyle(Theme.blue)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 10)
-            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
         }
-        .padding(.vertical, 20)
     }
 
     /// The only voices offered in the picker, in this specific order.
@@ -226,47 +236,34 @@ struct SettingsView: View {
     }
 
     private var appearanceRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Appearance").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
-                Text("Dark mode is gentler at bedtime.")
-                    .font(Theme.body(13))
-                    .foregroundStyle(Theme.textSecondary)
-            }
-            .frame(width: 220, alignment: .leading)
+        SettingsRow(title: "Appearance", subtitle: "Dark mode is gentler at bedtime.") {
+            HStack {
+                Picker("", selection: $appearance) {
+                    Text("Light").tag("light")
+                    Text("Dark").tag("dark")
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 220)
+                .onChange(of: appearance) { _, newValue in child.appearance = newValue }
 
-            Picker("", selection: $appearance) {
-                Text("Light").tag("light")
-                Text("Dark").tag("dark")
+                Spacer()
             }
-            .pickerStyle(.segmented)
-            .frame(width: 220)
-            .onChange(of: appearance) { _, newValue in child.appearance = newValue }
-
-            Spacer()
         }
-        .padding(.vertical, 20)
     }
 
     private var colorProfileRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Color theme").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
-                Text("Changes the colors used throughout the whole app.")
-                    .font(Theme.body(13))
-                    .foregroundStyle(Theme.textSecondary)
-            }
-            .frame(width: 220, alignment: .leading)
-
-            HStack(spacing: 14) {
-                ForEach(ColorProfile.all) { profile in
-                    colorProfileSwatch(profile)
+        SettingsRow(title: "Color theme", subtitle: "Changes the colors used throughout the whole app.") {
+            // Horizontally scrollable rather than assuming every swatch
+            // fits in one row -- keeps this from overflowing on a narrow
+            // screen as more color themes get added.
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(ColorProfile.all) { profile in
+                        colorProfileSwatch(profile)
+                    }
                 }
             }
-
-            Spacer()
         }
-        .padding(.vertical, 20)
     }
 
     private func colorProfileSwatch(_ profile: ColorProfile) -> some View {
@@ -340,62 +337,49 @@ struct SettingsView: View {
     }
 
     private var pinRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Parent PIN").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
-                Text("Unlocks the word list and rewards.")
-                    .font(Theme.body(13))
-                    .foregroundStyle(Theme.textSecondary)
+        SettingsRow(title: "Parent PIN", subtitle: "Unlocks the word list and rewards.") {
+            HStack {
+                Text("••••").font(Theme.body(20)).foregroundStyle(Theme.textPrimary)
+
+                Spacer()
+
+                Button("Change PIN") { showChangePIN = true }
+                    .font(Theme.body(15))
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 10)
+                    .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
             }
-            .frame(width: 220, alignment: .leading)
-
-            Text("••••").font(Theme.body(20)).foregroundStyle(Theme.textPrimary)
-
-            Spacer()
-
-            Button("Change PIN") { showChangePIN = true }
-                .font(Theme.body(15))
-                .padding(.horizontal, 18)
-                .padding(.vertical, 10)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
         }
-        .padding(.vertical, 20)
     }
 
     private var syncRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Sync").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
-                Text("Keeps word lists, rewards, and progress the same on every family device.")
-                    .font(Theme.body(13))
-                    .foregroundStyle(Theme.textSecondary)
-            }
-            .frame(width: 220, alignment: .leading)
+        SettingsRow(title: "Sync", subtitle: "Keeps word lists, rewards, and progress the same on every family device.") {
+            HStack {
+                Text(syncStatusText)
+                    .font(Theme.body(14))
+                    .foregroundStyle(syncStatusColor)
+                    .lineLimit(2)
 
-            Text(syncStatusText)
-                .font(Theme.body(14))
-                .foregroundStyle(syncStatusColor)
+                Spacer()
 
-            Spacer()
-
-            Button {
-                syncMonitor.requestSync(modelContext: modelContext)
-            } label: {
-                if syncMonitor.status == .syncing {
-                    ProgressView()
-                        .frame(width: 44)
-                } else {
-                    Text("Sync now")
+                Button {
+                    syncMonitor.requestSync(modelContext: modelContext)
+                } label: {
+                    if syncMonitor.status == .syncing {
+                        ProgressView()
+                            .frame(width: 44)
+                    } else {
+                        Text("Sync now")
+                    }
                 }
+                .disabled(syncMonitor.status == .syncing)
+                .font(Theme.body(15, weight: .medium))
+                .foregroundStyle(Theme.blue)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
             }
-            .disabled(syncMonitor.status == .syncing)
-            .font(Theme.body(15, weight: .medium))
-            .foregroundStyle(Theme.blue)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 10)
-            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
         }
-        .padding(.vertical, 20)
     }
 
     private var syncStatusText: String {
@@ -413,33 +397,26 @@ struct SettingsView: View {
     }
 
     private var progressRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Progress report").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
-                Text("Words correct, week by week.")
-                    .font(Theme.body(13))
-                    .foregroundStyle(Theme.textSecondary)
+        SettingsRow(title: "Progress report", subtitle: "Words correct, week by week.") {
+            HStack {
+                Text(progressSummary)
+                    .font(Theme.body(15))
+                    .foregroundStyle(Theme.textPrimary)
+
+                Spacer()
+
+                NavigationLink {
+                    ProgressReportView(child: child)
+                } label: {
+                    Text("View report")
+                }
+                .font(Theme.body(15, weight: .medium))
+                .foregroundStyle(Theme.blue)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
             }
-            .frame(width: 220, alignment: .leading)
-
-            Text(progressSummary)
-                .font(Theme.body(15))
-                .foregroundStyle(Theme.textPrimary)
-
-            Spacer()
-
-            NavigationLink {
-                ProgressReportView(child: child)
-            } label: {
-                Text("View report")
-            }
-            .font(Theme.body(15, weight: .medium))
-            .foregroundStyle(Theme.blue)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 10)
-            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
         }
-        .padding(.vertical, 20)
     }
 
     private var progressSummary: String {
@@ -453,24 +430,16 @@ struct SettingsView: View {
 
     #if DEBUG
     private var debugSampleDataRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Sample data").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
-                Text("Adds 3 past weeks of fake results to preview the report. Debug builds only -- never ships.")
-                    .font(Theme.body(13))
-                    .foregroundStyle(Theme.textSecondary)
+        SettingsRow(title: "Sample data", subtitle: "Adds 3 past weeks of fake results to preview the report. Debug builds only -- never ships.") {
+            HStack {
+                Spacer()
+                Button("Add sample weeks") { addSampleWeeks() }
+                    .font(Theme.body(15))
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 10)
+                    .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
             }
-            .frame(width: 220, alignment: .leading)
-
-            Spacer()
-
-            Button("Add sample weeks") { addSampleWeeks() }
-                .font(Theme.body(15))
-                .padding(.horizontal, 18)
-                .padding(.vertical, 10)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
         }
-        .padding(.vertical, 20)
     }
 
     /// Debug-only helper to preview the progress report with real-looking
@@ -511,24 +480,16 @@ struct SettingsView: View {
     }
 
     private var debugResetTourRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Tour banner").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
-                Text("Resets the launch count so Home's \"Take a Tour\" banner shows again on the next launch. Debug builds only.")
-                    .font(Theme.body(13))
-                    .foregroundStyle(Theme.textSecondary)
+        SettingsRow(title: "Tour banner", subtitle: "Resets the launch count so Home's \"Take a Tour\" banner shows again on the next launch. Debug builds only.") {
+            HStack {
+                Spacer()
+                Button("Reset for next launch") { AppLaunchTracker.resetForTesting() }
+                    .font(Theme.body(15))
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 10)
+                    .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
             }
-            .frame(width: 220, alignment: .leading)
-
-            Spacer()
-
-            Button("Reset for next launch") { AppLaunchTracker.resetForTesting() }
-                .font(Theme.body(15))
-                .padding(.horizontal, 18)
-                .padding(.vertical, 10)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
         }
-        .padding(.vertical, 20)
     }
     #endif
 }

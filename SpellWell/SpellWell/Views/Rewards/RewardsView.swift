@@ -3,7 +3,10 @@ import SwiftData
 
 struct RewardsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     let child: Child
+
+    private var isCompact: Bool { horizontalSizeClass == .compact }
 
     private let weekdayLabels: [(weekday: Int, label: String)] = [
         (2, "Monday"), (3, "Tuesday"), (4, "Wednesday"), (5, "Thursday")
@@ -56,74 +59,134 @@ struct RewardsView: View {
     }
 
     private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Rewards")
-                    .font(Theme.display(30))
-                    .foregroundStyle(Theme.textPrimary)
-                Text("Set what \(child.name) earns each day, and one prize for the week.")
-                    .font(Theme.body(14))
-                    .foregroundStyle(Theme.textSecondary)
+        let title = VStack(alignment: .leading, spacing: 4) {
+            Text("Rewards")
+                .font(Theme.display(30))
+                .foregroundStyle(Theme.textPrimary)
+            Text("Set what \(child.name) earns each day, and one prize for the week.")
+                .font(Theme.body(14))
+                .foregroundStyle(Theme.textSecondary)
+        }
+
+        let badge = HStack(spacing: 6) {
+            Image(systemName: "lock.fill")
+            Text("PIN required to edit")
+        }
+        .font(Theme.body(12))
+        .foregroundStyle(Theme.blue)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .overlay(Capsule().stroke(Theme.blue, lineWidth: 1))
+
+        return Group {
+            if isCompact {
+                VStack(alignment: .leading, spacing: 12) {
+                    title
+                    badge
+                }
+            } else {
+                HStack {
+                    title
+                    Spacer()
+                    badge
+                }
             }
-            Spacer()
-            HStack(spacing: 6) {
-                Image(systemName: "lock.fill")
-                Text("PIN required to edit")
-            }
-            .font(Theme.body(12))
-            .foregroundStyle(Theme.blue)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .overlay(Capsule().stroke(Theme.blue, lineWidth: 1))
         }
     }
 
+    /// Stacked on a compact screen -- the regular-width layout's fixed
+    /// 160pt label + 180pt slider + 70pt percent text, all beside a text
+    /// field in one row, adds up to more room than an iPhone has, so the
+    /// field and slider each get their own full-width row instead.
     private func dailyRow(weekday: Int, label: String) -> some View {
-        HStack(spacing: 20) {
-            Text("\(label)'s reward")
-                .font(Theme.body(17))
-                .foregroundStyle(Theme.textPrimary)
-                .frame(width: 160, alignment: .leading)
+        Group {
+            if isCompact {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("\(label)'s reward")
+                            .font(Theme.body(17))
+                            .foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                        Text("\(Int(thresholds[weekday] ?? 70))% right")
+                            .font(Theme.body(13))
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                    TextField("Enter reward", text: bindingForText(weekday))
+                        .font(Theme.body(16))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(Theme.surface)
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline, lineWidth: 1))
+                        .focused($focusedField, equals: .reward(weekday))
+                    Slider(value: bindingForThreshold(weekday), in: 0...100, step: 5)
+                        .tint(Theme.purple)
+                }
+                .padding(.vertical, 16)
+            } else {
+                HStack(spacing: 20) {
+                    Text("\(label)'s reward")
+                        .font(Theme.body(17))
+                        .foregroundStyle(Theme.textPrimary)
+                        .frame(width: 160, alignment: .leading)
 
-            TextField("Enter reward", text: bindingForText(weekday))
-                .font(Theme.body(16))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(Theme.surface)
-                .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline, lineWidth: 1))
-                .focused($focusedField, equals: .reward(weekday))
+                    TextField("Enter reward", text: bindingForText(weekday))
+                        .font(Theme.body(16))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(Theme.surface)
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline, lineWidth: 1))
+                        .focused($focusedField, equals: .reward(weekday))
 
-            Slider(value: bindingForThreshold(weekday), in: 0...100, step: 5)
-                .tint(Theme.purple)
-                .frame(width: 180)
+                    Slider(value: bindingForThreshold(weekday), in: 0...100, step: 5)
+                        .tint(Theme.purple)
+                        .frame(width: 180)
 
-            Text("\(Int(thresholds[weekday] ?? 70))% right")
-                .font(Theme.body(13))
-                .foregroundStyle(Theme.textSecondary)
-                .frame(width: 70, alignment: .leading)
+                    Text("\(Int(thresholds[weekday] ?? 70))% right")
+                        .font(Theme.body(13))
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 70, alignment: .leading)
+                }
+                .padding(.vertical, 16)
+            }
         }
-        .padding(.vertical, 16)
     }
 
     private var weeklyPrizeCard: some View {
-        HStack(spacing: 16) {
-            Image(systemName: "star").foregroundStyle(Theme.gold)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("WEEKLY PRIZE")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Theme.gold)
-                TextField("Weekly prize", text: $weeklyPrizeTitle)
-                    .font(Theme.display(20))
-                    .foregroundStyle(Theme.textPrimary)
-                    .focused($focusedField, equals: .weeklyPrize)
-            }
-            Spacer()
+        let titleField = VStack(alignment: .leading, spacing: 4) {
+            Text("WEEKLY PRIZE")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(Theme.gold)
+            TextField("Weekly prize", text: $weeklyPrizeTitle)
+                .font(Theme.display(20))
+                .foregroundStyle(Theme.textPrimary)
+                .focused($focusedField, equals: .weeklyPrize)
+        }
+
+        let earnedSlider = HStack(spacing: 16) {
             Slider(value: $weeklyPrizeThreshold, in: 0...100, step: 5)
                 .tint(Theme.purple)
-                .frame(width: 220)
             VStack(alignment: .trailing) {
                 Text("Earned").font(Theme.body(12)).foregroundStyle(Theme.textSecondary)
                 Text("\(Int(weeklyPrizeThreshold))%").font(Theme.display(22)).foregroundStyle(Theme.textPrimary)
+            }
+        }
+
+        return Group {
+            if isCompact {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 16) {
+                        Image(systemName: "star").foregroundStyle(Theme.gold)
+                        titleField
+                    }
+                    earnedSlider
+                }
+            } else {
+                HStack(spacing: 16) {
+                    Image(systemName: "star").foregroundStyle(Theme.gold)
+                    titleField
+                    Spacer()
+                    earnedSlider.frame(width: 260)
+                }
             }
         }
         .padding(20)
@@ -133,17 +196,30 @@ struct RewardsView: View {
     }
 
     private var footer: some View {
-        HStack {
-            Text("\(child.name) sees that day's reward on the home screen once they reach the goal.")
-                .font(Theme.body(13))
-                .foregroundStyle(Theme.textSecondary)
-            Spacer()
-            Button("Save rewards") { save() }
-                .font(Theme.body(15, weight: .medium))
-                .foregroundStyle(Theme.blue)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 10)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+        let caption = Text("\(child.name) sees that day's reward on the home screen once they reach the goal.")
+            .font(Theme.body(13))
+            .foregroundStyle(Theme.textSecondary)
+
+        let saveButton = Button("Save rewards") { save() }
+            .font(Theme.body(15, weight: .medium))
+            .foregroundStyle(Theme.blue)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+
+        return Group {
+            if isCompact {
+                VStack(alignment: .leading, spacing: 12) {
+                    caption
+                    saveButton
+                }
+            } else {
+                HStack {
+                    caption
+                    Spacer()
+                    saveButton
+                }
+            }
         }
     }
 
