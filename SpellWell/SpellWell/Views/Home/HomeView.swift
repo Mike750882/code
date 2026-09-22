@@ -72,20 +72,23 @@ struct HomeView: View {
     /// the old left-aligned layout instead. One consistent right-aligned
     /// layout avoids depending on that distinction at all.
     ///
-    /// The tour banner sits under the name rather than between the
-    /// greeting and the pills -- squeezed into whatever sliver of an
-    /// HStack was left between those two, its own content (an icon, "Take
-    /// a Tour," an X) had no room to lay out normally and wrapped one
-    /// character per line instead. Stacked under the greeting, it gets
-    /// its own full-width row to size itself in normally.
+    /// The tour banner sits under the greeting/pills row, as its own
+    /// sibling, rather than nested in a VStack alongside the greeting --
+    /// nested that way, it was still proposed only the same narrow width
+    /// as that VStack got from sharing its HStack row with the pills (the
+    /// pills claim their own space on the right regardless of which row
+    /// visually contains them), so its content (an icon, "Take a Tour,"
+    /// an X) didn't have room to lay out normally and truncated. As a
+    /// direct sibling, it's proposed the full row's width to size itself
+    /// in normally.
     private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
                 greeting
-                if showTourBanner { tourBanner }
+                Spacer()
+                streakAndWordListPills
             }
-            Spacer()
-            streakAndWordListPills
+            if showTourBanner { tourBanner }
         }
     }
 

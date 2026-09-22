@@ -366,10 +366,14 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     isn't actually a reliable "is this an iPad" check (a large iPhone in
     landscape also reports `.regular`), so branching on it here would
     have left some iPhones with a different layout than others depending
-    on orientation. The tour banner sits under the greeting rather than
-    squeezed between the greeting and the pills -- in that spot it had no
-    room to lay out its own content (icon, "Take a Tour," an X) normally
-    and wrapped one character per line instead. The practice card's very
+    on orientation. The tour banner is a direct sibling of the
+    greeting/pills row, not nested inside a VStack alongside the greeting
+    -- nested that way it was still only proposed the same narrow width
+    that VStack got from sharing a row with the pills (which claim their
+    own space regardless of which row visually contains them), so its own
+    content (icon, "Take a Tour," an X) didn't have room to lay out
+    normally and got truncated. As a direct sibling it's proposed the
+    full row's width instead. The practice card's very
     large iPad-sized fonts (a 60pt title down to 32pt) and padding still
     scale down on compact, and the three secondary cards and four daily
     grade cards switched from fixed-count `HStack`s to
