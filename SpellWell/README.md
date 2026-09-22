@@ -447,10 +447,9 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     `tileMetrics` is computed directly from that `GeometryReader`'s
     `proxy.size.width` in the same render pass -- no `@State` round-trip,
     no separate layer whose sizing could disagree with the foreground
-    content's. A `#if DEBUG`-only `Text` above the word shows the live
-    measured width and computed tile width on screen, so a build can be
-    visually checked without guessing; pull it out once confirmed solid
-    on device.
+    content's. (A temporary `#if DEBUG`-only `Text` above the word showed
+    the live measured width and chosen tile width on screen while this was
+    being tracked down, confirmed working on device, then removed.)
   - **Practice results** (`PracticeResultsView.swift`) — used to be a
     fixed-height (`maxHeight: 320`) `ScrollView` around just the word
     list, sitting under a non-scrolling score card. In landscape on an

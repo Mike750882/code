@@ -183,16 +183,6 @@ struct PracticeView: View {
                 if currentWord != nil {
                     topBar
                 }
-                #if DEBUG
-                // Temporary, DEBUG-only readout so a screenshot can show
-                // the actual measured width and chosen tile width instead
-                // of guessing -- pull this out once confirmed solid.
-                if let metrics {
-                    Text("debug: width=\(Int(proxy.size.width)) tileWidth=\(Int(metrics.width))")
-                        .font(.caption2)
-                        .foregroundStyle(.red)
-                }
-                #endif
                 Spacer()
                 if let word = currentWord, let metrics {
                     hearWordSection(word: word)
