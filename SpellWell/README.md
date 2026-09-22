@@ -418,19 +418,26 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     landscape-iPhone/regular-size-class quirk that broke the header
     doesn't matter, since a fixed 3- or 4-column layout looks fine on a
     wide landscape iPhone too, not just iPad.
-  - **Practice** — `answerSlots` and `letterBank` also switched from
-    `HStack` to an adaptive `LazyVGrid` (min/max both set to the tile's
-    56pt width, so tiles wrap to more rows at a fixed size rather than
-    stretching or overflowing) -- this was the one functionally broken
-    case, not just a cosmetic one, since a long enough word's tiles could
-    exceed an iPhone's screen width entirely with no way to reach the
-    rest of them. Same bunched-on-the-left issue as the Home cards
-    showed up here too, in landscape or on a wide screen (more room than
-    the tiles need, so `.adaptive` computes extra columns and the tiles
-    end up left-aligned instead of centered) -- fixed with `tileRowWidth
-    (forTileCount:)`, capping each grid at exactly the width its own
-    tiles need (`.frame(maxWidth:)`) and re-centering that within the
-    full available width (a second `.frame(maxWidth: .infinity)`).
+  - **Practice** — `answerSlots` and `letterBank` wrap a long word's
+    tiles onto more than one row (one 56pt-wide tile per letter can
+    easily add up to more than an iPhone's screen width) -- this was the
+    one functionally broken layout case, not just cosmetic, since without
+    wrapping a long enough word's tiles could exceed the screen width
+    entirely with no way to reach the rest of them. First tried an
+    adaptive `LazyVGrid`, which does wrap, but a grid lays its last,
+    partially-filled row out flush against the left edge instead of
+    centered under the row above -- capping the whole grid's width and
+    re-centering *that* (the same trick that fixed the Home cards
+    bunching left) only centers the block as a whole, it doesn't fix a
+    short trailing row's own left alignment within that block. Replaced
+    with rows chunked by hand instead (`tileRows(itemCount:)`,
+    `tilesPerRow(availableWidth:)`): the actual available width is
+    measured via a `TileAreaWidthKey` preference (same background-
+    `GeometryReader` pattern already used for `SlotFramesKey`'s drag
+    tracking), tiles are split into rows of however many fit, and each
+    row is its own `HStack` independently centered
+    (`.frame(maxWidth: .infinity)`) -- so a short trailing row centers
+    under the row(s) above it instead of hugging the left edge.
   - **Practice results** (`PracticeResultsView.swift`) — used to be a
     fixed-height (`maxHeight: 320`) `ScrollView` around just the word
     list, sitting under a non-scrolling score card. In landscape on an
