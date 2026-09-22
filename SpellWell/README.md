@@ -423,37 +423,35 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     easily add up to more than an iPhone's screen width) -- this was the
     one functionally broken layout case, not just cosmetic, since without
     wrapping a long enough word's tiles could exceed the screen width
-    entirely with no way to reach the rest of them. First tried an
-    adaptive `LazyVGrid`, which does wrap, but a grid lays its last,
-    partially-filled row out flush against the left edge instead of
-    centered under the row above -- capping the whole grid's width and
-    re-centering *that* (the same trick that fixed the Home cards
-    bunching left) only centers the block as a whole, it doesn't fix a
-    short trailing row's own left alignment within that block. Replaced
-    with rows chunked by hand instead (`tileRows(itemCount:)`,
-    `tilesPerRow(availableWidth:)`): the actual available width is
-    measured and split into rows of however many tiles fit, and each row
-    is its own `HStack` independently centered
-    (`.frame(maxWidth: .infinity)`) -- so a short trailing row centers
-    under the row(s) above it instead of hugging the left edge. Getting
-    the width measurement itself right took two tries. The first attempt
-    used the classic `.background(GeometryReader { ... })` +
-    `PreferenceKey` combo (the same pattern `SlotFramesKey` already used
-    for drag tracking), first placed directly on the tile `VStack`
-    *before* its own `.padding(24)` / `.frame(maxWidth: .infinity,
-    maxHeight: .infinity)`, which measured the view's near-zero natural
-    size before anything told it to grow; moving that background to
-    *after* those modifiers was expected to fix it but didn't -- it kept
-    reporting a near-zero width regardless of where in the chain it sat,
-    still wrapping every tile onto its own row. Replaced entirely with
-    `onGeometryChange` (iOS 17+, which this app already targets), which
-    reads the already-resolved geometry of the exact view it's attached
-    to with no separate background layer involved, removing the
-    ambiguity altogether. `tileAreaWidth` holds that full-screen figure,
-    and `tileRows(itemCount:)` subtracts the known 48pt (24pt each side)
-    of padding back out in code
-    (`tilesPerRow(availableWidth: tileAreaWidth - 48)`) rather than
-    trying to measure the already-padded width directly.
+    entirely with no way to reach the rest of them. Uses an adaptive
+    `LazyVGrid`, which wraps as needed, with a trailing
+    `.frame(maxWidth: tileRowWidth(forTileCount:)).frame(maxWidth:
+    .infinity)` pair that caps the grid at exactly the width its own
+    tiles need and re-centers that (the same trick that fixed the Home
+    cards bunching left) -- without it, `.adaptive` computes room for
+    more columns than there are tiles whenever there's extra width to
+    spare (a wide screen, or landscape), and the tiles end up bunched on
+    the left instead of centered. **Known limitation:** this only centers
+    the grid as a whole block -- once a word's tiles wrap to more than
+    one row, a short trailing row (e.g. a 7-letter word wrapping 5+2)
+    still lays out flush against the left edge under the row above it,
+    instead of centering under it. Two attempts at fixing that were tried
+    and reverted after making things dramatically worse (every tile
+    landing on its own row, in both portrait and landscape) even after a
+    full app delete-and-reinstall ruled out a stale build each time: (1)
+    manually chunking tiles into per-row `HStack`s with each row
+    independently centered, sizing the rows off a screen width measured
+    via `.background(GeometryReader { ... })` + a `PreferenceKey`
+    (attached both before and, in a second attempt, after
+    `.padding(24)`/`.frame(maxWidth: .infinity)` resolved the view's
+    final size); and (2) the same row-chunking approach measured instead
+    via `onGeometryChange` (iOS 17+), which sidesteps the background-
+    layer sizing ambiguity entirely and should have been more reliable.
+    Both reported a near-zero width regardless of technique or where in
+    the modifier chain the measurement sat, for reasons not yet
+    understood -- worth investigating from scratch (e.g. actually
+    printing/logging the measured width on device) before trying a third
+    fix, rather than guessing at another measurement placement.
   - **Practice results** (`PracticeResultsView.swift`) — used to be a
     fixed-height (`maxHeight: 320`) `ScrollView` around just the word
     list, sitting under a non-scrolling score card. In landscape on an
