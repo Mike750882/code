@@ -31,6 +31,16 @@ structural, but don't be surprised by a typo or an API signature mismatch.
 
 ## What's implemented
 
+- **App icon** (`Assets.xcassets/AppIcon.appiconset`) — there was no asset
+  catalog at all before, so the app used Xcode's default blank icon.
+  Added the catalog with a single 1024x1024 universal icon (the modern
+  Xcode 14+ format, which generates every other size at build time, so no
+  separate 20pt/29pt/40pt/60pt/etc. exports are needed), and
+  `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon` in `project.yml` so Xcode
+  actually picks it up as the app's icon. Swap
+  `AppIcon.appiconset/AppIcon-1024.png` for a different 1024x1024 PNG
+  (no transparency, no pre-rounded corners -- iOS applies the mask
+  itself) to change it later.
 - **Multiple student profiles on one iPad** — `Child` was always a
   standalone SwiftData model (each with its own `WeekList`s,
   `DailyReward`s, `WeeklyPrize`s, fully isolated), but the UI only ever
