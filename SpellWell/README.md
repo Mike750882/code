@@ -361,11 +361,17 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     stacked above a full-width control on compact. The color theme
     swatches sit in a horizontal `ScrollView` rather than assuming they
     all fit in one row.
-  - **Home** — the greeting/tour-banner/streak-pill header stacks
-    vertically on compact instead of squeezing into one row; the practice
-    card's very large iPad-sized fonts (a 60pt title down to 32pt) and
-    padding scale down; the three secondary cards and four daily grade
-    cards switched from fixed-count `HStack`s to `LazyVGrid(columns:
+  - **Home** — the greeting/tour-banner/streak-pill header always stacks
+    vertically, left-aligned, on every device now, not just compact ones.
+    It briefly did switch to a side-by-side layout on `.regular` (pills
+    floated to the right), but `horizontalSizeClass` isn't actually a
+    reliable "is this an iPad" check -- a large iPhone in landscape also
+    reports `.regular`, so that put the pills on the right on some
+    iPhones too. One consistent left-aligned layout sidesteps needing
+    that distinction at all. The practice card's very large iPad-sized
+    fonts (a 60pt title down to 32pt) and padding still scale down on
+    compact, and the three secondary cards and four daily grade cards
+    switched from fixed-count `HStack`s to `LazyVGrid(columns:
     [GridItem(.adaptive(minimum:))])`, which wraps to fewer columns
     automatically based on whatever width is actually available, iPhone
     or iPad, without needing a compact/regular branch at all.
