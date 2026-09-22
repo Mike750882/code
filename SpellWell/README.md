@@ -432,26 +432,26 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     short trailing row's own left alignment within that block. Replaced
     with rows chunked by hand instead (`tileRows(itemCount:)`,
     `tilesPerRow(availableWidth:)`): the actual available width is
-    measured via a `TileAreaWidthKey` preference (same background-
-    `GeometryReader` pattern already used for `SlotFramesKey`'s drag
-    tracking), tiles are split into rows of however many fit, and each
-    row is its own `HStack` independently centered
+    measured and split into rows of however many tiles fit, and each row
+    is its own `HStack` independently centered
     (`.frame(maxWidth: .infinity)`) -- so a short trailing row centers
-    under the row(s) above it instead of hugging the left edge. The
-    first version of this measurement made things worse, not better --
-    every tile ended up on its own row. The `.background(GeometryReader
-    { ... })` was attached directly on the tile `VStack`, *before* that
-    view's own `.padding(24)` / `.frame(maxWidth: .infinity, maxHeight:
-    .infinity)` further down the modifier chain, so it measured the
-    view's natural/ideal size (near zero, before anything had told it to
-    grow) instead of its final resolved width -- `tilesPerRow` saw a
-    tiny number and fit one tile per row almost everywhere. The fix was
-    to move that `.background(GeometryReader { ... })` to *after*
-    `.padding(24)` and `.frame(maxWidth: .infinity, maxHeight: .infinity)`
-    in the chain, so it measures the fully-resolved, unambiguous
-    full-screen width instead -- `tileAreaWidth` now holds that
-    full-screen figure, and `tileRows(itemCount:)` subtracts the known
-    48pt (24pt each side) of padding back out in code
+    under the row(s) above it instead of hugging the left edge. Getting
+    the width measurement itself right took two tries. The first attempt
+    used the classic `.background(GeometryReader { ... })` +
+    `PreferenceKey` combo (the same pattern `SlotFramesKey` already used
+    for drag tracking), first placed directly on the tile `VStack`
+    *before* its own `.padding(24)` / `.frame(maxWidth: .infinity,
+    maxHeight: .infinity)`, which measured the view's near-zero natural
+    size before anything told it to grow; moving that background to
+    *after* those modifiers was expected to fix it but didn't -- it kept
+    reporting a near-zero width regardless of where in the chain it sat,
+    still wrapping every tile onto its own row. Replaced entirely with
+    `onGeometryChange` (iOS 17+, which this app already targets), which
+    reads the already-resolved geometry of the exact view it's attached
+    to with no separate background layer involved, removing the
+    ambiguity altogether. `tileAreaWidth` holds that full-screen figure,
+    and `tileRows(itemCount:)` subtracts the known 48pt (24pt each side)
+    of padding back out in code
     (`tilesPerRow(availableWidth: tileAreaWidth - 48)`) rather than
     trying to measure the already-padded width directly.
   - **Practice results** (`PracticeResultsView.swift`) — used to be a

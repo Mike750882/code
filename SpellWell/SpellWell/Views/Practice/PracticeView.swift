@@ -7,13 +7,6 @@ private struct SlotFramesKey: PreferenceKey {
     }
 }
 
-private struct TileAreaWidthKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
-
 enum PracticeMode: String, CaseIterable, Identifiable, Hashable {
     case practice = "Practice"
     case test = "Test"
@@ -123,8 +116,8 @@ struct PracticeView: View {
     /// Each answer slot's frame in the shared "practiceArea" coordinate
     /// space, so a drag's release point can be tested against them.
     @State private var slotFrames: [Int: CGRect] = [:]
-    /// Measured *full screen* width (see `TileAreaWidthKey`) -- not yet
-    /// reduced by the screen's own 24pt-per-side padding, which
+    /// Measured *full screen* width via `onGeometryChange` (see `body`) --
+    /// not yet reduced by the screen's own 24pt-per-side padding, which
     /// `tilesPerRow` subtracts back out -- used to decide how many tiles
     /// fit per row and to chunk both `answerSlots` and `letterBank` into
     /// rows by hand. A plain `LazyVGrid` lays a partially-filled trailing
@@ -206,27 +199,28 @@ struct PracticeView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        // Measured *after* .frame(maxWidth: .infinity) resolves this view
-        // to its final, unambiguous full-screen width -- measuring any
-        // earlier (e.g. directly on the VStack above, before it's been
-        // told to expand) caught it still at its natural/compact content
-        // size, near zero before anything forced it wider, which made
-        // every tile wrap onto its own row. tilesPerRow subtracts the
-        // known 24pt-per-side padding back out in code instead, since
-        // that's simpler and more reliable than trying to measure the
-        // padded width directly.
-        .background(
-            GeometryReader { geo in
-                Color.clear.preference(key: TileAreaWidthKey.self, value: geo.size.width)
-            }
-        )
+        // Measures this view's own final, already-resolved size directly
+        // -- unlike a `.background(GeometryReader { ... })` + PreferenceKey,
+        // which measures a *separate* background layer and, in this
+        // screen's modifier chain, kept reporting a near-zero width no
+        // matter where it was placed, wrapping every tile onto its own
+        // row. `onGeometryChange` (iOS 17+) has no such ambiguity: it
+        // reads the geometry of the exact view it's attached to, at the
+        // point it's attached, full stop. tilesPerRow subtracts the known
+        // 24pt-per-side padding back out in code, since that's simpler
+        // and more reliable than trying to measure the padded width
+        // directly.
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.size.width
+        } action: { newWidth in
+            tileAreaWidth = newWidth
+        }
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .coordinateSpace(name: "practiceArea")
         .onPreferenceChange(SlotFramesKey.self) { slotFrames = $0 }
-        .onPreferenceChange(TileAreaWidthKey.self) { tileAreaWidth = $0 }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
