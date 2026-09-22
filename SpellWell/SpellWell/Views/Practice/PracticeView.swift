@@ -167,32 +167,52 @@ struct PracticeView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            if currentWord != nil {
-                topBar
-            }
-            Spacer()
-            if let word = currentWord {
-                hearWordSection(word: word)
-                if currentWordMode == .typed {
-                    typedAnswerField
-                } else {
-                    answerSlots(wordLength: word.text.count)
-                    letterBank
+        // A top-level GeometryReader instead of a background-attached one
+        // -- `proxy.size` is available synchronously, in the same render
+        // pass that lays out `answerSlots`/`letterBank`, with no @State
+        // round-trip and no separate background layer whose sizing can
+        // disagree with the foreground content's. Two earlier attempts at
+        // measuring width for tile wrapping (a `.background(GeometryReader
+        // { ... })` + PreferenceKey, then `onGeometryChange`) both ended
+        // up reporting a near-zero width on device for reasons never
+        // pinned down -- this sidesteps the whole class of "which layer,
+        // measured when" question by not going through @State at all.
+        GeometryReader { proxy in
+            VStack(spacing: 0) {
+                if currentWord != nil {
+                    topBar
                 }
-                actionButtons
-            } else {
-                PracticeResultsView(results: results) { dismiss() }
+                #if DEBUG
+                // Temporary, DEBUG-only readout so a screenshot can show
+                // the actual measured width instead of us guessing at it
+                // -- pull this out once tile wrapping is confirmed working.
+                Text("debug: width=\(Int(proxy.size.width)) perRow=\(tilesPerRow(availableWidth: proxy.size.width - 48))")
+                    .font(.caption2)
+                    .foregroundStyle(.red)
+                #endif
+                Spacer()
+                if let word = currentWord {
+                    hearWordSection(word: word)
+                    if currentWordMode == .typed {
+                        typedAnswerField
+                    } else {
+                        answerSlots(wordLength: word.text.count, availableWidth: proxy.size.width)
+                        letterBank(availableWidth: proxy.size.width)
+                    }
+                    actionButtons
+                } else {
+                    PracticeResultsView(results: results) { dismiss() }
+                }
+                Spacer()
             }
-            Spacer()
+            .padding(24)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .coordinateSpace(name: "practiceArea")
         }
-        .padding(24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .coordinateSpace(name: "practiceArea")
         .onPreferenceChange(SlotFramesKey.self) { slotFrames = $0 }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
@@ -245,7 +265,7 @@ struct PracticeView: View {
         .padding(.bottom, 40)
     }
 
-    private func answerSlots(wordLength: Int) -> some View {
+    private func answerSlots(wordLength: Int, availableWidth: CGFloat) -> some View {
         let borderColor: Color = {
             switch feedback {
             case .correct: return Theme.green
@@ -253,70 +273,78 @@ struct PracticeView: View {
             case nil: return Theme.hairline
             }
         }()
-        // A LazyVGrid rather than a plain HStack -- a long word's tiles
-        // (one 56pt-wide slot per letter, all in a row) can easily add up
-        // to more than an iPhone's screen width, where an HStack would
-        // just run off the edge. The grid wraps to as many rows as it
-        // needs instead, keeping every slot the same fixed size (the
-        // matching min/max on the column) rather than stretching to fill
-        // whatever width is available.
-        //
-        // The trailing .frame(maxWidth:) pair caps the grid at exactly
-        // the width its own tiles need, then re-centers that within the
-        // full available width -- without it, .adaptive computes room
-        // for more columns than there are tiles whenever there's extra
-        // width to spare (a wide screen, or landscape), and the tiles end
-        // up bunched on the left instead of centered.
-        let tileColumn = [GridItem(.adaptive(minimum: 56, maximum: 56), spacing: 10)]
-        return LazyVGrid(columns: tileColumn, spacing: 10) {
-            ForEach(0..<wordLength, id: \.self) { slotIndex in
-                let slot: SlotState = slotIndex < slotContents.count ? slotContents[slotIndex] : .empty
-                let isTargeted = dragTargetSlot == slotIndex
+        // Chunked into rows by hand (see tileRows(itemCount:availableWidth:))
+        // rather than a LazyVGrid -- a long word's tiles (one 56pt-wide
+        // slot per letter) can add up to more than an iPhone's screen
+        // width, so this still needs to wrap. A plain adaptive grid wraps
+        // fine but lays its last, partially-filled row out flush against
+        // the left edge instead of centered under the row above it;
+        // chunking rows by hand and centering each one independently
+        // (.frame(maxWidth: .infinity) per row) avoids that.
+        return VStack(spacing: 10) {
+            ForEach(Array(tileRows(itemCount: wordLength, availableWidth: availableWidth).enumerated()), id: \.offset) { _, row in
+                HStack(spacing: 10) {
+                    ForEach(row, id: \.self) { slotIndex in
+                        let slot: SlotState = slotIndex < slotContents.count ? slotContents[slotIndex] : .empty
+                        let isTargeted = dragTargetSlot == slotIndex
 
-                switch slot {
-                case .prefilled(let character):
-                    Text(String(character).uppercased())
-                        .font(Theme.display(28))
-                        .foregroundStyle(Theme.textSecondary)
-                        .frame(width: 56, height: 64)
-                        .background(Theme.hairline.opacity(0.3))
-                        .overlay(Rectangle().stroke(Theme.hairline, lineWidth: 1))
-                default:
-                    let letter: String = {
-                        if case .filled(let index) = slot, index < bankOrder.count { return String(bankOrder[index]) }
-                        return ""
-                    }()
-                    Text(letter.uppercased())
-                        .font(Theme.display(28))
-                        .frame(width: 56, height: 64)
-                        .background(isTargeted ? Theme.purple.opacity(0.15) : Theme.surface)
-                        .overlay(
-                            Rectangle().stroke(isTargeted ? Theme.purple : borderColor, lineWidth: isTargeted ? 2 : (feedback == nil ? 1 : 2))
-                        )
-                        .background(
-                            GeometryReader { geo in
-                                Color.clear.preference(
-                                    key: SlotFramesKey.self,
-                                    value: [slotIndex: geo.frame(in: .named("practiceArea"))]
+                        switch slot {
+                        case .prefilled(let character):
+                            Text(String(character).uppercased())
+                                .font(Theme.display(28))
+                                .foregroundStyle(Theme.textSecondary)
+                                .frame(width: 56, height: 64)
+                                .background(Theme.hairline.opacity(0.3))
+                                .overlay(Rectangle().stroke(Theme.hairline, lineWidth: 1))
+                        default:
+                            let letter: String = {
+                                if case .filled(let index) = slot, index < bankOrder.count { return String(bankOrder[index]) }
+                                return ""
+                            }()
+                            Text(letter.uppercased())
+                                .font(Theme.display(28))
+                                .frame(width: 56, height: 64)
+                                .background(isTargeted ? Theme.purple.opacity(0.15) : Theme.surface)
+                                .overlay(
+                                    Rectangle().stroke(isTargeted ? Theme.purple : borderColor, lineWidth: isTargeted ? 2 : (feedback == nil ? 1 : 2))
                                 )
-                            }
-                        )
-                        .onTapGesture { clearSlot(slotIndex) }
+                                .background(
+                                    GeometryReader { geo in
+                                        Color.clear.preference(
+                                            key: SlotFramesKey.self,
+                                            value: [slotIndex: geo.frame(in: .named("practiceArea"))]
+                                        )
+                                    }
+                                )
+                                .onTapGesture { clearSlot(slotIndex) }
+                        }
+                    }
                 }
+                .frame(maxWidth: .infinity)
             }
         }
-        .frame(maxWidth: tileRowWidth(forTileCount: wordLength))
-        .frame(maxWidth: .infinity)
         .padding(.bottom, 20)
     }
 
-    /// Natural width of `count` 56pt tiles in a single row, 10pt apart --
-    /// used to cap a tile grid at exactly the width it needs so it can be
-    /// centered instead of stretching (and bunching left) to fill
-    /// whatever width is actually available.
-    private func tileRowWidth(forTileCount count: Int) -> CGFloat {
-        guard count > 0 else { return 0 }
-        return CGFloat(count) * 56 + CGFloat(count - 1) * 10
+    /// How many 56pt tiles (10pt apart) fit in a row of the given width.
+    /// Always at least 1, so a tile is never asked to share a row with
+    /// zero others.
+    private func tilesPerRow(availableWidth: CGFloat) -> Int {
+        guard availableWidth > 0 else { return 1 }
+        return max(1, Int((availableWidth + 10) / (56 + 10)))
+    }
+
+    /// Splits `itemCount` tile indices into rows sized by `availableWidth`
+    /// (the full screen width from body's top-level GeometryReader, minus
+    /// the screen's own 24pt-per-side padding), left-to-right, wrapping to
+    /// a new row once a row is full -- shared by `answerSlots` and
+    /// `letterBank` so both wrap identically.
+    private func tileRows(itemCount: Int, availableWidth: CGFloat) -> [[Int]] {
+        let perRow = tilesPerRow(availableWidth: availableWidth - 48)
+        guard itemCount > 0 else { return [] }
+        return stride(from: 0, to: itemCount, by: perRow).map { start in
+            Array(start..<min(start + perRow, itemCount))
+        }
     }
 
     private var typedAnswerField: some View {
@@ -338,19 +366,19 @@ struct PracticeView: View {
             .padding(.bottom, 20)
     }
 
-    private var letterBank: some View {
-        // Same reasoning as answerSlots -- wraps to more rows instead of
-        // running off a narrow screen's edge for a long word, and the
-        // same width-cap-then-center trick so it doesn't bunch left on a
-        // wide screen or in landscape.
-        let tileColumn = [GridItem(.adaptive(minimum: 56, maximum: 56), spacing: 10)]
-        return LazyVGrid(columns: tileColumn, spacing: 10) {
-            ForEach(Array(bankOrder.enumerated()), id: \.offset) { index, letter in
-                bankTile(index: index, letter: letter)
+    private func letterBank(availableWidth: CGFloat) -> some View {
+        // Same reasoning and row-chunking as answerSlots, so both wrap
+        // (and center each row) identically.
+        VStack(spacing: 10) {
+            ForEach(Array(tileRows(itemCount: bankOrder.count, availableWidth: availableWidth).enumerated()), id: \.offset) { _, row in
+                HStack(spacing: 10) {
+                    ForEach(row, id: \.self) { index in
+                        bankTile(index: index, letter: bankOrder[index])
+                    }
+                }
+                .frame(maxWidth: .infinity)
             }
         }
-        .frame(maxWidth: tileRowWidth(forTileCount: bankOrder.count))
-        .frame(maxWidth: .infinity)
         .padding(.bottom, 32)
         .allowsHitTesting(!isAdvancing)
     }
