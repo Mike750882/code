@@ -8,7 +8,6 @@ import SwiftData
 final class Child {
     var id: UUID = UUID()
     var name: String = ""
-    var currentStreak: Int = 0
     var textScale: Double = 1.0
     /// "system" | "light" | "dark"
     var appearance: String = "system"
@@ -72,6 +71,52 @@ extension Child {
         case 5: thursdayInputMode = mode.rawValue
         default: break
         }
+    }
+
+    /// Consecutive Monday-Thursday school days, walking backward from
+    /// `now`, with at least one Test-mode attempt recorded that day --
+    /// weekends and Fridays are skipped over, neither counting toward nor
+    /// breaking the streak, matching the Mon-Thu scope of the daily grade
+    /// cards and reward system. Computed live from attempt history rather
+    /// than stored/incremented anywhere, so it can never drift out of
+    /// sync with what actually happened -- there's no "streak" column on
+    /// this model at all.
+    ///
+    /// Today doesn't break the streak just for not having a test yet,
+    /// since the day isn't over: only a *past* school day with no test
+    /// stops the count.
+    func currentStreak(asOf now: Date = Date()) -> Int {
+        let calendar = Calendar.current
+        let testDates = Set(
+            (weekLists ?? [])
+                .flatMap { $0.words ?? [] }
+                .flatMap { $0.attempts ?? [] }
+                .filter { $0.mode == "test" }
+                .map { calendar.startOfDay(for: $0.date) }
+        )
+
+        var streak = 0
+        var date = calendar.startOfDay(for: now)
+        var isFirstSchoolDay = true
+
+        // Bounded to ~10 years of days so this always terminates, even in
+        // a pathological case (e.g. a debug seed spanning many years).
+        for _ in 0..<3650 {
+            let weekday = calendar.component(.weekday, from: date)
+            if (2...5).contains(weekday) {
+                if testDates.contains(date) {
+                    streak += 1
+                    isFirstSchoolDay = false
+                } else if isFirstSchoolDay && calendar.isDate(date, inSameDayAs: now) {
+                    isFirstSchoolDay = false
+                } else {
+                    break
+                }
+            }
+            guard let previousDay = calendar.date(byAdding: .day, value: -1, to: date) else { break }
+            date = previousDay
+        }
+        return streak
     }
 }
 

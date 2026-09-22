@@ -121,7 +121,7 @@ struct HomeView: View {
         VStack(spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: "star").foregroundStyle(Theme.blue)
-                Text("\(child.currentStreak)-day streak")
+                Text("\(child.currentStreak())-day streak")
                     .font(Theme.body(15, weight: .medium))
                     .foregroundStyle(Theme.blue)
             }

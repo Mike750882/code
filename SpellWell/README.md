@@ -199,6 +199,18 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   `PracticeAttempt` recorded during one `PracticeView` session shares a
   `sessionID`, and `testPercent` uses only the attempts from whichever
   session has the latest timestamp for that day.
+- **Streak** (`Child.currentStreak(asOf:)`) — the "N-day streak" pill on
+  Home used to be dead: the field existed but nothing ever wrote to it.
+  Replaced with a live computed value instead of a stored counter, so it
+  can never drift out of sync with what actually happened. A day counts
+  if it has at least one **Test**-mode attempt (any test, regardless of
+  score -- Practice doesn't count), and only Monday-Thursday days count
+  at all, matching the daily grade cards' and reward system's scope;
+  weekends and Fridays are skipped over rather than breaking the streak.
+  Walks backward day by day from today counting consecutive qualifying
+  school days, stopping at the first one with no test -- except today
+  itself, which doesn't break the streak just for not having a test yet,
+  since the day isn't over.
 - **Shared grading scale** (`DesignSystem/Grading.swift`) — one place for
   the percent-to-letter-grade logic (A+ through F, standard 97/93/90/…
   cutoffs), used by both the results screen and the daily grade cards so
@@ -438,9 +450,6 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   layer exists (`AudioRecorderService.swift`) but isn't wired into any UI
   control yet. It should attach to each word row on the Add List screen and
   write into `SpellingWord.customAudioData`.
-- **Streak logic** — `Child.currentStreak` exists as a field but nothing
-  increments it yet. Needs a daily job (e.g. on app launch, check whether
-  yesterday's goal was met) to update it.
 - **Reward "earned" state** — `DailyReward`/`WeeklyPrize` store thresholds,
   and Home computes a live percentage, but nothing yet marks a specific day
   as earned/unearned for the "Movie night on Friday" style copy shown on the
