@@ -65,17 +65,20 @@ struct HomeView: View {
         }
     }
 
-    /// Always stacked, left-aligned, on every device -- this used to put
-    /// the streak/word-list pills on the right on a wide (`.regular`)
-    /// screen, but `horizontalSizeClass` isn't a reliable "is this an
-    /// iPhone" check: a large iPhone in landscape also reports `.regular`,
-    /// so that pill row was landing on the right on some iPhones too, not
-    /// just iPad. One consistent left-aligned layout avoids depending on
-    /// that distinction at all.
+    /// Streak/word-list pills sit on the right on every device, not just
+    /// a wide (`.regular`) one -- `horizontalSizeClass` isn't a reliable
+    /// "is this an iPad" check (a large iPhone in landscape also reports
+    /// `.regular`), so branching on it here would leave some iPhones with
+    /// the old left-aligned layout instead. One consistent right-aligned
+    /// layout avoids depending on that distinction at all.
     private var header: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        HStack(alignment: .top) {
             greeting
-            if showTourBanner { tourBanner }
+            Spacer()
+            if showTourBanner {
+                tourBanner
+                Spacer()
+            }
             streakAndWordListPills
         }
     }
