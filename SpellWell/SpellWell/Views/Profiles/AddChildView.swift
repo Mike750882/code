@@ -19,7 +19,9 @@ struct AddChildView: View {
     /// stutter if a child taps straight into the name field. Waiting a
     /// beat before showing an interactive field avoids that -- not needed
     /// once the app's already been running for a while, like when this
-    /// same view is reused from Settings to add a sibling.
+    /// same view is reused from Settings to add a sibling, or on a normal
+    /// cold launch (force-quit and reopen) that isn't a fresh install --
+    /// the CloudKit setup only happens once, ever, on a given install.
     var showsInitialSetupDelay = false
 
     @State private var name = ""
@@ -87,8 +89,15 @@ struct AddChildView: View {
         .onAppear {
             guard !isReady else { return }
             if showsInitialSetupDelay {
+                // 1.2s wasn't long enough in practice -- the field was
+                // still stuttering on first tap after the spinner
+                // disappeared, meaning the underlying CloudKit setup was
+                // still going. 3s errs toward safety instead: this delay
+                // only ever happens once per real install (never again on
+                // a normal cold launch), so a few extra seconds here
+                // don't cost anything in everyday use.
                 Task {
-                    try? await Task.sleep(nanoseconds: 1_200_000_000)
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
                     isReady = true
                 }
             } else {

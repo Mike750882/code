@@ -48,10 +48,16 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     thread (iCloud provisioning the CloudKit container for the very first
     time), which could make the very first keyboard appearance stutter if
     a child taps straight into the name field. Shows a brief "Just a
-    moment..." spinner instead of the interactive field for ~1.2s on
-    appear before letting anyone tap in. Not needed (and not passed) when
-    this same view is reused from Settings to add a sibling, since the app
-    is already fully up and running by then.
+    moment..." spinner instead of the interactive field for 3s on appear
+    before letting anyone tap in -- an earlier attempt at 1.2s wasn't
+    long enough, the field still stuttered on first tap once the spinner
+    disappeared, meaning the underlying CloudKit setup was still going.
+    3s errs toward safety instead: this only ever happens once per real
+    install, never again on a normal cold launch (force-quit and reopen
+    without reinstalling), so a few extra seconds here don't cost
+    anything in everyday use. Not needed (and not passed) when this same
+    view is reused from Settings to add a sibling, since the app is
+    already fully up and running by then.
   - **Settings → Student profiles → Manage** opens
     `Views/Profiles/ProfilesView.swift` (no separate PIN gate needed;
     Settings is already gated to get there): lists every profile, tap one
