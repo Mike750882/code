@@ -382,11 +382,20 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     full row's width instead. The practice card's very
     large iPad-sized fonts (a 60pt title down to 32pt) and padding still
     scale down on compact, and the three secondary cards and four daily
-    grade cards switched from fixed-count `HStack`s to
-    `LazyVGrid(columns: [GridItem(.adaptive(minimum:))])`, which wraps to
-    fewer columns automatically based on whatever width is actually
-    available, iPhone or iPad, without needing a compact/regular branch
-    at all.
+    grade cards switched from fixed-count `HStack`s to `LazyVGrid`s.
+    These *do* branch on `isCompact` (unlike the header above) --
+    `.adaptive(minimum:)` on compact, so cards wrap down to fewer columns
+    instead of squeezing three or four into an iPhone-width row, but
+    exactly `count: 3` / `count: 4` equal `.flexible()` columns on
+    regular, matching the original fixed-width `HStack`s. A pure
+    `.adaptive` grid on a *wide* iPad screen computes room for more
+    columns than there are actual cards (its minimum is much smaller than
+    a third or a quarter of an iPad's width), so the cards ended up
+    bunched on the left with empty space on the right instead of spread
+    across the full row like before -- this is the one case where the
+    landscape-iPhone/regular-size-class quirk that broke the header
+    doesn't matter, since a fixed 3- or 4-column layout looks fine on a
+    wide landscape iPhone too, not just iPad.
   - **Practice** — `answerSlots` and `letterBank` also switched from
     `HStack` to an adaptive `LazyVGrid` (min/max both set to the tile's
     56pt width, so tiles wrap to more rows at a fixed size rather than

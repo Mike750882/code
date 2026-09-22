@@ -252,12 +252,19 @@ struct HomeView: View {
         }
     }
 
-    /// Adaptive rather than a fixed 3-wide HStack -- naturally wraps to
-    /// fewer columns (down to one) on a narrow phone screen instead of
-    /// squeezing all three cards into a width they were never designed
-    /// to fit in.
+    /// On a regular-width screen (iPad, any orientation), exactly 3 equal
+    /// flexible columns -- same as the original fixed 3-wide HStack, so
+    /// the cards spread across the full row instead of `.adaptive`
+    /// computing room for more columns than there are cards and leaving
+    /// them bunched on the left with empty space on the right. On a
+    /// compact screen (iPhone), still adaptive so it wraps down to fewer
+    /// columns instead of squeezing all three into a width they don't
+    /// fit in.
     private var secondaryCards: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 16)], spacing: 16) {
+        let columns = isCompact
+            ? [GridItem(.adaptive(minimum: 220), spacing: 16)]
+            : Array(repeating: GridItem(.flexible(), spacing: 16), count: 3)
+        return LazyVGrid(columns: columns, spacing: 16) {
             SecondaryCard(
                 icon: "line.3.horizontal",
                 badge: "Grown-ups",
@@ -315,10 +322,15 @@ struct HomeView: View {
         (2, "Monday"), (3, "Tuesday"), (4, "Wednesday"), (5, "Thursday")
     ]
 
-    /// Same adaptive treatment as `secondaryCards` -- four cards wrap down
-    /// to two, or one, per row instead of overflowing a narrow screen.
+    /// Same reasoning as `secondaryCards` -- exactly 4 equal columns on
+    /// regular width so the cards spread across the full row like the
+    /// original fixed 4-wide HStack, adaptive (wrapping down to two, or
+    /// one, per row) on compact.
     private var dailyGradeCards: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 16)], spacing: 16) {
+        let columns = isCompact
+            ? [GridItem(.adaptive(minimum: 150), spacing: 16)]
+            : Array(repeating: GridItem(.flexible(), spacing: 16), count: 4)
+        return LazyVGrid(columns: columns, spacing: 16) {
             ForEach(Self.weekdayLabels, id: \.weekday) { entry in
                 DayGradeCard(label: entry.label, percent: testPercent(onWeekday: entry.weekday))
             }
