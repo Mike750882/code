@@ -418,35 +418,39 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     landscape-iPhone/regular-size-class quirk that broke the header
     doesn't matter, since a fixed 3- or 4-column layout looks fine on a
     wide landscape iPhone too, not just iPad.
-  - **Practice** — `answerSlots` and `letterBank` wrap a long word's
-    tiles onto more than one row (one 56pt-wide tile per letter can
-    easily add up to more than an iPhone's screen width) -- this was the
-    one functionally broken layout case, not just cosmetic, since without
-    wrapping a long enough word's tiles could exceed the screen width
-    entirely with no way to reach the rest of them, and rows are chunked
-    by hand (`tileRows(itemCount:availableWidth:)`,
-    `tilesPerRow(availableWidth:)`) with each row independently centered
-    (`.frame(maxWidth: .infinity)` per row) so a short trailing row (e.g.
-    a 7-letter word wrapping 5+2) centers under the row above it instead
-    of hugging the left edge like a plain adaptive `LazyVGrid`'s trailing
-    row does. Getting the available width right took three tries. The
-    first two both measured it via a *separate* layer -- a
-    `.background(GeometryReader { ... })` + `PreferenceKey` (tried both
-    before and after `.padding(24)`/`.frame(maxWidth: .infinity)` resolved
-    the view's final size) and, next, `onGeometryChange` (iOS 17+) -- and
-    both reported a near-zero width on device regardless of where in the
-    chain they sat, wrapping every tile onto its own row; a full
-    delete-and-reinstall each time ruled out a stale build as the cause.
-    The working fix (third try) uses a `GeometryReader` as `body`'s
+  - **Practice** — `answerSlots` and `letterBank` always lay a word's
+    tiles out in a single row rather than wrapping. Wrapping was tried
+    first (tiles wrap fine once you can measure the available width
+    correctly -- see below), but a child sounding out a word needs to see
+    it as one connected line of blanks; splitting it across stacked rows
+    works against that, especially mid-word where the break falls in an
+    arbitrary place. Instead, `tileMetrics(availableWidth:tileCount:)`
+    computes a tile size, spacing, and font for the *specific* word that
+    guarantees all of it fits on one line: at the normal 56x64pt/10pt-gap/
+    28pt-font size if it fits, otherwise spacing shrinks first (down to a
+    4pt floor), then the tiles themselves shrink (scaling height and font
+    to match, so a smaller tile still looks like a smaller version of the
+    same tile rather than a squished one) until everything fits. Both
+    `answerSlots` and `letterBank` are sized off the *word's* full length
+    (not the bank's, which is shorter whenever some letters are already
+    prefilled), so a bank tile always matches its answer slot's size.
+    Getting the available width right (needed regardless of whether tiles
+    wrap or shrink) took three tries. The first two both measured it via a
+    *separate* layer -- a `.background(GeometryReader { ... })` +
+    `PreferenceKey` (tried both before and after
+    `.padding(24)`/`.frame(maxWidth: .infinity)` resolved the view's final
+    size) and, next, `onGeometryChange` (iOS 17+) -- and both reported a
+    near-zero width on device regardless of where in the chain they sat; a
+    full delete-and-reinstall each time ruled out a stale build as the
+    cause. The working fix (third try) uses a `GeometryReader` as `body`'s
     top-level container instead of a measurement-only background layer:
-    `answerSlots`/`letterBank` now take `availableWidth: CGFloat` as a
-    parameter, fed directly from that `GeometryReader`'s `proxy.size.width`
-    in the same render pass -- no `@State` round-trip, no separate layer
-    whose sizing could disagree with the foreground content's. A
-    `#if DEBUG`-only `Text` above the word shows the live measured width
-    and computed tiles-per-row on screen, so a build can be visually
-    checked without guessing; pull it out once wrapping is confirmed
-    solid on device across portrait, landscape, and a multi-row word.
+    `tileMetrics` is computed directly from that `GeometryReader`'s
+    `proxy.size.width` in the same render pass -- no `@State` round-trip,
+    no separate layer whose sizing could disagree with the foreground
+    content's. A `#if DEBUG`-only `Text` above the word shows the live
+    measured width and computed tile width on screen, so a build can be
+    visually checked without guessing; pull it out once confirmed solid
+    on device.
   - **Practice results** (`PracticeResultsView.swift`) — used to be a
     fixed-height (`maxHeight: 320`) `ScrollView` around just the word
     list, sitting under a non-scrolling score card. In landscape on an
