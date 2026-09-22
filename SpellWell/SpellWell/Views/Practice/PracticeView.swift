@@ -123,15 +123,17 @@ struct PracticeView: View {
     /// Each answer slot's frame in the shared "practiceArea" coordinate
     /// space, so a drag's release point can be tested against them.
     @State private var slotFrames: [Int: CGRect] = [:]
-    /// Measured width available to the tile rows (see `TileAreaWidthKey`),
-    /// used to decide how many tiles fit per row and to chunk both
-    /// `answerSlots` and `letterBank` into rows by hand -- a plain
-    /// `LazyVGrid` lays a partially-filled trailing row out flush against
-    /// the left edge instead of centered, which looked wrong once a
-    /// word's tiles wrapped to more than one row. 400 is just a
-    /// reasonable starting guess for the first frame or two before the
-    /// real measurement arrives.
-    @State private var tileAreaWidth: CGFloat = 400
+    /// Measured *full screen* width (see `TileAreaWidthKey`) -- not yet
+    /// reduced by the screen's own 24pt-per-side padding, which
+    /// `tilesPerRow` subtracts back out -- used to decide how many tiles
+    /// fit per row and to chunk both `answerSlots` and `letterBank` into
+    /// rows by hand. A plain `LazyVGrid` lays a partially-filled trailing
+    /// row out flush against the left edge instead of centered, which
+    /// looked wrong once a word's tiles wrapped to more than one row. 440
+    /// is just a reasonable starting guess (~390pt of content after
+    /// padding) for the first frame or two before the real measurement
+    /// arrives.
+    @State private var tileAreaWidth: CGFloat = 440
     /// This word's challenge type, resolved fresh each time a new word is
     /// set up -- on a `.halfAndHalf` day this is where that resolves to
     /// either tiles or typed for this particular word.
@@ -202,19 +204,22 @@ struct PracticeView: View {
             }
             Spacer()
         }
-        // Measures this VStack's own width -- i.e. after .padding(24)
-        // reduces the space proposed to it, but before that padding adds
-        // its empty margin back around the outside -- so it matches
-        // exactly what answerSlots/letterBank actually receive. Measuring
-        // any later in the modifier chain (after .padding/.frame) would
-        // report the full screen width instead, 48pt too wide.
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Measured *after* .frame(maxWidth: .infinity) resolves this view
+        // to its final, unambiguous full-screen width -- measuring any
+        // earlier (e.g. directly on the VStack above, before it's been
+        // told to expand) caught it still at its natural/compact content
+        // size, near zero before anything forced it wider, which made
+        // every tile wrap onto its own row. tilesPerRow subtracts the
+        // known 24pt-per-side padding back out in code instead, since
+        // that's simpler and more reliable than trying to measure the
+        // padded width directly.
         .background(
             GeometryReader { geo in
                 Color.clear.preference(key: TileAreaWidthKey.self, value: geo.size.width)
             }
         )
-        .padding(24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -342,11 +347,13 @@ struct PracticeView: View {
         return max(1, Int((availableWidth + 10) / (56 + 10)))
     }
 
-    /// Splits `itemCount` tile indices into rows sized by `tileAreaWidth`,
-    /// left-to-right, wrapping to a new row once a row is full -- shared
-    /// by `answerSlots` and `letterBank` so both wrap identically.
+    /// Splits `itemCount` tile indices into rows sized by `tileAreaWidth`
+    /// (minus the screen's own 24pt-per-side padding, since that width is
+    /// measured full-screen -- see `tileAreaWidth`), left-to-right,
+    /// wrapping to a new row once a row is full -- shared by `answerSlots`
+    /// and `letterBank` so both wrap identically.
     private func tileRows(itemCount: Int) -> [[Int]] {
-        let perRow = tilesPerRow(availableWidth: tileAreaWidth)
+        let perRow = tilesPerRow(availableWidth: tileAreaWidth - 48)
         guard itemCount > 0 else { return [] }
         return stride(from: 0, to: itemCount, by: perRow).map { start in
             Array(start..<min(start + perRow, itemCount))

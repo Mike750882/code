@@ -437,7 +437,23 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     tracking), tiles are split into rows of however many fit, and each
     row is its own `HStack` independently centered
     (`.frame(maxWidth: .infinity)`) -- so a short trailing row centers
-    under the row(s) above it instead of hugging the left edge.
+    under the row(s) above it instead of hugging the left edge. The
+    first version of this measurement made things worse, not better --
+    every tile ended up on its own row. The `.background(GeometryReader
+    { ... })` was attached directly on the tile `VStack`, *before* that
+    view's own `.padding(24)` / `.frame(maxWidth: .infinity, maxHeight:
+    .infinity)` further down the modifier chain, so it measured the
+    view's natural/ideal size (near zero, before anything had told it to
+    grow) instead of its final resolved width -- `tilesPerRow` saw a
+    tiny number and fit one tile per row almost everywhere. The fix was
+    to move that `.background(GeometryReader { ... })` to *after*
+    `.padding(24)` and `.frame(maxWidth: .infinity, maxHeight: .infinity)`
+    in the chain, so it measures the fully-resolved, unambiguous
+    full-screen width instead -- `tileAreaWidth` now holds that
+    full-screen figure, and `tileRows(itemCount:)` subtracts the known
+    48pt (24pt each side) of padding back out in code
+    (`tilesPerRow(availableWidth: tileAreaWidth - 48)`) rather than
+    trying to measure the already-padded width directly.
   - **Practice results** (`PracticeResultsView.swift`) — used to be a
     fixed-height (`maxHeight: 320`) `ScrollView` around just the word
     list, sitting under a non-scrolling score card. In landscape on an
