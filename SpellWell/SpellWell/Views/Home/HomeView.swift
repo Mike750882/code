@@ -71,14 +71,20 @@ struct HomeView: View {
     /// `.regular`), so branching on it here would leave some iPhones with
     /// the old left-aligned layout instead. One consistent right-aligned
     /// layout avoids depending on that distinction at all.
+    ///
+    /// The tour banner sits under the name rather than between the
+    /// greeting and the pills -- squeezed into whatever sliver of an
+    /// HStack was left between those two, its own content (an icon, "Take
+    /// a Tour," an X) had no room to lay out normally and wrapped one
+    /// character per line instead. Stacked under the greeting, it gets
+    /// its own full-width row to size itself in normally.
     private var header: some View {
         HStack(alignment: .top) {
-            greeting
-            Spacer()
-            if showTourBanner {
-                tourBanner
-                Spacer()
+            VStack(alignment: .leading, spacing: 12) {
+                greeting
+                if showTourBanner { tourBanner }
             }
+            Spacer()
             streakAndWordListPills
         }
     }
