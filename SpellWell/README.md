@@ -402,7 +402,22 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     stretching or overflowing) -- this was the one functionally broken
     case, not just a cosmetic one, since a long enough word's tiles could
     exceed an iPhone's screen width entirely with no way to reach the
-    rest of them.
+    rest of them. Same bunched-on-the-left issue as the Home cards
+    showed up here too, in landscape or on a wide screen (more room than
+    the tiles need, so `.adaptive` computes extra columns and the tiles
+    end up left-aligned instead of centered) -- fixed with `tileRowWidth
+    (forTileCount:)`, capping each grid at exactly the width its own
+    tiles need (`.frame(maxWidth:)`) and re-centering that within the
+    full available width (a second `.frame(maxWidth: .infinity)`).
+  - **Practice results** (`PracticeResultsView.swift`) — used to be a
+    fixed-height (`maxHeight: 320`) `ScrollView` around just the word
+    list, sitting under a non-scrolling score card. In landscape on an
+    iPhone (much less vertical room than portrait), the score card alone
+    could take up nearly all the available height, squeezing the word
+    list down to barely any of its own 320pt cap with the rest of the
+    words unreachable. The whole screen scrolls now instead -- the score
+    card, word list, and button are all one `ScrollView`'s content, so
+    there's no fixed sub-region to run out of room.
   - **Add List** — the header (title + word-count stepper) and footer
     (caption + Import/Save buttons) stack on compact instead of forcing
     one wide row; the word grid's column width shrinks from 200pt to

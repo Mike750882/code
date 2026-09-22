@@ -260,6 +260,13 @@ struct PracticeView: View {
         // needs instead, keeping every slot the same fixed size (the
         // matching min/max on the column) rather than stretching to fill
         // whatever width is available.
+        //
+        // The trailing .frame(maxWidth:) pair caps the grid at exactly
+        // the width its own tiles need, then re-centers that within the
+        // full available width -- without it, .adaptive computes room
+        // for more columns than there are tiles whenever there's extra
+        // width to spare (a wide screen, or landscape), and the tiles end
+        // up bunched on the left instead of centered.
         let tileColumn = [GridItem(.adaptive(minimum: 56, maximum: 56), spacing: 10)]
         return LazyVGrid(columns: tileColumn, spacing: 10) {
             ForEach(0..<wordLength, id: \.self) { slotIndex in
@@ -298,7 +305,18 @@ struct PracticeView: View {
                 }
             }
         }
+        .frame(maxWidth: tileRowWidth(forTileCount: wordLength))
+        .frame(maxWidth: .infinity)
         .padding(.bottom, 20)
+    }
+
+    /// Natural width of `count` 56pt tiles in a single row, 10pt apart --
+    /// used to cap a tile grid at exactly the width it needs so it can be
+    /// centered instead of stretching (and bunching left) to fill
+    /// whatever width is actually available.
+    private func tileRowWidth(forTileCount count: Int) -> CGFloat {
+        guard count > 0 else { return 0 }
+        return CGFloat(count) * 56 + CGFloat(count - 1) * 10
     }
 
     private var typedAnswerField: some View {
@@ -322,13 +340,17 @@ struct PracticeView: View {
 
     private var letterBank: some View {
         // Same reasoning as answerSlots -- wraps to more rows instead of
-        // running off a narrow screen's edge for a long word.
+        // running off a narrow screen's edge for a long word, and the
+        // same width-cap-then-center trick so it doesn't bunch left on a
+        // wide screen or in landscape.
         let tileColumn = [GridItem(.adaptive(minimum: 56, maximum: 56), spacing: 10)]
         return LazyVGrid(columns: tileColumn, spacing: 10) {
             ForEach(Array(bankOrder.enumerated()), id: \.offset) { index, letter in
                 bankTile(index: index, letter: letter)
             }
         }
+        .frame(maxWidth: tileRowWidth(forTileCount: bankOrder.count))
+        .frame(maxWidth: .infinity)
         .padding(.bottom, 32)
         .allowsHitTesting(!isAdvancing)
     }

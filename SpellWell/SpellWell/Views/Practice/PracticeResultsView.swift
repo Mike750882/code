@@ -27,18 +27,26 @@ struct PracticeResultsView: View {
     private var grade: String { Grading.letter(forPercent: percent) }
     private var gradeColor: Color { Grading.color(forPercent: percent) }
 
+    /// The whole screen scrolls, not just the word list in a fixed-height
+    /// sub-region -- in landscape on an iPhone (much less vertical room
+    /// than portrait), the score card alone could take up nearly all the
+    /// available height, leaving the word list squeezed down to barely
+    /// any of its own 320pt cap and the rest of the words unreachable.
     var body: some View {
-        VStack(spacing: 24) {
-            scoreCard
-            wordList
-            Button("Back to Home", action: onDone)
-                .font(Theme.body(16, weight: .medium))
-                .foregroundStyle(Theme.blue)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+        ScrollView {
+            VStack(spacing: 24) {
+                scoreCard
+                wordList
+                Button("Back to Home", action: onDone)
+                    .font(Theme.body(16, weight: .medium))
+                    .foregroundStyle(Theme.blue)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+            }
+            .frame(maxWidth: 520)
+            .padding(.vertical, 24)
         }
-        .frame(maxWidth: 520)
     }
 
     private var scoreCard: some View {
@@ -59,15 +67,15 @@ struct PracticeResultsView: View {
     }
 
     private var wordList: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                ForEach(results) { result in
-                    wordRow(result)
-                    Divider().overlay(Theme.hairline)
-                }
+        // No longer its own nested ScrollView with a fixed height cap --
+        // the whole screen scrolls now (see body), so this just lays out
+        // the rows directly.
+        VStack(spacing: 0) {
+            ForEach(results) { result in
+                wordRow(result)
+                Divider().overlay(Theme.hairline)
             }
         }
-        .frame(maxHeight: 320)
     }
 
     private func wordRow(_ result: WordResult) -> some View {
