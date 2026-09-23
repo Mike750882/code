@@ -150,7 +150,7 @@ struct ProgressReportView: View {
                         .font(Theme.display(20))
                         .foregroundStyle(Grading.color(forPercent: row.percent))
                     ProgressView(value: Double(row.percent) / 100)
-                        .tint(Theme.gold)
+                        .tint(Theme.primary)
                         .frame(width: 100)
                 }
             }
@@ -159,7 +159,7 @@ struct ProgressReportView: View {
                 weekPendingDeletion = row
             } label: {
                 Image(systemName: "trash")
-                    .foregroundStyle(Theme.coral)
+                    .foregroundStyle(Theme.error)
             }
             .padding(.leading, 16)
         }
@@ -218,8 +218,8 @@ struct ProgressReportView: View {
 
     private func iconColor(for result: Bool?) -> Color {
         switch result {
-        case true: return Theme.green
-        case false: return Theme.coral
+        case true: return Theme.success
+        case false: return Theme.error
         case nil: return Theme.textSecondary
         }
     }

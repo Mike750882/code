@@ -120,27 +120,27 @@ struct HomeView: View {
     private var streakAndWordListPills: some View {
         VStack(spacing: 8) {
             HStack(spacing: 6) {
-                Image(systemName: "star").foregroundStyle(Theme.blue)
+                Image(systemName: "star").foregroundStyle(Theme.primary)
                 Text("\(child.currentStreak())-day streak")
                     .font(Theme.body(15, weight: .medium))
-                    .foregroundStyle(Theme.blue)
+                    .foregroundStyle(Theme.primary)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .overlay(Capsule().stroke(Theme.blue, lineWidth: 1))
+            .overlay(Capsule().stroke(Theme.primary, lineWidth: 1))
 
             Button {
                 showWordList = true
             } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "list.bullet").foregroundStyle(Theme.purple)
+                    Image(systemName: "list.bullet").foregroundStyle(Theme.tile)
                     Text("This week's words")
                         .font(Theme.body(15, weight: .medium))
-                        .foregroundStyle(Theme.purple)
+                        .foregroundStyle(Theme.tile)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
-                .overlay(Capsule().stroke(Theme.purple, lineWidth: 1))
+                .overlay(Capsule().stroke(Theme.tile, lineWidth: 1))
             }
         }
     }
@@ -156,7 +156,7 @@ struct HomeView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "sparkles")
                         .font(.system(size: 18))
-                        .foregroundStyle(Theme.purple)
+                        .foregroundStyle(Theme.tile)
                     Text("Take a Tour")
                         .font(Theme.body(17, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
@@ -176,8 +176,8 @@ struct HomeView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
-        .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.purple, lineWidth: 1.5))
-        .shadow(color: Theme.purple.opacity(isTourBannerPulsing ? 0.55 : 0.15), radius: isTourBannerPulsing ? 12 : 4)
+        .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.tile, lineWidth: 1.5))
+        .shadow(color: Theme.tile.opacity(isTourBannerPulsing ? 0.55 : 0.15), radius: isTourBannerPulsing ? 12 : 4)
         .scaleEffect(isTourBannerPulsing ? 1.05 : 1.0)
         .onAppear {
             withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
@@ -227,7 +227,7 @@ struct HomeView: View {
                 HStack {
                     Image(systemName: "square.and.pencil")
                         .font(.system(size: isCompact ? 24 : 33))
-                        .foregroundStyle(Theme.coral)
+                        .foregroundStyle(Theme.action)
                     Spacer()
                     Text("\(todayCompletedCount) of \(thisWeekWords.count) today")
                         .font(Theme.body(isCompact ? 15 : 22))
@@ -242,7 +242,7 @@ struct HomeView: View {
             }
             .padding(isCompact ? 24 : 42)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .card(borderColor: Theme.coral, lineWidth: 1.5)
+            .card(background: Theme.surfaceRaised, borderColor: Theme.action, lineWidth: 1.5)
         }
         .buttonStyle(.plain)
         .alert("No words yet", isPresented: $showNoWordsAlert) {
@@ -379,7 +379,7 @@ private struct DayGradeCard: View {
                 .foregroundStyle(Theme.textSecondary)
                 .multilineTextAlignment(.center)
             ProgressView(value: Double(percent ?? 0) / 100)
-                .tint(Theme.gold)
+                .tint(Theme.primary)
         }
         .padding(18)
         .frame(maxWidth: .infinity)
@@ -399,15 +399,15 @@ private struct SecondaryCard: View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Image(systemName: icon).foregroundStyle(Theme.purple)
+                    Image(systemName: icon).foregroundStyle(Theme.tile)
                     Spacer()
                     if let badge {
                         Text(badge.uppercased())
                             .font(.caption2.weight(.medium))
-                            .foregroundStyle(Theme.blue)
+                            .foregroundStyle(Theme.primary)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .overlay(Capsule().stroke(Theme.blue.opacity(0.5), lineWidth: 1))
+                            .overlay(Capsule().stroke(Theme.primary.opacity(0.5), lineWidth: 1))
                     }
                 }
                 Text(title)
@@ -418,7 +418,7 @@ private struct SecondaryCard: View {
                     .foregroundStyle(Theme.textSecondary)
                     .lineLimit(2)
                 if let progress {
-                    ProgressView(value: progress).tint(Theme.gold)
+                    ProgressView(value: progress).tint(Theme.reward)
                 }
             }
             .padding(18)

@@ -17,7 +17,7 @@ struct WordListView: View {
                 Spacer()
                 Button("Done") { dismiss() }
                     .font(Theme.body(16, weight: .medium))
-                    .foregroundStyle(Theme.blue)
+                    .foregroundStyle(Theme.primary)
             }
 
             if words.isEmpty {

@@ -87,19 +87,19 @@ struct ProfilesView: View {
                     .foregroundStyle(Theme.textPrimary)
                 Text(active ? "Active on this iPad" : "Tap to switch to this profile")
                     .font(Theme.body(13))
-                    .foregroundStyle(active ? Theme.blue : Theme.textSecondary)
+                    .foregroundStyle(active ? Theme.primary : Theme.textSecondary)
             }
             Spacer()
             if active {
                 Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(Theme.blue)
+                    .foregroundStyle(Theme.primary)
             }
             if children.count > 1 {
                 Button {
                     childPendingDeletion = child
                 } label: {
                     Image(systemName: "trash")
-                        .foregroundStyle(Theme.coral)
+                        .foregroundStyle(Theme.error)
                 }
                 .padding(.leading, 16)
             }
@@ -123,10 +123,10 @@ struct ProfilesView: View {
             }
         }
         .font(Theme.body(16, weight: .medium))
-        .foregroundStyle(Theme.blue)
+        .foregroundStyle(Theme.primary)
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
-        .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+        .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.primary, lineWidth: 1.5))
         .padding(.top, 16)
     }
 

@@ -39,10 +39,10 @@ struct PracticeResultsView: View {
                 wordList
                 Button("Back to Home", action: onDone)
                     .font(Theme.body(16, weight: .medium))
-                    .foregroundStyle(Theme.blue)
+                    .foregroundStyle(Theme.primary)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+                    .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.primary, lineWidth: 1.5))
             }
             .frame(maxWidth: 520)
             .padding(.vertical, 24)
@@ -81,7 +81,7 @@ struct PracticeResultsView: View {
     private func wordRow(_ result: WordResult) -> some View {
         HStack {
             Image(systemName: result.isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .foregroundStyle(result.isCorrect ? Theme.green : Theme.coral)
+                .foregroundStyle(result.isCorrect ? Theme.success : Theme.error)
             Text(result.word.capitalized)
                 .font(Theme.body(17))
                 .foregroundStyle(Theme.textPrimary)
@@ -97,7 +97,7 @@ struct PracticeResultsView: View {
                         .foregroundStyle(Theme.textSecondary)
                     Text(result.attempt.isEmpty ? "(blank)" : result.attempt.capitalized)
                         .font(Theme.body(15, weight: .medium))
-                        .foregroundStyle(Theme.coral)
+                        .foregroundStyle(Theme.error)
                 }
             }
         }

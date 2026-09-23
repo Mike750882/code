@@ -127,10 +127,10 @@ struct SettingsView: View {
                     Text("Manage")
                 }
                 .font(Theme.body(15, weight: .medium))
-                .foregroundStyle(Theme.blue)
+                .foregroundStyle(Theme.primary)
                 .padding(.horizontal, 18)
                 .padding(.vertical, 10)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.primary, lineWidth: 1.5))
             }
         }
     }
@@ -164,7 +164,7 @@ struct SettingsView: View {
         SettingsRow(title: "Text size", subtitle: "How big words look while spelling.") {
             HStack {
                 Slider(value: $textScale, in: 0.8...1.6)
-                    .tint(Theme.blue)
+                    .tint(Theme.primary)
                     .onChange(of: textScale) { _, newValue in child.textScale = newValue }
 
                 Text("friend")
@@ -199,10 +199,10 @@ struct SettingsView: View {
                     Label("Preview", systemImage: "play.circle")
                 }
                 .font(Theme.body(15))
-                .foregroundStyle(Theme.blue)
+                .foregroundStyle(Theme.primary)
                 .padding(.horizontal, 18)
                 .padding(.vertical, 10)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.primary, lineWidth: 1.5))
             }
         }
     }
@@ -276,7 +276,7 @@ struct SettingsView: View {
                         .frame(width: 44, height: 44)
                 }
                 Circle()
-                    .fill(Color(hex: profile.coral))
+                    .fill(Color(hex: profile.action))
                     .frame(width: 36, height: 36)
             }
             Text(profile.name)
@@ -374,10 +374,10 @@ struct SettingsView: View {
                 }
                 .disabled(syncMonitor.status == .syncing)
                 .font(Theme.body(15, weight: .medium))
-                .foregroundStyle(Theme.blue)
+                .foregroundStyle(Theme.primary)
                 .padding(.horizontal, 18)
                 .padding(.vertical, 10)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.primary, lineWidth: 1.5))
             }
         }
     }
@@ -392,7 +392,7 @@ struct SettingsView: View {
     }
 
     private var syncStatusColor: Color {
-        if case .failed = syncMonitor.status { return Theme.coral }
+        if case .failed = syncMonitor.status { return Theme.error }
         return Theme.textSecondary
     }
 
@@ -411,10 +411,10 @@ struct SettingsView: View {
                     Text("View report")
                 }
                 .font(Theme.body(15, weight: .medium))
-                .foregroundStyle(Theme.blue)
+                .foregroundStyle(Theme.primary)
                 .padding(.horizontal, 18)
                 .padding(.vertical, 10)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.primary, lineWidth: 1.5))
             }
         }
     }

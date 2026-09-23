@@ -227,7 +227,7 @@ struct PracticeView: View {
                     .foregroundStyle(Theme.textPrimary)
             }
             ProgressView(value: Double(currentIndex), total: Double(max(words.count, 1)))
-                .tint(Theme.blue)
+                .tint(Theme.primary)
                 .padding(.horizontal, 16)
             Text("Word \(min(currentIndex + 1, words.count)) of \(words.count)")
                 .font(Theme.body(14))
@@ -242,9 +242,9 @@ struct PracticeView: View {
             } label: {
                 Image(systemName: "speaker.wave.2.fill")
                     .font(.title2)
-                    .foregroundStyle(Theme.blue)
+                    .foregroundStyle(Theme.primary)
                     .frame(width: 72, height: 72)
-                    .overlay(Circle().stroke(Theme.blue, lineWidth: 1.5))
+                    .overlay(Circle().stroke(Theme.primary, lineWidth: 1.5))
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text("Tap to hear the word")
@@ -261,8 +261,8 @@ struct PracticeView: View {
     private func answerSlots(wordLength: Int, metrics: TileMetrics) -> some View {
         let borderColor: Color = {
             switch feedback {
-            case .correct: return Theme.green
-            case .incorrect: return Theme.coral
+            case .correct: return Theme.success
+            case .incorrect: return Theme.error
             case nil: return Theme.hairline
             }
         }()
@@ -292,9 +292,9 @@ struct PracticeView: View {
                     Text(letter.uppercased())
                         .font(Theme.display(metrics.font))
                         .frame(width: metrics.width, height: metrics.height)
-                        .background(isTargeted ? Theme.purple.opacity(0.15) : Theme.surface)
+                        .background(isTargeted ? Theme.tile.opacity(0.15) : Theme.surface)
                         .overlay(
-                            Rectangle().stroke(isTargeted ? Theme.purple : borderColor, lineWidth: isTargeted ? 2 : (feedback == nil ? 1 : 2))
+                            Rectangle().stroke(isTargeted ? Theme.tile : borderColor, lineWidth: isTargeted ? 2 : (feedback == nil ? 1 : 2))
                         )
                         .background(
                             GeometryReader { geo in
@@ -362,7 +362,7 @@ struct PracticeView: View {
             .background(Theme.surface)
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.controlCornerRadius)
-                    .stroke(feedback == .incorrect ? Theme.coral : Theme.hairline, lineWidth: feedback == nil ? 1 : 2)
+                    .stroke(feedback == .incorrect ? Theme.error : Theme.hairline, lineWidth: feedback == nil ? 1 : 2)
             )
             .onSubmit { checkWord() }
             .padding(.bottom, 20)
@@ -397,7 +397,7 @@ struct PracticeView: View {
             .frame(width: metrics.width, height: metrics.height)
             .background(Theme.surface)
             .overlay(
-                Rectangle().stroke(used ? Theme.purple.opacity(0.25) : Theme.purple, lineWidth: used ? 1 : 2)
+                Rectangle().stroke(used ? Theme.tile.opacity(0.25) : Theme.tile, lineWidth: used ? 1 : 2)
             )
             .opacity(used ? 0.4 : 1)
             .scaleEffect(isDragging ? 1.08 : 1)
@@ -464,10 +464,10 @@ struct PracticeView: View {
 
             Button("Check my word") { checkWord() }
                 .font(Theme.body(16, weight: .medium))
-                .foregroundStyle(Theme.coral)
+                .foregroundStyle(Theme.action)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
-                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.coral, lineWidth: 1.5))
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.action, lineWidth: 1.5))
         }
         .disabled(isAdvancing)
         .opacity(isAdvancing ? 0.4 : 1)

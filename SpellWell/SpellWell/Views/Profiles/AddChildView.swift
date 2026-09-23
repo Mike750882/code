@@ -34,7 +34,7 @@ struct AddChildView: View {
             VStack(spacing: 24) {
                 Image(systemName: "person.crop.circle.badge.plus")
                     .font(.system(size: 40))
-                    .foregroundStyle(Theme.blue)
+                    .foregroundStyle(Theme.primary)
                 Text(title)
                     .font(Theme.display(28))
                     .foregroundStyle(Theme.textPrimary)
@@ -59,13 +59,13 @@ struct AddChildView: View {
                     Button("Create") { create() }
                         .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                         .font(Theme.body(16, weight: .medium))
-                        .foregroundStyle(Theme.blue)
+                        .foregroundStyle(Theme.primary)
                         .padding(.horizontal, 24)
                         .padding(.vertical, 12)
-                        .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+                        .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.primary, lineWidth: 1.5))
                 } else {
                     ProgressView()
-                        .tint(Theme.blue)
+                        .tint(Theme.primary)
                         .padding(.vertical, 8)
                     Text("Just a moment...")
                         .font(Theme.body(13))

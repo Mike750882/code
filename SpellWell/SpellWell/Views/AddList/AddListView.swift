@@ -183,10 +183,10 @@ struct AddListView: View {
                 dismiss()
             }
             .font(Theme.body(15, weight: .medium))
-            .foregroundStyle(Theme.blue)
+            .foregroundStyle(Theme.primary)
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
-            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.primary, lineWidth: 1.5))
         }
 
         return VStack(alignment: .leading, spacing: 16) {

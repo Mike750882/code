@@ -32,6 +32,6 @@ enum Grading {
     }
 
     static func color(forPercent percent: Int) -> Color {
-        percent >= 70 ? Theme.green : Theme.coral
+        percent >= 70 ? Theme.success : Theme.error
     }
 }

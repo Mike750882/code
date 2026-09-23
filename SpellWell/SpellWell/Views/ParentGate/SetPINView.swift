@@ -25,7 +25,7 @@ struct SetPINView: View {
         VStack(spacing: 24) {
             Image(systemName: "lock.fill")
                 .font(.title)
-                .foregroundStyle(Theme.blue)
+                .foregroundStyle(Theme.primary)
             Text(currentTitle)
                 .font(Theme.display(26))
                 .foregroundStyle(Theme.textPrimary)

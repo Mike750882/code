@@ -21,9 +21,9 @@ struct PINPad: View {
             HStack(spacing: 16) {
                 ForEach(0..<pinLength, id: \.self) { index in
                     Circle()
-                        .strokeBorder(showError ? Theme.coral : Theme.blue, lineWidth: 1.5)
+                        .strokeBorder(showError ? Theme.error : Theme.primary, lineWidth: 1.5)
                         .background(
-                            Circle().fill(index < digits.count ? (showError ? Theme.coral : Theme.blue) : Color.clear)
+                            Circle().fill(index < digits.count ? (showError ? Theme.error : Theme.primary) : Color.clear)
                         )
                         .frame(width: 16, height: 16)
                 }

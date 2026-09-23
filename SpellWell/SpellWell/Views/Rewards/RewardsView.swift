@@ -73,10 +73,10 @@ struct RewardsView: View {
             Text("PIN required to edit")
         }
         .font(Theme.body(12))
-        .foregroundStyle(Theme.blue)
+        .foregroundStyle(Theme.primary)
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .overlay(Capsule().stroke(Theme.blue, lineWidth: 1))
+        .overlay(Capsule().stroke(Theme.primary, lineWidth: 1))
 
         return Group {
             if isCompact {
@@ -119,7 +119,7 @@ struct RewardsView: View {
                         .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline, lineWidth: 1))
                         .focused($focusedField, equals: .reward(weekday))
                     Slider(value: bindingForThreshold(weekday), in: 0...100, step: 5)
-                        .tint(Theme.purple)
+                        .tint(Theme.tile)
                 }
                 .padding(.vertical, 16)
             } else {
@@ -138,7 +138,7 @@ struct RewardsView: View {
                         .focused($focusedField, equals: .reward(weekday))
 
                     Slider(value: bindingForThreshold(weekday), in: 0...100, step: 5)
-                        .tint(Theme.purple)
+                        .tint(Theme.tile)
                         .frame(width: 180)
 
                     Text("\(Int(thresholds[weekday] ?? 70))% right")
@@ -155,7 +155,7 @@ struct RewardsView: View {
         let titleField = VStack(alignment: .leading, spacing: 4) {
             Text("WEEKLY PRIZE")
                 .font(.caption2.weight(.semibold))
-                .foregroundStyle(Theme.gold)
+                .foregroundStyle(Theme.rewardText)
             TextField("Weekly prize", text: $weeklyPrizeTitle)
                 .font(Theme.display(20))
                 .foregroundStyle(Theme.textPrimary)
@@ -164,7 +164,7 @@ struct RewardsView: View {
 
         let earnedSlider = HStack(spacing: 16) {
             Slider(value: $weeklyPrizeThreshold, in: 0...100, step: 5)
-                .tint(Theme.purple)
+                .tint(Theme.tile)
             VStack(alignment: .trailing) {
                 Text("Earned").font(Theme.body(12)).foregroundStyle(Theme.textSecondary)
                 Text("\(Int(weeklyPrizeThreshold))%").font(Theme.display(22)).foregroundStyle(Theme.textPrimary)
@@ -175,14 +175,14 @@ struct RewardsView: View {
             if isCompact {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(spacing: 16) {
-                        Image(systemName: "star").foregroundStyle(Theme.gold)
+                        Image(systemName: "star").foregroundStyle(Theme.rewardIcon)
                         titleField
                     }
                     earnedSlider
                 }
             } else {
                 HStack(spacing: 16) {
-                    Image(systemName: "star").foregroundStyle(Theme.gold)
+                    Image(systemName: "star").foregroundStyle(Theme.rewardIcon)
                     titleField
                     Spacer()
                     earnedSlider.frame(width: 260)
@@ -190,8 +190,8 @@ struct RewardsView: View {
             }
         }
         .padding(20)
-        .background(Theme.goldFill)
-        .overlay(RoundedRectangle(cornerRadius: Theme.cardCornerRadius).stroke(Theme.gold, lineWidth: 1))
+        .background(Theme.rewardFill)
+        .overlay(RoundedRectangle(cornerRadius: Theme.cardCornerRadius).stroke(Theme.reward, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: Theme.cardCornerRadius))
     }
 
@@ -202,10 +202,10 @@ struct RewardsView: View {
 
         let saveButton = Button("Save rewards") { save() }
             .font(Theme.body(15, weight: .medium))
-            .foregroundStyle(Theme.blue)
+            .foregroundStyle(Theme.primary)
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
-            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+            .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.primary, lineWidth: 1.5))
 
         return Group {
             if isCompact {

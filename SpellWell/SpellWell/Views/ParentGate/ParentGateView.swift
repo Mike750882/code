@@ -10,7 +10,7 @@ struct ParentGateView: View {
         VStack(spacing: 24) {
             Image(systemName: "lock.fill")
                 .font(.title)
-                .foregroundStyle(Theme.blue)
+                .foregroundStyle(Theme.primary)
             Text("Grown-ups only")
                 .font(Theme.display(28))
                 .foregroundStyle(Theme.textPrimary)
@@ -24,7 +24,7 @@ struct ParentGateView: View {
 
             Button("Forgot your PIN?", action: onForgotPIN)
                 .font(Theme.body(14))
-                .foregroundStyle(Theme.blue)
+                .foregroundStyle(Theme.primary)
                 .underline()
         }
         .padding(32)

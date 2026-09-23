@@ -17,7 +17,7 @@ struct EditNameView: View {
             VStack(spacing: 24) {
                 Image(systemName: "person.crop.circle")
                     .font(.system(size: 40))
-                    .foregroundStyle(Theme.blue)
+                    .foregroundStyle(Theme.primary)
                 Text("Student's name")
                     .font(Theme.display(28))
                     .foregroundStyle(Theme.textPrimary)
@@ -40,10 +40,10 @@ struct EditNameView: View {
                 Button("Save") { save() }
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                     .font(Theme.body(16, weight: .medium))
-                    .foregroundStyle(Theme.blue)
+                    .foregroundStyle(Theme.primary)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.blue, lineWidth: 1.5))
+                    .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.primary, lineWidth: 1.5))
             }
             .padding(32)
             .frame(maxWidth: 420)

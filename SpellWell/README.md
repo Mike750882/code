@@ -493,30 +493,56 @@ structural, but don't be surprised by a typo or an API signature mismatch.
 
 `DesignSystem/Theme.swift` centralizes the visual language pulled from the
 mockups: a serif display face (`design: .serif`, i.e. Apple's New York) for
-headlines, system sans for body/UI text, an off-white background, and three
-accent colors — coral for primary actions, blue for streak/audio/info,
-purple for the letter-tile game and reward sliders.
+headlines, system sans for body/UI text, and a small set of *role-based*
+colors (`Theme.background`, `Theme.primary`, `Theme.action`, `Theme.tile`,
+`Theme.reward`, etc.) rather than colors named after their hue -- a role
+keeps its meaning (`Theme.action` is always "the main kid-facing action
+color") even though the actual hex behind it changes per theme. This
+followed a parent-supplied theme token spec (role names + hex values per
+theme); fonts from that spec (Exo 2/Nunito, Playfair Display/Lora, Alfa
+Slab One/Nunito) were intentionally *not* bundled -- every theme still uses
+the app's existing serif/system font pairing, colors only.
 
 - **Color themes** — Settings → "Color theme" lets a parent pick a whole
-  background+accent color set for that student, applied everywhere in the
-  app. `Theme`'s colors used to be hardcoded `static let` constants; now
-  each one (`Theme.background`, `Theme.coral`, etc.) is a computed
-  `static var` that reads from `Theme.currentProfile`, a `ColorProfile`
-  (`DesignSystem/Theme.swift`) bundling a background/surface/hairline/text
-  pair (each still light+dark adaptive) plus the coral/blue/purple/gold/
-  green accents. Every existing `Theme.xxx` call site across the app kept
-  working untouched — only `Theme.swift` itself changed.
+  color set for that student, applied everywhere in the app. Each `Theme`
+  color is a computed `static var` that reads from `Theme.currentProfile`,
+  a `ColorProfile` (`DesignSystem/Theme.swift`) bundling a background/
+  surface/surfaceRaised/hairline/text/textSecondary set (each light+dark
+  adaptive) plus five single-value accents: `primary` (navigation,
+  progress, Save/Done buttons, lock badges), `action` (the Practice card,
+  "Check my word"), `tile` (letter-tile border, reward sliders, decorative/
+  Settings icons), `reward` (weekly-prize border and progress fill, plus
+  `rewardFill`/`rewardIcon`/`rewardText` for its card background, star
+  icon, and label text specifically). Two colors -- `Theme.success` and
+  `Theme.error`, for right/wrong feedback -- are fixed constants on `Theme`
+  itself rather than part of `ColorProfile`: a child needs "right" vs
+  "wrong" to always read the same way regardless of which decorative theme
+  is active, and the source token spec didn't define role names for that
+  pair at all.
   `Child.colorProfile` stores which one (`ColorProfile.id`) a student has
-  picked, defaulting to `"default"` (today's original palette, unchanged).
+  picked, defaulting to `"default"` (today's original palette, unchanged --
+  the only profile that still adapts to the system's light/dark setting).
   `ContentView.body` applies it each render (`Theme.apply(profileID:)`,
   called as a `let _ =` side effect) and keys `.id()` on the whole tree to
   the profile, since static properties aren't environment-driven and
   nothing already on screen would otherwise know to re-read them when it
   changes — that `.id()` forces a full rebuild so every view picks up the
   new colors immediately, including ones currently visible.
-  `ColorProfile.all` currently lists `.default`, `.happy` (a vivid orange/
-  blue/yellow/red/green set), `.circus` (red/indigo/magenta/orange/
-  green), and `.focus` (a muted, low-distraction near-white/near-black/
-  gray background with two deep reds standing in for all five accent
-  roles, rather than five distinct hues); more (a parent supplies the hex
-  values for each) get added there the same way.
+  `ColorProfile.all` currently lists `.default`, `.space` (dark, starry
+  blues/purples), `.princess` (soft pink/purple, light), and `.circus`
+  (warm carnival-poster reds/blues/teals/golds, light) -- the last three
+  each fix their own light/dark values (all their token spec's colors were
+  single values to begin with), so their struct fields just repeat the same
+  hex for both the light and dark slot. `Happy`, the old `Circus`, and
+  `Focus` were retired in the same change; more themes (a parent supplies
+  the hex values for each role) get added the same way.
+  Borders (`hairline`) are one more simplification: the source spec calls
+  for the same hairline hue at three different opacities depending on
+  context (12% for row rules, 16% for section rules, 28% for card/field
+  borders), but this app doesn't distinguish those contexts anywhere today,
+  so `ColorProfile.hairlineOpacity` collapses that to one flat value per
+  profile -- 1.0 for Default (whose hairline hexes are already subtle,
+  pre-blended colors meant to be drawn solid, unchanged from before this
+  token system existed) and 0.28 (the "card/field borders" tier, the
+  dominant real usage in this codebase) for Space/Princess/Circus, whose
+  spec instead gives one bold hue meant to be washed out with opacity.
