@@ -77,7 +77,7 @@ struct TourView: View {
             icon: "star.fill",
             color: Theme.rewardIcon,
             title: "Earn rewards",
-            body: "Grown-ups can set a reward for each day of the week and a bigger prize for the week. Each day has its own slider for how accurate you need to be to earn it, for example, 70% on Monday and 90% by Thursday, so the bar can be set exactly where a grown-up wants."
+            body: "Grown-ups can set a reward for each day and a bigger prize for the week. Each day has its own slider for how accurate the student needs to be to earn it."
         )
     ]
 
