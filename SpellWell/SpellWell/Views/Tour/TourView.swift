@@ -71,7 +71,7 @@ struct TourView: View {
             icon: "lock.fill",
             color: Theme.primary,
             title: "Grown-ups only",
-            body: "A parent PIN protects the spelling list, rewards, and settings, so only a grown-up can change them."
+            body: "A parent PIN protects the spelling list, rewards, and settings so only a grown-up can change them."
         ),
         TourPage(
             icon: "star.fill",
