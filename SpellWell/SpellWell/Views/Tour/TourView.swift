@@ -65,7 +65,7 @@ struct TourView: View {
             icon: "chart.bar.fill",
             color: Theme.primary,
             title: "Grades and progress",
-            body: "After a test, see which words you got right and wrong. Daily grade cards on Home, and a full weekly report, track how you're doing over time. A grade only counts for the day you take the test, miss a day, like Monday, and there's no way to go back and add one later."
+            body: "After a test, see which words you got right or wrong. Daily grade cards on the home screen and a full weekly report track how the student is doing over time. A grade only counts for the day you take the test. Miss that day and no score will be recorded for that day."
         ),
         TourPage(
             icon: "lock.fill",
