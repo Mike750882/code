@@ -88,6 +88,12 @@ struct PracticeView: View {
 
     let weekList: WeekList
     let mode: PracticeMode
+    /// Non-nil for a "review missed words" session started from tapping a
+    /// low daily grade on Home -- only these word IDs are included instead
+    /// of the whole week's list. Always launched in Practice mode (see
+    /// `ContentView`), so retaking a handful of missed words never touches
+    /// that day's already-recorded Test grade.
+    var restrictToWordIDs: Set<UUID>? = nil
 
     @State private var currentIndex = 0
     /// Per answer-slot state, indexed by slot position, not fill order, so
@@ -121,11 +127,12 @@ struct PracticeView: View {
     /// either tiles or typed for this particular word.
     @State private var currentWordMode: WordInputMode = .tilesFull
     /// Practice allows retrying a word after a miss (see `checkWord`), so
-    /// this tracks whether the *first* attempt at the current word has
-    /// already gone into `results` -- retries after that update `feedback`
-    /// and can still advance on a correct answer, but don't add duplicate
-    /// entries to the end-of-session results screen.
-    @State private var recordedFirstAttempt = false
+    /// this tracks *where* the current word's entry lives in `results`
+    /// once a first attempt has been recorded (nil until then) -- letting
+    /// a later correct retry update that same entry to isCorrect: true
+    /// instead of the results screen permanently showing the word wrong
+    /// just because the *first* try missed it.
+    @State private var currentResultIndex: Int?
     @State private var typedAnswer: String = ""
     @FocusState private var isTypedFieldFocused: Bool
     @State private var feedback: Feedback?
@@ -139,7 +146,9 @@ struct PracticeView: View {
     enum Feedback { case correct, incorrect }
 
     private var words: [SpellingWord] {
-        (weekList.words ?? []).sorted(by: { $0.orderIndex < $1.orderIndex })
+        let all = (weekList.words ?? []).sorted(by: { $0.orderIndex < $1.orderIndex })
+        guard let restrictToWordIDs else { return all }
+        return all.filter { restrictToWordIDs.contains($0.id) }
     }
 
     private var currentWord: SpellingWord? {
@@ -194,7 +203,7 @@ struct PracticeView: View {
                     }
                     actionButtons
                 } else {
-                    PracticeResultsView(results: results) { dismiss() }
+                    PracticeResultsView(results: results, mode: mode, child: weekList.child) { dismiss() }
                 }
                 Spacer()
             }
@@ -476,7 +485,7 @@ struct PracticeView: View {
     private func setUpWord() {
         feedback = nil
         typedAnswer = ""
-        recordedFirstAttempt = false
+        currentResultIndex = nil
         guard let word = currentWord else {
             slotContents = []
             fillOrder = []
@@ -576,14 +585,21 @@ struct PracticeView: View {
             // Wrong answers just leave the red flash showing -- placing or
             // clearing a letter clears it as soon as the child edits again,
             // so they can keep retrying the same word until they get it.
-            // Only the first attempt goes into this session's end-of-
-            // practice results, and nothing here is ever persisted as a
-            // PracticeAttempt -- practice is just for rehearsing, and
-            // shouldn't show up later in the Progress Report or count
-            // toward any grade.
-            if !recordedFirstAttempt {
+            // Nothing here is ever persisted as a PracticeAttempt --
+            // practice is just for rehearsing, and shouldn't show up later
+            // in the Progress Report or count toward any grade.
+            if let index = currentResultIndex {
+                // Already recorded this word's first attempt. A later
+                // correct retry updates that same entry to isCorrect: true
+                // -- without this, the results screen would permanently
+                // show the word wrong just because the *first* try missed
+                // it, even though the child went on to spell it right.
+                if isCorrect {
+                    results[index] = WordResult(word: word.text, attempt: attempt, isCorrect: true)
+                }
+            } else {
                 results.append(WordResult(word: word.text, attempt: attempt, isCorrect: isCorrect))
-                recordedFirstAttempt = true
+                currentResultIndex = results.count - 1
             }
             if isCorrect {
                 currentIndex += 1
@@ -599,11 +615,11 @@ struct PracticeView: View {
     /// stands and this doesn't add a second entry.
     private func skipWord() {
         guard !isAdvancing, let word = currentWord else { return }
-        if !recordedFirstAttempt {
+        if currentResultIndex == nil {
             let attempt = currentAttemptString
             let isCorrect = attempt.lowercased() == word.text.lowercased()
             results.append(WordResult(word: word.text, attempt: attempt, isCorrect: isCorrect))
-            recordedFirstAttempt = true
+            currentResultIndex = results.count - 1
         }
         currentIndex += 1
     }

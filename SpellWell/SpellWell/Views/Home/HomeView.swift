@@ -5,6 +5,10 @@ struct HomeView: View {
     let child: Child
     var onOpenGated: (ContentView.GatedDestination) -> Void
     var onStartPractice: (WeekList, PracticeMode) -> Void
+    /// Tapping a daily grade card with missed words starts a focused
+    /// Practice session on just those words -- doesn't touch the day's
+    /// already-recorded Test grade, same as any other Practice session.
+    var onReviewMissedWords: (WeekList, [SpellingWord]) -> Void
 
     /// iPhone portrait (and most iPhone landscape) is "compact"; iPad is
     /// "regular" in both orientations. Several layouts below were built
@@ -332,19 +336,23 @@ struct HomeView: View {
             : Array(repeating: GridItem(.flexible(), spacing: 16), count: 4)
         return LazyVGrid(columns: columns, spacing: 16) {
             ForEach(Self.weekdayLabels, id: \.weekday) { entry in
-                DayGradeCard(label: entry.label, percent: testPercent(onWeekday: entry.weekday))
+                let missed = missedWords(onWeekday: entry.weekday)
+                DayGradeCard(label: entry.label, percent: testPercent(onWeekday: entry.weekday), missedCount: missed.count) {
+                    guard let list = thisWeekList, !missed.isEmpty else { return }
+                    onReviewMissedWords(list, missed)
+                }
             }
         }
     }
 
-    /// Score for that weekday's Test-mode attempts this week, or nil if the
-    /// child hasn't taken a test that day yet. Practice-mode attempts are
-    /// excluded on purpose -- see the note on PracticeAttempt.mode. If the
-    /// test was taken more than once that day, only the most recent
-    /// session (PracticeAttempt.sessionID) counts, not a blend of every
-    /// attempt -- retaking a test replaces that day's grade rather than
-    /// averaging into it.
-    private func testPercent(onWeekday weekday: Int) -> Int? {
+    /// That weekday's most recent Test-mode session this week, or nil if
+    /// the child hasn't taken a test that day yet -- shared by
+    /// `testPercent` and `missedWords` so both agree on which session
+    /// counts. If the test was taken more than once that day, only the
+    /// most recent session (PracticeAttempt.sessionID) counts, not a blend
+    /// of every attempt -- retaking a test replaces that day's grade
+    /// rather than averaging into it.
+    private func latestTestSession(onWeekday weekday: Int) -> [PracticeAttempt]? {
         let calendar = Calendar.current
         let now = Date()
         let attempts = thisWeekWords
@@ -356,18 +364,33 @@ struct HomeView: View {
             }
         guard let mostRecentSessionID = attempts.max(by: { $0.date < $1.date })?.sessionID else { return nil }
         let latestSession = attempts.filter { $0.sessionID == mostRecentSessionID }
-        guard !latestSession.isEmpty else { return nil }
-        let correct = latestSession.filter(\.isCorrect).count
-        return Int((Double(correct) / Double(latestSession.count) * 100).rounded())
+        return latestSession.isEmpty ? nil : latestSession
+    }
+
+    private func testPercent(onWeekday weekday: Int) -> Int? {
+        guard let session = latestTestSession(onWeekday: weekday) else { return nil }
+        let correct = session.filter(\.isCorrect).count
+        return Int((Double(correct) / Double(session.count) * 100).rounded())
+    }
+
+    /// The specific words gotten wrong in that weekday's most recent Test
+    /// session -- lets a low grade turn directly into a focused practice
+    /// session on exactly what to fix, via `onReviewMissedWords`.
+    private func missedWords(onWeekday weekday: Int) -> [SpellingWord] {
+        (latestTestSession(onWeekday: weekday) ?? []).filter { !$0.isCorrect }.compactMap(\.word)
     }
 }
 
 private struct DayGradeCard: View {
     let label: String
     let percent: Int?
+    let missedCount: Int
+    var onRetakeMissed: () -> Void
+
+    private var isTappable: Bool { missedCount > 0 }
 
     var body: some View {
-        VStack(spacing: 10) {
+        let card = VStack(spacing: 10) {
             Text(label)
                 .font(Theme.body(14))
                 .foregroundStyle(Theme.textSecondary)
@@ -380,10 +403,24 @@ private struct DayGradeCard: View {
                 .multilineTextAlignment(.center)
             ProgressView(value: Double(percent ?? 0) / 100)
                 .tint(Theme.primary)
+            if isTappable {
+                Text("Retake \(missedCount) missed word\(missedCount == 1 ? "" : "s")")
+                    .font(Theme.body(12, weight: .medium))
+                    .foregroundStyle(Theme.primary)
+            }
         }
         .padding(18)
         .frame(maxWidth: .infinity)
-        .card()
+        .card(borderColor: isTappable ? Theme.primary.opacity(0.4) : Theme.hairline)
+
+        return Group {
+            if isTappable {
+                Button(action: onRetakeMissed) { card }
+                    .buttonStyle(.plain)
+            } else {
+                card
+            }
+        }
     }
 }
 

@@ -30,6 +30,9 @@ struct ContentView: View {
     struct PracticeRoute: Hashable {
         let weekList: WeekList
         let mode: PracticeMode
+        /// Non-nil for a "review missed words" session -- see
+        /// `PracticeView.restrictToWordIDs`.
+        var restrictToWordIDs: Set<UUID>? = nil
     }
 
     /// Falls back to the first child (in creation order isn't guaranteed
@@ -54,6 +57,13 @@ struct ContentView: View {
                         onOpenGated: requestGatedAccess,
                         onStartPractice: { weekList, mode in
                             path.append(PracticeRoute(weekList: weekList, mode: mode))
+                        },
+                        onReviewMissedWords: { weekList, missedWords in
+                            path.append(PracticeRoute(
+                                weekList: weekList,
+                                mode: .practice,
+                                restrictToWordIDs: Set(missedWords.map(\.id))
+                            ))
                         }
                     )
                 } else {
@@ -81,7 +91,7 @@ struct ContentView: View {
                 }
             }
             .navigationDestination(for: PracticeRoute.self) { route in
-                PracticeView(weekList: route.weekList, mode: route.mode)
+                PracticeView(weekList: route.weekList, mode: route.mode, restrictToWordIDs: route.restrictToWordIDs)
             }
         }
         .sheet(item: $pendingDestination) { destination in

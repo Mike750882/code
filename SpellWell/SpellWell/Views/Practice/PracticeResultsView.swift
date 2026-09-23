@@ -13,6 +13,12 @@ struct WordResult: Identifiable {
 /// letter grade, plus a right/wrong breakdown of every word.
 struct PracticeResultsView: View {
     let results: [WordResult]
+    /// Only Test results count toward the day's reward -- Practice (used
+    /// both for open-ended rehearsing and for retaking a day's missed
+    /// words) never affects it, same as it never affects the recorded
+    /// grade.
+    let mode: PracticeMode
+    let child: Child?
     var onDone: () -> Void
 
     private var correctCount: Int {
@@ -27,6 +33,20 @@ struct PracticeResultsView: View {
     private var grade: String { Grading.letter(forPercent: percent) }
     private var gradeColor: Color { Grading.color(forPercent: percent) }
 
+    /// Today's reward, if a grown-up has set one for this weekday --
+    /// matches the same "keyed by weekday only" lookup Rewards/Home
+    /// already use, not scoped to a particular `weekOf`.
+    private var todaysReward: DailyReward? {
+        guard mode == .test, let child else { return nil }
+        let weekday = Calendar.current.component(.weekday, from: Date())
+        return child.dailyRewards?.first(where: { $0.weekday == weekday })
+    }
+
+    private var earnedTodaysReward: Bool {
+        guard let reward = todaysReward else { return false }
+        return percent >= reward.thresholdPercent
+    }
+
     /// The whole screen scrolls, not just the word list in a fixed-height
     /// sub-region -- in landscape on an iPhone (much less vertical room
     /// than portrait), the score card alone could take up nearly all the
@@ -36,6 +56,9 @@ struct PracticeResultsView: View {
         ScrollView {
             VStack(spacing: 24) {
                 scoreCard
+                if let reward = todaysReward {
+                    rewardStatus(reward)
+                }
                 wordList
                 Button("Back to Home", action: onDone)
                     .font(Theme.body(16, weight: .medium))
@@ -64,6 +87,23 @@ struct PracticeResultsView: View {
         .padding(28)
         .frame(maxWidth: .infinity)
         .card(borderColor: gradeColor, lineWidth: 1.5)
+    }
+
+    private func rewardStatus(_ reward: DailyReward) -> some View {
+        VStack(spacing: 4) {
+            Text(earnedTodaysReward ? "Reward earned!" : "Reward not quite earned yet")
+                .font(Theme.body(15, weight: .semibold))
+                .foregroundStyle(earnedTodaysReward ? Theme.success : Theme.textPrimary)
+            Text(earnedTodaysReward
+                ? "\(percent)% meets today's goal of \(reward.thresholdPercent)% -- \(reward.rewardText) is earned!"
+                : "\(percent)% is under today's goal of \(reward.thresholdPercent)% needed for \(reward.rewardText).")
+                .font(Theme.body(13))
+                .foregroundStyle(Theme.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .card(borderColor: earnedTodaysReward ? Theme.success : Theme.hairline, lineWidth: earnedTodaysReward ? 1.5 : 1)
     }
 
     private var wordList: some View {

@@ -200,7 +200,7 @@ structural, but don't be surprised by a typo or an API signature mismatch.
 - **Daily grade cards** — one card per weekday (Monday-Thursday, matching
   the Rewards screen's day range), each showing that day's grade,
   percentage-based caption ("Excellent!" / "Good Job!" / "Getting Better" /
-  "Need More Practice!"), and a gold progress bar. Computed only from that
+  "Need More Practice!"), and a progress bar. Computed only from that
   day's **Test**-mode attempts (`HomeView.testPercent(onWeekday:)`) —
   Practice-mode attempts are deliberately excluded, since unlimited
   retries would make every day read as 100%. A day with no test taken yet
@@ -209,6 +209,34 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   `PracticeAttempt` recorded during one `PracticeView` session shares a
   `sessionID`, and `testPercent` uses only the attempts from whichever
   session has the latest timestamp for that day.
+  A card with at least one missed word is tappable (`onReviewMissedWords`,
+  wired through `ContentView`'s `PracticeRoute.restrictToWordIDs`) and
+  shows "Retake N missed words" — starts a **Practice**-mode session
+  (`HomeView.missedWords(onWeekday:)` finds them from that same latest
+  Test session) containing only those words, via a new
+  `PracticeView.restrictToWordIDs` filter on the week's full word list.
+  Always Practice, never Test, so retaking a handful of missed words can't
+  overwrite that day's already-recorded grade with a score based on just
+  those few words.
+- **Daily reward status on the results screen** — after a **Test** (not
+  Practice — see `PracticeResultsView.todaysReward`, gated on
+  `mode == .test`), if a grown-up has set a reward for that weekday
+  (`Child.dailyRewards`, keyed by weekday only, same lookup Rewards and
+  Home already use), the results screen shows whether that score met the
+  day's threshold and what the reward is — "Reward earned!" or "Reward not
+  quite earned yet," either way naming the goal percent and the reward
+  text. No reward set for that weekday just means the banner doesn't show.
+- **Fixed: Practice results wrongly kept a word marked incorrect after a
+  successful retry** — Practice records only one `WordResult` per word (so
+  the end-of-session results screen has one row per word, not one per
+  attempt), added the first time that word is checked. But the code never
+  updated that entry afterward — get a word wrong, then get it right on a
+  retry (without using "Skip word"), and the results screen still showed
+  it as wrong, because the *first* attempt's entry was the only one ever
+  recorded. Fixed by tracking *which* index in `results` belongs to the
+  current word (`currentResultIndex`, replacing a plain
+  `recordedFirstAttempt` bool) so a later correct retry can overwrite that
+  same entry to `isCorrect: true` instead of leaving the stale wrong one.
 - **Streak** (`Child.currentStreak(asOf:)`) — the "N-day streak" pill on
   Home used to be dead: the field existed but nothing ever wrote to it.
   Replaced with a live computed value instead of a stored counter, so it
