@@ -53,6 +53,11 @@ struct ColorProfile: Identifiable, Equatable {
     let rewardIcon: UInt32
     /// The "WEEKLY PRIZE" label text specifically.
     let rewardText: UInt32
+    /// The picker circle in Settings -- usually just `action`, but not
+    /// every theme's `action` color reads as representative of the theme
+    /// at a glance (Space's is orange, Princess's is purple), so this is
+    /// its own field rather than always reusing `action`.
+    let swatchColor: UInt32
 
     static let all: [ColorProfile] = [.default, .space, .princess, .circus]
 
@@ -76,7 +81,8 @@ struct ColorProfile: Identifiable, Equatable {
         reward: 0xC9A227,
         rewardFillLight: 0xFBF6E3, rewardFillDark: 0x332B12,
         rewardIcon: 0xC9A227,
-        rewardText: 0xC9A227
+        rewardText: 0xC9A227,
+        swatchColor: 0xE14C3E
     )
 
     /// Dark, starry. Fonts kept as the app's existing serif/system pairing
@@ -97,7 +103,8 @@ struct ColorProfile: Identifiable, Equatable {
         reward: 0xFFD166,
         rewardFillLight: 0x262A44, rewardFillDark: 0x262A44,
         rewardIcon: 0xFFD166,
-        rewardText: 0xFFE39E
+        rewardText: 0xFFE39E,
+        swatchColor: 0x141A33
     )
 
     /// Soft pink and purple. Fonts kept as the app's existing serif/system
@@ -118,7 +125,12 @@ struct ColorProfile: Identifiable, Equatable {
         reward: 0xE8B64C,
         rewardFillLight: 0xFFF9EC, rewardFillDark: 0xFFF9EC,
         rewardIcon: 0xA07516,
-        rewardText: 0x7A5810
+        rewardText: 0x7A5810,
+        // Princess's `background` (#fdf3f6) is a light pink too, but is
+        // close enough to white that it barely reads as a color at swatch
+        // size -- this is a more saturated, still-light pink chosen just
+        // to be clearly visible and clearly pink at a glance.
+        swatchColor: 0xFFB6C1
     )
 
     /// Warm, bold, carnival-poster colors. Fonts kept as the app's existing
@@ -142,7 +154,8 @@ struct ColorProfile: Identifiable, Equatable {
         reward: 0xF2B705,
         rewardFillLight: 0xFFF7E0, rewardFillDark: 0xFFF7E0,
         rewardIcon: 0x9A7300,
-        rewardText: 0x6E5200
+        rewardText: 0x6E5200,
+        swatchColor: 0xD62B2B
     )
 }
 

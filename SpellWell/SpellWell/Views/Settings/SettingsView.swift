@@ -276,7 +276,7 @@ struct SettingsView: View {
                         .frame(width: 44, height: 44)
                 }
                 Circle()
-                    .fill(Color(hex: profile.action))
+                    .fill(Color(hex: profile.swatchColor))
                     .frame(width: 36, height: 36)
             }
             Text(profile.name)
