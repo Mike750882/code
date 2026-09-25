@@ -98,7 +98,7 @@ struct HomeView: View {
             HStack(alignment: .top) {
                 greeting
                 Spacer()
-                streakAndWordListPills
+                wordListPill
             }
             if showTourBanner { tourBanner }
         }
@@ -126,34 +126,19 @@ struct HomeView: View {
         }
     }
 
-    /// Always stacked vertically, even in compact mode -- two pills side
-    /// by side would be tight on the narrowest iPhone widths, and there's
-    /// no shortage of vertical room to stack them in instead.
-    private var streakAndWordListPills: some View {
-        VStack(spacing: 8) {
+    private var wordListPill: some View {
+        Button {
+            showWordList = true
+        } label: {
             HStack(spacing: 6) {
-                Image(systemName: "star").foregroundStyle(Theme.primary)
-                Text("\(child.currentStreak())-day streak")
+                Image(systemName: "list.bullet").foregroundStyle(Theme.tile)
+                Text("This week's words")
                     .font(Theme.body(15, weight: .medium))
-                    .foregroundStyle(Theme.primary)
+                    .foregroundStyle(Theme.tile)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .overlay(Capsule().stroke(Theme.primary, lineWidth: 1))
-
-            Button {
-                showWordList = true
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "list.bullet").foregroundStyle(Theme.tile)
-                    Text("This week's words")
-                        .font(Theme.body(15, weight: .medium))
-                        .foregroundStyle(Theme.tile)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .overlay(Capsule().stroke(Theme.tile, lineWidth: 1))
-            }
+            .overlay(Capsule().stroke(Theme.tile, lineWidth: 1))
         }
     }
 

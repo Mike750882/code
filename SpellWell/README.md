@@ -299,19 +299,13 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   current word (`currentResultIndex`, replacing a plain
   `recordedFirstAttempt` bool) so a later correct retry can overwrite that
   same entry to `isCorrect: true` instead of leaving the stale wrong one.
-- **Streak** (`Child.currentStreak(asOf:)`) — the "N-day streak" pill on
-  Home used to be dead: the field existed but nothing ever wrote to it.
-  Replaced with a live computed value instead of a stored counter, so it
-  can never drift out of sync with what actually happened. A day counts
-  if it has at least one **Test**-mode attempt (any test, regardless of
-  score -- Practice doesn't count), and only Monday-Friday days count at
-  all, matching the daily grade cards' scope (the reward system is still
-  Monday-Thursday only, separately); weekends are skipped over rather
-  than breaking the streak. Walks backward day by day from today counting
-  consecutive qualifying
-  school days, stopping at the first one with no test -- except today
-  itself, which doesn't break the streak just for not having a test yet,
-  since the day isn't over.
+- **Streak (removed)** — the "N-day streak" pill on Home used to be dead
+  (the field existed but nothing ever wrote to it), then was rebuilt as a
+  live computed value (`Child.currentStreak(asOf:)`, no stored counter, so
+  it couldn't drift out of sync). Removed outright on request once
+  working -- it wasn't judged useful now that it actually reflected real
+  data. Home's header is just the greeting and the "This week's words"
+  pill now.
 - **Shared grading scale** (`DesignSystem/Grading.swift`) — one place for
   the percent-to-letter-grade logic (A+ through F, standard 97/93/90/…
   cutoffs), used by both the results screen and the daily grade cards so
@@ -485,13 +479,24 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   previous, light-background theme:
   - The Practice/Test segmented picker on Home, and Settings' Appearance
     picker, are `UISegmentedControl` under the hood, which SwiftUI doesn't
-    expose a direct modifier for (its unselected-segment text color isn't
-    settable via `.foregroundStyle` the way a `Text` is). Fixed with a
+    expose a direct modifier for (its segment text colors aren't settable
+    via `.foregroundStyle` the way a `Text` is). Fixed with a
     `UISegmentedControl.appearance()` proxy reapplied in
     `Theme.apply(profileID:)` -- the one place the active theme changes --
-    using a dynamic `UIColor` built the same way `Color.adaptive` is, so
+    using dynamic `UIColor`s built the same way `Color.adaptive` is, so
     `Default` still tracks the system's own light/dark setting instead of
-    being pinned to one.
+    being pinned to one. First attempt pointed *both* the unselected and
+    selected segment text at `Theme.textPrimary` and left the selected
+    segment's own pill background alone -- fine for unselected (dark
+    track, theme text color), but the pill defaults to a fixed near-white
+    background regardless of theme, so under Space that became white text
+    on a white pill, invisible for the opposite reason. Fixed by setting
+    `selectedSegmentTintColor` too, and using an inverted pair for the
+    selected chip specifically -- pill filled with the theme's own text
+    color, its own text in the theme's background color -- which is
+    guaranteed good contrast in any theme (text-vs-background is already
+    that theme's core readability pair) rather than trying to individually
+    vet some fixed color against a chosen accent.
   - The letter tiles in `answerSlots`/`bankTile` (Practice) never had an
     explicit `.foregroundStyle` at all, only the *prefilled* (given,
     locked) letters did -- both now use `Theme.textPrimary`.

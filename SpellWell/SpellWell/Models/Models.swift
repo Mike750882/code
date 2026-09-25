@@ -89,52 +89,6 @@ extension Child {
         }
     }
 
-    /// Consecutive Monday-Friday school days, walking backward from `now`,
-    /// with at least one Test-mode attempt recorded that day -- weekends
-    /// are skipped over, neither counting toward nor breaking the streak,
-    /// matching the Mon-Fri scope of the daily grade cards (the reward
-    /// system is still Mon-Thu only -- unrelated to how the streak
-    /// counts). Computed live from attempt history rather than
-    /// stored/incremented anywhere, so it can never drift out of sync
-    /// with what actually happened -- there's no "streak" column on this
-    /// model at all.
-    ///
-    /// Today doesn't break the streak just for not having a test yet,
-    /// since the day isn't over: only a *past* school day with no test
-    /// stops the count.
-    func currentStreak(asOf now: Date = Date()) -> Int {
-        let calendar = Calendar.current
-        let testDates = Set(
-            (weekLists ?? [])
-                .flatMap { $0.words ?? [] }
-                .flatMap { $0.attempts ?? [] }
-                .filter { $0.mode == "test" }
-                .map { calendar.startOfDay(for: $0.date) }
-        )
-
-        var streak = 0
-        var date = calendar.startOfDay(for: now)
-        var isFirstSchoolDay = true
-
-        // Bounded to ~10 years of days so this always terminates, even in
-        // a pathological case (e.g. a debug seed spanning many years).
-        for _ in 0..<3650 {
-            let weekday = calendar.component(.weekday, from: date)
-            if (2...6).contains(weekday) {
-                if testDates.contains(date) {
-                    streak += 1
-                    isFirstSchoolDay = false
-                } else if isFirstSchoolDay && calendar.isDate(date, inSameDayAs: now) {
-                    isFirstSchoolDay = false
-                } else {
-                    break
-                }
-            }
-            guard let previousDay = calendar.date(byAdding: .day, value: -1, to: date) else { break }
-            date = previousDay
-        }
-        return streak
-    }
 }
 
 @Model

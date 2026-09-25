@@ -187,20 +187,33 @@ enum Theme {
 
         // UISegmentedControl (the Practice/Test toggle on Home, Settings'
         // Appearance picker) doesn't pick up custom theme colors on its
-        // own -- its default segment text color is fixed regardless of
-        // Theme, which made it unreadable (dark text on a dark
-        // background) under Space. UIAppearance proxies are global and
-        // take a UIColor, not a SwiftUI Color, so this is reapplied here
-        // (the one place the active theme changes) with a dynamic UIColor
-        // built the same way Color.adaptive is, so Default still tracks
-        // the system's own light/dark setting rather than being pinned.
-        let segmentTextColor = UIColor { traits in
+        // own. Its unselected-segment text defaults to a fixed color
+        // regardless of Theme (unreadable against a dark theme like
+        // Space), and its selected-segment pill defaults to a fixed
+        // near-white background -- which became a second invisible-text
+        // bug once the text itself was pointed at Theme.textPrimary
+        // (also near-white for Space): white text on a white pill.
+        // UIAppearance proxies are global and take a UIColor, not a
+        // SwiftUI Color, so this is reapplied here (the one place the
+        // active theme changes). The selected pill and its text use the
+        // theme's own text/background colors, swapped -- an "inverted"
+        // chip that's guaranteed good contrast in any theme, since
+        // text-vs-background is already that theme's core readability
+        // pair, rather than picking an accent color and hoping white (or
+        // any other fixed color) happens to read well against it.
+        let unselectedTextColor = UIColor { traits in
             traits.userInterfaceStyle == .dark
                 ? UIColor(Color(hex: Theme.currentProfile.textPrimaryDark))
                 : UIColor(Color(hex: Theme.currentProfile.textPrimaryLight))
         }
-        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: segmentTextColor], for: .normal)
-        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: segmentTextColor], for: .selected)
+        let selectedTextColor = UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(Color(hex: Theme.currentProfile.backgroundDark))
+                : UIColor(Color(hex: Theme.currentProfile.backgroundLight))
+        }
+        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: unselectedTextColor], for: .normal)
+        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: selectedTextColor], for: .selected)
+        UISegmentedControl.appearance().selectedSegmentTintColor = unselectedTextColor
     }
 
     static var background: Color { Color.adaptive(light: currentProfile.backgroundLight, dark: currentProfile.backgroundDark) }
