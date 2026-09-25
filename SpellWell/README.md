@@ -187,23 +187,29 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     instead (`typedAnswerField`). "Take one back" hides itself on these
     words since there's nothing to undo tile-by-tile.
 
-  **Case sensitivity** (`PracticeView.isAttemptCorrect`) differs by mode.
-  A typed answer must match the stored word *exactly*, case included --
-  if a parent capitalized a word entering this week's list (a proper
-  noun), that capitalization is part of the correct spelling. Tile-built
-  answers still compare case-insensitively: tiles are always *displayed*
-  uppercase for legibility regardless of a letter's real case, so a child
-  has no way to see or choose a tile's case, and enforcing it there would
-  turn any word with the same letter repeated in different cases (e.g.
-  "Anna") into a coin flip on which visually-identical tile they happened
-  to grab rather than a real test of spelling. Since case now genuinely
-  matters, every screen that shows a word for review --
-  `PracticeResultsView`'s results list (both the correct word and what the
-  child typed/assembled), `ProgressReportView`'s word breakdown, and
-  `WordListView`'s "This week's words" preview -- shows it in its exact
-  stored/typed case instead of `.capitalized` (which would force the rest
-  of a word lowercase and could misrepresent the real spelling, or mask a
-  case-only mistake from whoever's reviewing).
+  **Case sensitivity** (`PracticeView.isAttemptCorrect`) — every mode
+  must match the stored word exactly, case included: if a parent
+  capitalized a word entering this week's list (a proper noun), that
+  capitalization is part of the correct spelling. This used to be
+  case-insensitive for tile-built answers specifically, since tiles were
+  always *displayed* uppercase regardless of a letter's real case -- with
+  no way to see or choose a tile's case, a word with the same letter
+  repeated in different cases (e.g. "Anna") would've come down to a coin
+  flip on which visually-identical tile a child happened to grab. Fixed
+  by displaying tiles in their real case instead (`setUpWord` no longer
+  lowercases the word's letters before building `bankOrder`/
+  `slotContents`; `answerSlots` and `bankTile` no longer force
+  `.uppercased()` on what they show) -- a given capital letter in
+  scaffolded mode is now a genuine hint, not just decoration, and a
+  repeated letter in different cases is a real, visible distinction to
+  make. Since case now genuinely matters everywhere, every screen that
+  shows a word for review -- `PracticeResultsView`'s results list (both
+  the correct word and what the child typed/assembled),
+  `ProgressReportView`'s word breakdown, and `WordListView`'s "This
+  week's words" preview -- shows it in its exact stored/typed case instead
+  of `.capitalized` (which would force the rest of a word lowercase and
+  could misrepresent the real spelling, or mask a case-only mistake from
+  whoever's reviewing).
 
   Defaults match the progression a parent would set up for a typical week
   (Monday: some letters given, Tuesday: fill in every letter, Wednesday:
@@ -239,6 +245,18 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     that happens outside any SwiftUI view) and a `FridayTestRoute`
     `NavigationStack` destination that both the router and
     `HomeView.onStartFridayTest` push onto.
+  - **Fixed: "Back to Home" landed on the choice screen, not Home** —
+    Friday's test is reached two levels deep (Home -> FridayTestChoiceView
+    -> PracticeView), but the results screen's "Back to Home" button (and
+    Practice's own top-left "Home" button) called
+    `@Environment(\.dismiss)`, which only pops *one* level back -- to the
+    choice screen, not actual Home. Fixed by giving `PracticeView` a
+    required `onGoHome: () -> Void` (wired from `ContentView` to the same
+    `resetToHome()` -- `path = NavigationPath()` -- already used after
+    switching profiles) instead of relying on `dismiss`, so both buttons
+    now always land on Home regardless of how deep Practice was reached
+    from. Harmless for every other, one-level-deep path into Practice,
+    where `dismiss()` and `resetToHome()` already did the same thing.
 - **Daily grade cards** — one card per weekday, Monday through **Friday**
   (five now, not four — Friday's card was added once Friday became a real
   typed test day; the Rewards screen's day range is still Monday-Thursday
@@ -460,6 +478,23 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   needed here -- a `ScrollView` never gets "shrunk to content" and
   centered the way a bare `VStack` does, so it was never actually a fix
   for the *layout*, just a workaround for that one bug.
+- **Fixed: unreadable text under the Space theme** — three separate gaps,
+  same root cause (something relying on a default text color instead of
+  an explicit `Theme` one), all invisible only on a dark theme like Space
+  since the default happened to still contrast fine against every
+  previous, light-background theme:
+  - The Practice/Test segmented picker on Home, and Settings' Appearance
+    picker, are `UISegmentedControl` under the hood, which SwiftUI doesn't
+    expose a direct modifier for (its unselected-segment text color isn't
+    settable via `.foregroundStyle` the way a `Text` is). Fixed with a
+    `UISegmentedControl.appearance()` proxy reapplied in
+    `Theme.apply(profileID:)` -- the one place the active theme changes --
+    using a dynamic `UIColor` built the same way `Color.adaptive` is, so
+    `Default` still tracks the system's own light/dark setting instead of
+    being pinned to one.
+  - The letter tiles in `answerSlots`/`bankTile` (Practice) never had an
+    explicit `.foregroundStyle` at all, only the *prefilled* (given,
+    locked) letters did -- both now use `Theme.textPrimary`.
 - **iPhone-adaptive layouts** — this app was designed from iPad mockups,
   and several screens used layouts that assumed iPad-width space: fixed
   220pt (or wider) label columns next to a control in Settings, three or

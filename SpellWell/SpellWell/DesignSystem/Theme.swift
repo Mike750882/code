@@ -184,6 +184,23 @@ enum Theme {
     /// rebuild against it.
     static func apply(profileID: String?) {
         currentProfile = ColorProfile.profile(id: profileID ?? "default")
+
+        // UISegmentedControl (the Practice/Test toggle on Home, Settings'
+        // Appearance picker) doesn't pick up custom theme colors on its
+        // own -- its default segment text color is fixed regardless of
+        // Theme, which made it unreadable (dark text on a dark
+        // background) under Space. UIAppearance proxies are global and
+        // take a UIColor, not a SwiftUI Color, so this is reapplied here
+        // (the one place the active theme changes) with a dynamic UIColor
+        // built the same way Color.adaptive is, so Default still tracks
+        // the system's own light/dark setting rather than being pinned.
+        let segmentTextColor = UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(Color(hex: Theme.currentProfile.textPrimaryDark))
+                : UIColor(Color(hex: Theme.currentProfile.textPrimaryLight))
+        }
+        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: segmentTextColor], for: .normal)
+        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: segmentTextColor], for: .selected)
     }
 
     static var background: Color { Color.adaptive(light: currentProfile.backgroundLight, dark: currentProfile.backgroundDark) }

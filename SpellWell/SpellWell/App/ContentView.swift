@@ -113,7 +113,7 @@ struct ContentView: View {
                 }
             }
             .navigationDestination(for: PracticeRoute.self) { route in
-                PracticeView(weekList: route.weekList, mode: route.mode, restrictToWordIDs: route.restrictToWordIDs)
+                PracticeView(weekList: route.weekList, mode: route.mode, restrictToWordIDs: route.restrictToWordIDs, onGoHome: resetToHome)
             }
             .navigationDestination(for: FridayTestRoute.self) { route in
                 FridayTestChoiceView(weekList: route.weekList) {
@@ -213,8 +213,13 @@ struct ContentView: View {
     }
 
     /// Pops all the way back to Home -- used after switching or removing
-    /// the active student profile, so the newly active one shows right
-    /// away instead of leaving the parent stranded on Settings/Profiles.
+    /// the active student profile (so the newly active one shows right
+    /// away instead of leaving the parent stranded on Settings/Profiles),
+    /// and as PracticeView's onGoHome (so "Home"/"Back to Home" always
+    /// lands on the actual Home screen, even when Practice was reached
+    /// two levels deep, e.g. via Friday's review-or-test choice screen --
+    /// @Environment(\.dismiss) would only pop one level back to that
+    /// screen instead).
     private func resetToHome() {
         path = NavigationPath()
     }

@@ -82,7 +82,6 @@ private enum SlotState: Equatable {
 /// same word -- "Skip word" is there for when they'd rather move on without
 /// getting it right first, so nothing can leave them stuck on one word.
 struct PracticeView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @StateObject private var speech = SpeechService()
 
@@ -94,6 +93,12 @@ struct PracticeView: View {
     /// `ContentView`), so retaking a handful of missed words never touches
     /// that day's already-recorded Test grade.
     var restrictToWordIDs: Set<UUID>? = nil
+    /// Pops the whole navigation stack back to Home -- not just one level
+    /// back, which `@Environment(\.dismiss)` would do. That distinction
+    /// matters here specifically because Friday's test can be reached two
+    /// levels deep (Home -> FridayTestChoiceView -> PracticeView), where
+    /// `dismiss()` would land back on the choice screen instead of Home.
+    var onGoHome: () -> Void
 
     @State private var currentIndex = 0
     /// Per answer-slot state, indexed by slot position, not fill order, so
@@ -203,7 +208,7 @@ struct PracticeView: View {
                     }
                     actionButtons
                 } else {
-                    PracticeResultsView(results: results, mode: mode, child: weekList.child) { dismiss() }
+                    PracticeResultsView(results: results, mode: mode, child: weekList.child, onDone: onGoHome)
                 }
                 Spacer()
             }
@@ -229,7 +234,7 @@ struct PracticeView: View {
     private var topBar: some View {
         HStack {
             Button {
-                dismiss()
+                onGoHome()
             } label: {
                 Label("Home", systemImage: "chevron.left")
                     .font(Theme.body(15))
@@ -287,7 +292,10 @@ struct PracticeView: View {
 
                 switch slot {
                 case .prefilled(let character):
-                    Text(String(character).uppercased())
+                    // Shown in its real case, not forced uppercase -- a
+                    // given capital letter (e.g. a proper noun's first
+                    // letter) is a genuine hint, not just decoration.
+                    Text(String(character))
                         .font(Theme.display(metrics.font))
                         .foregroundStyle(Theme.textSecondary)
                         .frame(width: metrics.width, height: metrics.height)
@@ -298,8 +306,9 @@ struct PracticeView: View {
                         if case .filled(let index) = slot, index < bankOrder.count { return String(bankOrder[index]) }
                         return ""
                     }()
-                    Text(letter.uppercased())
+                    Text(letter)
                         .font(Theme.display(metrics.font))
+                        .foregroundStyle(Theme.textPrimary)
                         .frame(width: metrics.width, height: metrics.height)
                         .background(isTargeted ? Theme.tile.opacity(0.15) : Theme.surface)
                         .overlay(
@@ -406,8 +415,9 @@ struct PracticeView: View {
     private func bankTile(index: Int, letter: Character, metrics: TileMetrics) -> some View {
         let used = usedBankIndices.contains(index)
         let isDragging = draggingBankIndex == index
-        let tile = Text(String(letter).uppercased())
+        let tile = Text(String(letter))
             .font(Theme.display(metrics.font))
+            .foregroundStyle(Theme.textPrimary)
             .frame(width: metrics.width, height: metrics.height)
             .background(Theme.surface)
             .overlay(
@@ -500,7 +510,10 @@ struct PracticeView: View {
 
         let dayMode = weekList.child?.inputMode(forWeekday: Calendar.current.component(.weekday, from: Date())) ?? .tilesFull
         currentWordMode = dayMode.resolvedForWord
-        let letters = Array(word.text.lowercased())
+        // Kept in the word's real case, not lowercased -- tiles display
+        // (and are now graded on) their actual case, matching whatever a
+        // parent typed entering this week's list.
+        let letters = Array(word.text)
 
         switch currentWordMode {
         case .typed:
@@ -563,20 +576,18 @@ struct PracticeView: View {
         feedback = nil
     }
 
-    /// Typed answers must match the stored word exactly, case included --
-    /// if a parent capitalized a word when entering this week's list
-    /// (e.g. a proper noun), that capitalization is part of the correct
-    /// spelling. Tile-built answers still compare case-insensitively:
-    /// tiles are always *displayed* uppercase for legibility regardless
-    /// of a letter's real case, so a child has no way to see or choose a
-    /// tile's case -- enforcing it there would turn any word with the
-    /// same letter repeated in different cases (e.g. "Anna") into a coin
-    /// flip on which visually-identical tile they happened to grab,
-    /// rather than a real test of spelling.
+    /// Every mode now must match the stored word exactly, case included --
+    /// if a parent capitalized a word when entering this week's list (e.g.
+    /// a proper noun), that capitalization is part of the correct
+    /// spelling. This is fair for tiles specifically because tiles are
+    /// displayed in their real case now (see `setUpWord`/`answerSlots`/
+    /// `bankTile`), not forced uppercase -- a child can see and choose a
+    /// tile's case, so a word with the same letter repeated in different
+    /// cases (e.g. "Anna") is a real distinction to make, not a coin flip
+    /// between visually-identical tiles the way it would be if every tile
+    /// still just showed as a capital letter.
     private func isAttemptCorrect(_ attempt: String, for word: SpellingWord) -> Bool {
-        currentWordMode == .typed
-            ? attempt == word.text
-            : attempt.lowercased() == word.text.lowercased()
+        attempt == word.text
     }
 
     private func checkWord() {
