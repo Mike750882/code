@@ -563,10 +563,26 @@ struct PracticeView: View {
         feedback = nil
     }
 
+    /// Typed answers must match the stored word exactly, case included --
+    /// if a parent capitalized a word when entering this week's list
+    /// (e.g. a proper noun), that capitalization is part of the correct
+    /// spelling. Tile-built answers still compare case-insensitively:
+    /// tiles are always *displayed* uppercase for legibility regardless
+    /// of a letter's real case, so a child has no way to see or choose a
+    /// tile's case -- enforcing it there would turn any word with the
+    /// same letter repeated in different cases (e.g. "Anna") into a coin
+    /// flip on which visually-identical tile they happened to grab,
+    /// rather than a real test of spelling.
+    private func isAttemptCorrect(_ attempt: String, for word: SpellingWord) -> Bool {
+        currentWordMode == .typed
+            ? attempt == word.text
+            : attempt.lowercased() == word.text.lowercased()
+    }
+
     private func checkWord() {
         guard !isAdvancing, let word = currentWord else { return }
         let attempt = currentAttemptString
-        let isCorrect = attempt.lowercased() == word.text.lowercased()
+        let isCorrect = isAttemptCorrect(attempt, for: word)
         feedback = isCorrect ? .correct : .incorrect
 
         switch mode {
@@ -622,7 +638,7 @@ struct PracticeView: View {
         guard !isAdvancing, let word = currentWord else { return }
         if currentResultIndex == nil {
             let attempt = currentAttemptString
-            let isCorrect = attempt.lowercased() == word.text.lowercased()
+            let isCorrect = isAttemptCorrect(attempt, for: word)
             results.append(WordResult(word: word.text, attempt: attempt, isCorrect: isCorrect))
             currentResultIndex = results.count - 1
         }

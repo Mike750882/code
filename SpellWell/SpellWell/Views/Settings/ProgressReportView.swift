@@ -189,7 +189,9 @@ struct ProgressReportView: View {
         return HStack {
             Image(systemName: iconName(for: result))
                 .foregroundStyle(iconColor(for: result))
-            Text(word.text.capitalized)
+            // Exact stored case, not .capitalized -- see the note on
+            // PracticeResultsView.wordRow for why.
+            Text(word.text)
                 .font(Theme.body(15))
                 .foregroundStyle(Theme.textPrimary)
             Spacer()

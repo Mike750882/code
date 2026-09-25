@@ -35,7 +35,12 @@ struct WordListView: View {
                                     .font(Theme.body(14))
                                     .foregroundStyle(Theme.textSecondary)
                                     .frame(width: 24, alignment: .leading)
-                                Text(word.text.capitalized)
+                                // Exact stored case, not .capitalized --
+                                // a child studying from this list needs to
+                                // see any capitalization (e.g. a proper
+                                // noun) that's actually part of the
+                                // correct spelling.
+                                Text(word.text)
                                     .font(Theme.display(20))
                                     .foregroundStyle(Theme.textPrimary)
                                 Spacer()

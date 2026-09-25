@@ -184,9 +184,26 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     resolvedForWord`), fresh every time that word comes up, so it's not
     always the same words in each half.
   - **Type from memory** — no letter-tile UI at all; a plain text field
-    instead (`typedAnswerField`), checked the same case-insensitive way.
-    "Take one back" hides itself on these words since there's nothing to
-    undo tile-by-tile.
+    instead (`typedAnswerField`). "Take one back" hides itself on these
+    words since there's nothing to undo tile-by-tile.
+
+  **Case sensitivity** (`PracticeView.isAttemptCorrect`) differs by mode.
+  A typed answer must match the stored word *exactly*, case included --
+  if a parent capitalized a word entering this week's list (a proper
+  noun), that capitalization is part of the correct spelling. Tile-built
+  answers still compare case-insensitively: tiles are always *displayed*
+  uppercase for legibility regardless of a letter's real case, so a child
+  has no way to see or choose a tile's case, and enforcing it there would
+  turn any word with the same letter repeated in different cases (e.g.
+  "Anna") into a coin flip on which visually-identical tile they happened
+  to grab rather than a real test of spelling. Since case now genuinely
+  matters, every screen that shows a word for review --
+  `PracticeResultsView`'s results list (both the correct word and what the
+  child typed/assembled), `ProgressReportView`'s word breakdown, and
+  `WordListView`'s "This week's words" preview -- shows it in its exact
+  stored/typed case instead of `.capitalized` (which would force the rest
+  of a word lowercase and could misrepresent the real spelling, or mask a
+  case-only mistake from whoever's reviewing).
 
   Defaults match the progression a parent would set up for a typical week
   (Monday: some letters given, Tuesday: fill in every letter, Wednesday:

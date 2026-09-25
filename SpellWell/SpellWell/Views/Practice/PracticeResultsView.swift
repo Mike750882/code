@@ -122,7 +122,12 @@ struct PracticeResultsView: View {
         HStack {
             Image(systemName: result.isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
                 .foregroundStyle(result.isCorrect ? Theme.success : Theme.error)
-            Text(result.word.capitalized)
+            // Shown exactly as stored/typed, not .capitalized -- forcing
+            // first-letter-capital, rest-lowercase would misrepresent the
+            // correct spelling for any word with case elsewhere in it, and
+            // would hide a case-only mistake (e.g. "paris" typed for
+            // "Paris") from whoever's reviewing this screen.
+            Text(result.word)
                 .font(Theme.body(17))
                 .foregroundStyle(Theme.textPrimary)
             Spacer()
@@ -135,7 +140,7 @@ struct PracticeResultsView: View {
                     Text("My spelling")
                         .font(.caption2.weight(.medium))
                         .foregroundStyle(Theme.textSecondary)
-                    Text(result.attempt.isEmpty ? "(blank)" : result.attempt.capitalized)
+                    Text(result.attempt.isEmpty ? "(blank)" : result.attempt)
                         .font(Theme.body(15, weight: .medium))
                         .foregroundStyle(Theme.error)
                 }
