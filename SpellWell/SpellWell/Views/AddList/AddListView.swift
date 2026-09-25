@@ -194,7 +194,7 @@ struct AddListView: View {
     }
 
     private var footer: some View {
-        let caption = Text("Words are read aloud with the iPad voice. Tap a word to record your own voice. A flagged word doesn't match a standard dictionary spelling -- double check it before saving.")
+        let caption = Text("Words are read aloud with the iPad voice. Tap a word to record your own voice. A flagged word doesn't match a standard dictionary spelling, double check it before saving.")
             .font(Theme.body(13))
             .foregroundStyle(Theme.textSecondary)
 
