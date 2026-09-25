@@ -89,14 +89,15 @@ extension Child {
         }
     }
 
-    /// Consecutive Monday-Thursday school days, walking backward from
-    /// `now`, with at least one Test-mode attempt recorded that day --
-    /// weekends and Fridays are skipped over, neither counting toward nor
-    /// breaking the streak, matching the Mon-Thu scope of the daily grade
-    /// cards and reward system. Computed live from attempt history rather
-    /// than stored/incremented anywhere, so it can never drift out of
-    /// sync with what actually happened -- there's no "streak" column on
-    /// this model at all.
+    /// Consecutive Monday-Friday school days, walking backward from `now`,
+    /// with at least one Test-mode attempt recorded that day -- weekends
+    /// are skipped over, neither counting toward nor breaking the streak,
+    /// matching the Mon-Fri scope of the daily grade cards (the reward
+    /// system is still Mon-Thu only -- unrelated to how the streak
+    /// counts). Computed live from attempt history rather than
+    /// stored/incremented anywhere, so it can never drift out of sync
+    /// with what actually happened -- there's no "streak" column on this
+    /// model at all.
     ///
     /// Today doesn't break the streak just for not having a test yet,
     /// since the day isn't over: only a *past* school day with no test
@@ -119,7 +120,7 @@ extension Child {
         // a pathological case (e.g. a debug seed spanning many years).
         for _ in 0..<3650 {
             let weekday = calendar.component(.weekday, from: date)
-            if (2...5).contains(weekday) {
+            if (2...6).contains(weekday) {
                 if testDates.contains(date) {
                     streak += 1
                     isFirstSchoolDay = false

@@ -335,17 +335,16 @@ struct HomeView: View {
     }
 
     private static let weekdayLabels: [(weekday: Int, label: String)] = [
-        (2, "Monday"), (3, "Tuesday"), (4, "Wednesday"), (5, "Thursday")
+        (2, "Monday"), (3, "Tuesday"), (4, "Wednesday"), (5, "Thursday"), (6, "Friday")
     ]
 
-    /// Same reasoning as `secondaryCards` -- exactly 4 equal columns on
-    /// regular width so the cards spread across the full row like the
-    /// original fixed 4-wide HStack, adaptive (wrapping down to two, or
-    /// one, per row) on compact.
+    /// Same reasoning as `secondaryCards` -- exactly 5 equal columns on
+    /// regular width so the cards spread across the full row, adaptive
+    /// (wrapping down to fewer per row) on compact.
     private var dailyGradeCards: some View {
         let columns = isCompact
             ? [GridItem(.adaptive(minimum: 150), spacing: 16)]
-            : Array(repeating: GridItem(.flexible(), spacing: 16), count: 4)
+            : Array(repeating: GridItem(.flexible(), spacing: 16), count: 5)
         return LazyVGrid(columns: columns, spacing: 16) {
             ForEach(Self.weekdayLabels, id: \.weekday) { entry in
                 let missed = missedWords(onWeekday: entry.weekday)

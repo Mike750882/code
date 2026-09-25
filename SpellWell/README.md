@@ -222,8 +222,10 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     that happens outside any SwiftUI view) and a `FridayTestRoute`
     `NavigationStack` destination that both the router and
     `HomeView.onStartFridayTest` push onto.
-- **Daily grade cards** — one card per weekday (Monday-Thursday, matching
-  the Rewards screen's day range), each showing that day's grade,
+- **Daily grade cards** — one card per weekday, Monday through **Friday**
+  (five now, not four — Friday's card was added once Friday became a real
+  typed test day; the Rewards screen's day range is still Monday-Thursday
+  only, unrelated to this), each showing that day's grade,
   percentage-based caption ("Excellent!" / "Good Job!" / "Getting Better" /
   "Need More Practice!"), and a progress bar. Computed only from that
   day's **Test**-mode attempts (`HomeView.testPercent(onWeekday:)`) —
@@ -267,10 +269,11 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   Replaced with a live computed value instead of a stored counter, so it
   can never drift out of sync with what actually happened. A day counts
   if it has at least one **Test**-mode attempt (any test, regardless of
-  score -- Practice doesn't count), and only Monday-Thursday days count
-  at all, matching the daily grade cards' and reward system's scope;
-  weekends and Fridays are skipped over rather than breaking the streak.
-  Walks backward day by day from today counting consecutive qualifying
+  score -- Practice doesn't count), and only Monday-Friday days count at
+  all, matching the daily grade cards' scope (the reward system is still
+  Monday-Thursday only, separately); weekends are skipped over rather
+  than breaking the streak. Walks backward day by day from today counting
+  consecutive qualifying
   school days, stopping at the first one with no test -- except today
   itself, which doesn't break the streak just for not having a test yet,
   since the day isn't over.
