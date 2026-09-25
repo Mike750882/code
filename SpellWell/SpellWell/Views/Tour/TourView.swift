@@ -29,7 +29,7 @@ struct TourView: View {
             icon: "key.fill",
             color: Theme.primary,
             title: "Setting your PIN",
-            body: "The first time you tap \"Add spelling list,\" you'll be asked to create a 4-digit PIN, then enter it again to confirm. You can change your PIN anytime from Settings."
+            body: "The first time you tap \"Add spelling list,\" you'll be asked to create a 4-digit PIN, then enter it again to confirm. You can change your PIN anytime from Settings. As you type each week's words, any word that doesn't match a standard dictionary spelling gets flagged so a typo doesn't slip into what your student studies all week."
         ),
         TourPage(
             icon: "slider.horizontal.3",

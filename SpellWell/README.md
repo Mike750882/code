@@ -304,6 +304,19 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   true, so test the photo import via "Choose from Library" there (drag a
   photo of a word list into the Simulator's Photos app first), and test
   "Take Photo" on a real device.
+  - **Misspelling double check** (`Services/SpellCheckService.swift`) — as
+    a parent types (or after a photo import), any word that isn't in the
+    system's English dictionary gets flagged: a warning icon next to its
+    field and a highlighted border, using `UITextChecker`, the same
+    on-device checker behind the red squiggly underline in Notes/Messages
+    — no network call, no API key, nothing leaves the device. It's a
+    dictionary check, not a "did you mean" check, so it won't catch a typo
+    that happens to land on a different real word ("form" instead of
+    "from"), and it will flag legitimate things a spelling list often has
+    (names, uncommon words) — a nudge to double check, not a hard block.
+    Tapping "Save list" with anything still flagged shows a confirmation
+    ("Double check these words") with "Review words" or "Save anyway,"
+    rather than saving silently or refusing outright.
 - **Rewards** — per-weekday reward text + accuracy threshold slider, plus a
   weekly prize card with its own threshold. The whole screen scrolls as one
   unit (`.scrollDismissesKeyboard(.interactively)`) so a text field being

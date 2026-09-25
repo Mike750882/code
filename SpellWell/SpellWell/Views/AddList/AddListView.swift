@@ -22,6 +22,14 @@ struct AddListView: View {
     @State private var isImporting = false
     @State private var showImportError = false
     @State private var importErrorMessage = ""
+    @State private var showSpellCheckConfirmation = false
+
+    /// How many currently-typed words don't match a standard dictionary
+    /// spelling (see `SpellCheckService`) -- recomputed on every keystroke
+    /// since `wordFields` is what drives it, no separate tracking needed.
+    private var flaggedWordCount: Int {
+        wordFields.filter(SpellCheckService.isPossiblyMisspelled).count
+    }
 
     private var currentWeekList: WeekList? {
         child.weekLists?.sorted(by: { $0.weekOf > $1.weekOf }).first
@@ -99,6 +107,14 @@ struct AddListView: View {
         } message: {
             Text(importErrorMessage)
         }
+        .alert("Double check these words", isPresented: $showSpellCheckConfirmation) {
+            Button("Review words", role: .cancel) {}
+            Button("Save anyway") { finishSaving() }
+        } message: {
+            Text(flaggedWordCount == 1
+                ? "1 word doesn't match a standard dictionary spelling. Make sure it's spelled the way you want before saving."
+                : "\(flaggedWordCount) words don't match a standard dictionary spelling. Make sure they're spelled the way you want before saving.")
+        }
     }
 
     private var header: some View {
@@ -145,6 +161,7 @@ struct AddListView: View {
         let columns = [GridItem(.adaptive(minimum: isCompact ? 140 : 200), spacing: 16)]
         return LazyVGrid(columns: columns, spacing: 16) {
             ForEach(0..<wordFields.count, id: \.self) { index in
+                let flagged = SpellCheckService.isPossiblyMisspelled(wordFields[index])
                 HStack {
                     Text("\(index + 1)")
                         .font(Theme.body(13))
@@ -155,17 +172,28 @@ struct AddListView: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 10)
                         .background(Theme.surface)
-                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline, lineWidth: 1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(flagged ? Theme.error.opacity(0.7) : Theme.hairline, lineWidth: flagged ? 1.5 : 1)
+                        )
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                         .focused($focusedField, equals: index)
+                    // Not in the system dictionary -- a nudge to double
+                    // check, not a hard error. A name or uncommon word will
+                    // trip this too, so it's never blocking on its own.
+                    if flagged {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Theme.error.opacity(0.7))
+                    }
                 }
             }
         }
     }
 
     private var footer: some View {
-        let caption = Text("Words are read aloud with the iPad voice. Tap a word to record your own voice.")
+        let caption = Text("Words are read aloud with the iPad voice. Tap a word to record your own voice. A flagged word doesn't match a standard dictionary spelling -- double check it before saving.")
             .font(Theme.body(13))
             .foregroundStyle(Theme.textSecondary)
 
@@ -179,8 +207,11 @@ struct AddListView: View {
             .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.hairline, lineWidth: 1))
 
             Button("Save list") {
-                saveList()
-                dismiss()
+                if flaggedWordCount > 0 {
+                    showSpellCheckConfirmation = true
+                } else {
+                    finishSaving()
+                }
             }
             .font(Theme.body(15, weight: .medium))
             .foregroundStyle(Theme.primary)
@@ -254,6 +285,11 @@ struct AddListView: View {
             fields[word.orderIndex] = word.text
         }
         wordFields = fields
+    }
+
+    private func finishSaving() {
+        saveList()
+        dismiss()
     }
 
     private func saveList() {
