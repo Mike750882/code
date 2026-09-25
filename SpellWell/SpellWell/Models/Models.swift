@@ -32,6 +32,18 @@ final class Child {
     var wednesdayInputMode: String = "halfAndHalf"
     var thursdayInputMode: String = "typed"
 
+    /// Whether the Friday "Practice For Today's Test" reminder is on --
+    /// off by default, a parent opts in from Settings. This is a local,
+    /// on-device notification (see `NotificationService`), not a server
+    /// push.
+    var fridayNotificationEnabled: Bool = false
+    /// Local time-of-day the Friday reminder fires, 24-hour. Two flat
+    /// Ints rather than a Date, matching this model's other per-child
+    /// settings, since a specific calendar day doesn't mean anything here
+    /// -- it repeats every Friday.
+    var fridayNotificationHour: Int = 7
+    var fridayNotificationMinute: Int = 0
+
     @Relationship(deleteRule: .cascade, inverse: \WeekList.child)
     var weekLists: [WeekList]? = []
 
@@ -49,9 +61,13 @@ final class Child {
 extension Child {
     /// weekday matches `Calendar.component(.weekday, from:)`: 2 = Monday
     /// ... 5 = Thursday, same convention Home's daily grade cards use.
-    /// Anything else (a weekend) falls back to `.tilesFull` since there's
-    /// no weekend slot to configure.
+    /// Friday (6) is always typed from memory -- the real test on the
+    /// whole week's words, not one of the four adjustable practice days --
+    /// and isn't user-configurable like Monday-Thursday. Anything else (a
+    /// weekend) falls back to `.tilesFull` since there's no slot to
+    /// configure for it.
     func inputMode(forWeekday weekday: Int) -> WordInputMode {
+        guard weekday != 6 else { return .typed }
         let raw: String
         switch weekday {
         case 2: raw = mondayInputMode

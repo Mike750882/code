@@ -197,6 +197,31 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   of the others. Home's practice card subtitle
   (`WordInputMode.homeCardSubtitle`) reflects today's mode too, so a child
   knows what kind of challenge they're in for before they start.
+- **Friday's test** — Friday (weekday 6) isn't one of the four adjustable
+  practice-schedule days above; it's always **typed from memory**
+  (`Child.inputMode(forWeekday:)` special-cases it, unconditionally, ahead
+  of the Monday-Thursday switch). This fixed a real bug: Friday used to
+  fall through that switch's `default` case, which meant "fill in every
+  letter" tiles instead of a real typed test.
+  - **Reminder notification** — Settings → "Friday test reminder" lets a
+    parent turn on a local, on-device notification ("Practice For Today's
+    Test," `NotificationService`) at a time they choose
+    (`Child.fridayNotificationEnabled`/`Hour`/`Minute`), firing every
+    Friday via a repeating `UNCalendarNotificationTrigger`. Not a server
+    push — no backend involved, just the standard iOS notification
+    permission prompt (requested the first time the toggle is turned on;
+    a denial shows an inline hint to enable it in iOS Settings instead of
+    silently doing nothing).
+  - **Review-or-test choice screen** (`FridayTestChoiceView`) — tapping the
+    notification, or starting a Test normally from Home on a Friday, both
+    land here first rather than going straight into `PracticeView`: review
+    this week's words (reuses `WordListView`, same as the ungated "This
+    week's words" pill), or jump straight into the test. Wired through two
+    new pieces on `ContentView`: `NotificationRouter` (an `ObservableObject`
+    singleton `AppDelegate` flips when the notification is tapped, since
+    that happens outside any SwiftUI view) and a `FridayTestRoute`
+    `NavigationStack` destination that both the router and
+    `HomeView.onStartFridayTest` push onto.
 - **Daily grade cards** — one card per weekday (Monday-Thursday, matching
   the Rewards screen's day range), each showing that day's grade,
   percentage-based caption ("Excellent!" / "Good Job!" / "Getting Better" /

@@ -9,6 +9,10 @@ struct HomeView: View {
     /// Practice session on just those words -- doesn't touch the day's
     /// already-recorded Test grade, same as any other Practice session.
     var onReviewMissedWords: (WeekList, [SpellingWord]) -> Void
+    /// Starting a Test on a Friday goes through the review-or-test choice
+    /// screen instead of straight into `PracticeView` -- same landing
+    /// screen reached by tapping the Friday reminder notification.
+    var onStartFridayTest: (WeekList) -> Void
 
     /// iPhone portrait (and most iPhone landscape) is "compact"; iPad is
     /// "regular" in both orientations. Several layouts below were built
@@ -34,6 +38,10 @@ struct HomeView: View {
 
     private var todaysWordInputMode: WordInputMode {
         child.inputMode(forWeekday: Calendar.current.component(.weekday, from: Date()))
+    }
+
+    private var isFriday: Bool {
+        Calendar.current.component(.weekday, from: Date()) == 6
     }
 
     private var todayCompletedCount: Int {
@@ -221,10 +229,14 @@ struct HomeView: View {
 
     private var practiceCard: some View {
         Button {
-            if let list = thisWeekList, !thisWeekWords.isEmpty {
-                onStartPractice(list, mode)
-            } else {
+            guard let list = thisWeekList, !thisWeekWords.isEmpty else {
                 showNoWordsAlert = true
+                return
+            }
+            if mode == .test && isFriday {
+                onStartFridayTest(list)
+            } else {
+                onStartPractice(list, mode)
             }
         } label: {
             VStack(alignment: .leading, spacing: isCompact ? 16 : 24) {

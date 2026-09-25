@@ -15,6 +15,10 @@ struct ContentView: View {
     @State private var pendingDestination: GatedDestination?
     @State private var isResettingPIN = false
     @State private var showForgotPINUnavailable = false
+    /// Flips true when the Friday reminder notification is tapped (see
+    /// `AppDelegate`) -- observed below to navigate straight to Friday's
+    /// test screen instead of just opening to Home like a normal launch.
+    @ObservedObject private var notificationRouter = NotificationRouter.shared
 
     enum GatedDestination: Identifiable, Hashable {
         case addList, rewards, settings, editName
@@ -35,6 +39,13 @@ struct ContentView: View {
         var restrictToWordIDs: Set<UUID>? = nil
     }
 
+    /// Friday's test landing screen -- reached either by tapping the
+    /// Friday reminder notification or starting a test normally from Home
+    /// on a Friday (see `HomeView.onStartFridayTest`).
+    struct FridayTestRoute: Hashable {
+        let weekList: WeekList
+    }
+
     /// Falls back to the first child (in creation order isn't guaranteed
     /// here, just @Query's default order) if the stored ID doesn't match
     /// any current profile -- e.g. it was removed, or this is a fresh
@@ -45,6 +56,14 @@ struct ContentView: View {
             return match
         }
         return children.first
+    }
+
+    /// Same "most recent weekOf" lookup HomeView uses -- duplicated here
+    /// (rather than shared) since it's a one-liner and this is the only
+    /// other place that needs it, to resolve the Friday notification tap
+    /// to a concrete week without HomeView already being on screen.
+    private var thisWeekList: WeekList? {
+        activeChild?.weekLists?.sorted(by: { $0.weekOf > $1.weekOf }).first
     }
 
     var body: some View {
@@ -64,6 +83,9 @@ struct ContentView: View {
                                 mode: .practice,
                                 restrictToWordIDs: Set(missedWords.map(\.id))
                             ))
+                        },
+                        onStartFridayTest: { weekList in
+                            path.append(FridayTestRoute(weekList: weekList))
                         }
                     )
                 } else {
@@ -92,6 +114,18 @@ struct ContentView: View {
             }
             .navigationDestination(for: PracticeRoute.self) { route in
                 PracticeView(weekList: route.weekList, mode: route.mode, restrictToWordIDs: route.restrictToWordIDs)
+            }
+            .navigationDestination(for: FridayTestRoute.self) { route in
+                FridayTestChoiceView(weekList: route.weekList) {
+                    path.append(PracticeRoute(weekList: route.weekList, mode: .test))
+                }
+            }
+        }
+        .onChange(of: notificationRouter.pendingFridayTest) { _, isPending in
+            guard isPending else { return }
+            notificationRouter.pendingFridayTest = false
+            if let list = thisWeekList {
+                path.append(FridayTestRoute(weekList: list))
             }
         }
         .sheet(item: $pendingDestination) { destination in

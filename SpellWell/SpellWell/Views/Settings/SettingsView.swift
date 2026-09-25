@@ -57,6 +57,9 @@ struct SettingsView: View {
     @State private var selectedVoiceIdentifier: String = ""
     @State private var showChangePIN = false
     @State private var showTour = false
+    @State private var fridayReminderEnabled = false
+    @State private var fridayReminderTime = Date()
+    @State private var fridayReminderPermissionDenied = false
 
     var body: some View {
         ScrollView {
@@ -76,6 +79,8 @@ struct SettingsView: View {
                 colorProfileRow
                 Divider().overlay(Theme.hairline)
                 practiceScheduleRow
+                Divider().overlay(Theme.hairline)
+                fridayReminderRow
                 Divider().overlay(Theme.hairline)
                 pinRow
                 Divider().overlay(Theme.hairline)
@@ -101,6 +106,13 @@ struct SettingsView: View {
             appearance = child.appearance == "system" ? "light" : child.appearance
             selectedColorProfile = child.colorProfile
             selectedVoiceIdentifier = child.voiceIdentifier
+            fridayReminderEnabled = child.fridayNotificationEnabled
+            fridayReminderTime = Calendar.current.date(
+                bySettingHour: child.fridayNotificationHour,
+                minute: child.fridayNotificationMinute,
+                second: 0,
+                of: Date()
+            ) ?? Date()
         }
         .sheet(isPresented: $showChangePIN) {
             SetPINView(
@@ -334,6 +346,43 @@ struct SettingsView: View {
             }
         }
         .padding(.vertical, 20)
+    }
+
+    private var fridayReminderRow: some View {
+        SettingsRow(
+            title: "Friday test reminder",
+            subtitle: "A notification reminding the student to practice before Friday's spelling test, which is always typed from memory."
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                Toggle("Remind on Fridays", isOn: $fridayReminderEnabled)
+                    .tint(Theme.primary)
+                    .onChange(of: fridayReminderEnabled) { _, newValue in
+                        child.fridayNotificationEnabled = newValue
+                        syncFridayReminder()
+                    }
+                if fridayReminderEnabled {
+                    DatePicker("Time", selection: $fridayReminderTime, displayedComponents: .hourAndMinute)
+                        .labelsHidden()
+                        .onChange(of: fridayReminderTime) { _, newValue in
+                            let components = Calendar.current.dateComponents([.hour, .minute], from: newValue)
+                            child.fridayNotificationHour = components.hour ?? 7
+                            child.fridayNotificationMinute = components.minute ?? 0
+                            syncFridayReminder()
+                        }
+                    if fridayReminderPermissionDenied {
+                        Text("Notifications are turned off for SpellWell. Enable them in iOS Settings to get this reminder.")
+                            .font(Theme.body(12))
+                            .foregroundStyle(Theme.error)
+                    }
+                }
+            }
+        }
+    }
+
+    private func syncFridayReminder() {
+        NotificationService.syncFridayReminder(for: child) { granted in
+            fridayReminderPermissionDenied = !granted
+        }
     }
 
     private var pinRow: some View {
