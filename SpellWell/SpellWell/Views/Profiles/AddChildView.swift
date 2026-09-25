@@ -47,6 +47,7 @@ struct AddChildView: View {
                 if isReady {
                     TextField("Student's name", text: $name)
                         .font(Theme.display(22))
+                        .foregroundStyle(Theme.textPrimary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)

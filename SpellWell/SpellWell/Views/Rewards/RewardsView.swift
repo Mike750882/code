@@ -113,6 +113,7 @@ struct RewardsView: View {
                     }
                     TextField("Enter reward", text: bindingForText(weekday))
                         .font(Theme.body(16))
+                        .foregroundStyle(Theme.textPrimary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 10)
                         .background(Theme.surface)
@@ -131,6 +132,7 @@ struct RewardsView: View {
 
                     TextField("Enter reward", text: bindingForText(weekday))
                         .font(Theme.body(16))
+                        .foregroundStyle(Theme.textPrimary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 10)
                         .background(Theme.surface)

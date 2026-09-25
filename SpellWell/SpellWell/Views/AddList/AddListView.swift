@@ -169,6 +169,7 @@ struct AddListView: View {
                         .frame(width: 20, alignment: .trailing)
                     TextField("", text: binding(for: index))
                         .font(Theme.body(18))
+                        .foregroundStyle(Theme.textPrimary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 10)
                         .background(Theme.surface)

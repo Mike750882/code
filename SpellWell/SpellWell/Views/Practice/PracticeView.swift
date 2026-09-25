@@ -361,6 +361,11 @@ struct PracticeView: View {
     private var typedAnswerField: some View {
         TextField("Type the word", text: $typedAnswer)
             .font(Theme.display(28))
+            // Without this, the typed text falls back to the system's
+            // own light/dark text color instead of the active theme's --
+            // on a light-mode device that's plain black, unreadable
+            // against a dark theme's background (e.g. Space).
+            .foregroundStyle(Theme.textPrimary)
             .multilineTextAlignment(.center)
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()

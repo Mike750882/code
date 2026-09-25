@@ -28,6 +28,7 @@ struct EditNameView: View {
 
                 TextField("Name", text: $name)
                     .font(Theme.display(22))
+                    .foregroundStyle(Theme.textPrimary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
