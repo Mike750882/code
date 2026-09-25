@@ -308,12 +308,17 @@ struct HomeView: View {
 
     /// Correct-answer rate across this week's attempts, used as a stand-in
     /// for "progress toward the weekly prize" until a dedicated scoring rule
-    /// is defined.
+    /// is defined. Collapsed to each day's most recent Test session
+    /// (`latestSessionPerWeekday`) before averaging -- otherwise a retaken
+    /// day's earlier, wrong attempts stayed mixed in with the correct
+    /// retake that replaced them, dragging the week's average down even
+    /// though every daily grade card shows the retake's (better) result.
     private var weeklyPrizeProgress: Double {
         let calendar = Calendar.current
         let attemptsThisWeek = thisWeekWords
             .flatMap { $0.attempts ?? [] }
             .filter { calendar.isDate($0.date, equalTo: Date(), toGranularity: .weekOfYear) }
+            .latestSessionPerWeekday
         guard !attemptsThisWeek.isEmpty else { return 0 }
         let correct = attemptsThisWeek.filter(\.isCorrect).count
         return Double(correct) / Double(attemptsThisWeek.count)

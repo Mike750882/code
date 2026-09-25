@@ -472,7 +472,13 @@ struct SettingsView: View {
         let attempts = (child.weekLists ?? [])
             .flatMap { $0.words ?? [] }
             .flatMap { $0.attempts ?? [] }
-        let thisWeek = attempts.filter { Calendar.current.isDate($0.date, equalTo: Date(), toGranularity: .weekOfYear) }
+        // Collapsed to each day's most recent Test session before
+        // counting -- see the note on ProgressReportView.rows for why:
+        // otherwise a retaken day's earlier, wrong attempts stayed mixed
+        // in with the correct retake that replaced them.
+        let thisWeek = attempts
+            .filter { Calendar.current.isDate($0.date, equalTo: Date(), toGranularity: .weekOfYear) }
+            .latestSessionPerWeekday
         let correct = thisWeek.filter(\.isCorrect).count
         return "This week · \(correct) of \(thisWeek.count) correct"
     }

@@ -20,7 +20,12 @@ struct ProgressReportView: View {
             .sorted(by: { $0.weekOf > $1.weekOf })
             .map { list in
                 let words = (list.words ?? []).sorted(by: { $0.orderIndex < $1.orderIndex })
-                let attempts = words.flatMap { $0.attempts ?? [] }
+                // Collapsed to each day's most recent Test session before
+                // counting -- otherwise a retaken day's earlier, wrong
+                // attempts stayed mixed in with the correct retake that
+                // replaced them, dragging this week's percent down even
+                // when every one of that week's daily grades was good.
+                let attempts = words.flatMap { $0.attempts ?? [] }.latestSessionPerWeekday
                 let correct = attempts.filter(\.isCorrect).count
                 return WeeklyReportRow(
                     id: list.id,

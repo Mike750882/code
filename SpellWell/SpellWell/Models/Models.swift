@@ -152,6 +152,27 @@ final class PracticeAttempt {
     }
 }
 
+extension Array where Element == PracticeAttempt {
+    /// Collapses to just each weekday's most recent Test-mode session --
+    /// a retaken day's earlier, superseded attempts are dropped instead
+    /// of being averaged in alongside the retake that replaced them.
+    /// Generalizes the same "most recent session wins" rule the daily
+    /// grade cards already use per individual day (see
+    /// `HomeView.latestTestSession(onWeekday:)`) to a whole set of
+    /// attempts at once -- e.g. every attempt recorded against one
+    /// week's words -- so a weekly average can't be dragged down by
+    /// attempts a same-day retake already superseded.
+    var latestSessionPerWeekday: [PracticeAttempt] {
+        let calendar = Calendar.current
+        let testAttempts = filter { $0.mode == "test" }
+        let byWeekday = Dictionary(grouping: testAttempts) { calendar.component(.weekday, from: $0.date) }
+        return byWeekday.values.flatMap { dayAttempts -> [PracticeAttempt] in
+            guard let latestSessionID = dayAttempts.max(by: { $0.date < $1.date })?.sessionID else { return [] }
+            return dayAttempts.filter { $0.sessionID == latestSessionID }
+        }
+    }
+}
+
 @Model
 final class DailyReward {
     var id: UUID = UUID()

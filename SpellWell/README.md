@@ -363,6 +363,27 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     in one final pass at the end -- the same ordering the original code
     needed to avoid a SwiftData crash from diffing `list.words` against
     an object already deleted mid-pass.
+- **Fixed: a retake's superseded attempts still dragged down the week's
+  average** (`PracticeAttempt.latestSessionPerWeekday`, `Models.swift`) —
+  the daily grade cards already collapsed a retaken day to just its most
+  recent session (`HomeView.latestTestSession(onWeekday:)`), but three
+  other, week-level aggregates didn't: Home's weekly-prize progress
+  (`weeklyPrizeProgress`), the Progress Report's per-week percent
+  (`ProgressReportView.rows`), and Settings' one-line "This week · X of Y
+  correct" summary (`progressSummary`) all just flattened *every*
+  `PracticeAttempt` ever recorded against a week's words. So a D retaken
+  into an A left the D's wrong attempts still counted alongside the A's
+  correct ones -- mathematically, a student could see straight A's on
+  every daily grade card and still have the week's overall percent land
+  well below 100%, since the "week average" was silently built from the
+  *first* attempt at each retaken word as much as the last. Fixed with a
+  shared `Array<PracticeAttempt>.latestSessionPerWeekday` extension that
+  generalizes the daily grade cards' own "most recent session per weekday
+  wins" rule to a whole set of attempts at once -- e.g. every attempt
+  recorded against one week's words -- so a superseded retry never
+  factors into any weekly aggregate, not just the daily grade cards. All
+  three of the above now run their attempts through it before counting
+  correct/total.
 - **Rewards** — per-weekday reward text + accuracy threshold slider, plus a
   weekly prize card with its own threshold. The whole screen scrolls as one
   unit (`.scrollDismissesKeyboard(.interactively)`) so a text field being
