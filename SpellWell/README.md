@@ -346,6 +346,23 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     Tapping "Save list" with anything still flagged shows a confirmation
     ("Double check these words") with "Review words" or "Save anyway,"
     rather than saving silently or refusing outright.
+  - **Fixed: saving mid-week erased the whole week's test history** —
+    `saveList()` used to delete every existing `SpellingWord` and insert
+    brand-new ones on *every* save, even for words whose text never
+    changed. `PracticeAttempt` cascades away when its `SpellingWord` is
+    deleted (the model's delete rule), so re-saving the list at all --
+    even just to add one word Wednesday afternoon -- silently wiped every
+    word's test history for the entire week, Monday's and Tuesday's
+    included. Fixed by matching the draft to the list's existing words by
+    `orderIndex` instead of blowing everything away: a word whose text is
+    unchanged is left alone entirely (same identity, same `attempts`), an
+    edited word has just its `.text` updated in place (keeping its
+    identity and history), and only a word whose slot is now blank, or
+    whose slot no longer exists at all (the word count went down), is
+    actually deleted. All inserts/edits still happen before any deletes,
+    in one final pass at the end -- the same ordering the original code
+    needed to avoid a SwiftData crash from diffing `list.words` against
+    an object already deleted mid-pass.
 - **Rewards** — per-weekday reward text + accuracy threshold slider, plus a
   weekly prize card with its own threshold. The whole screen scrolls as one
   unit (`.scrollDismissesKeyboard(.interactively)`) so a text field being

@@ -302,25 +302,47 @@ struct AddListView: View {
         }()
         list.targetWordCount = wordCount
 
-        // Capture the old words before touching anything, link the new
-        // ones in (which appends them into list.words via the inverse
-        // relationship -- no need to reassign the array), and only then
-        // delete the old ones. Deleting first and reassigning list.words
-        // in the same pass makes SwiftData diff the collection against
-        // objects it just deleted, which crashes with "this model instance
-        // was invalidated because its backing data could no longer be
-        // found."
-        let oldWords = list.words ?? []
+        // Matched to the draft by orderIndex rather than deleted and
+        // recreated wholesale -- a SpellingWord's PracticeAttempt history
+        // cascades away when it's deleted (see the model's delete rule),
+        // so blowing away and rebuilding every word on every save --
+        // even ones whose text never changed -- erased a whole week's
+        // test scores just for adding or editing one word partway
+        // through it. Only a word whose slot is now blank, or whose slot
+        // no longer exists (the word count went down), is actually
+        // deleted; an edited word keeps its identity (and attempts) with
+        // its text simply updated in place.
+        var existingByIndex: [Int: SpellingWord] = [:]
+        for word in list.words ?? [] {
+            existingByIndex[word.orderIndex] = word
+        }
+
+        // All inserts/edits happen first, deletes only in one final pass
+        // at the end -- same ordering the original all-delete-then-insert
+        // code relied on to avoid SwiftData diffing list.words against an
+        // object it had already deleted mid-pass (see the note that used
+        // to be here).
+        var wordsToDelete: [SpellingWord] = []
 
         for (index, text) in wordFields.enumerated() {
             let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else { continue }
-            let word = SpellingWord(text: trimmed, orderIndex: index)
-            modelContext.insert(word)
-            word.weekList = list
+            if let existing = existingByIndex.removeValue(forKey: index) {
+                if trimmed.isEmpty {
+                    wordsToDelete.append(existing)
+                } else if existing.text != trimmed {
+                    existing.text = trimmed
+                }
+            } else if !trimmed.isEmpty {
+                let word = SpellingWord(text: trimmed, orderIndex: index)
+                modelContext.insert(word)
+                word.weekList = list
+            }
         }
 
-        for word in oldWords {
+        // Anything left here had no matching field at all this save.
+        wordsToDelete.append(contentsOf: existingByIndex.values)
+
+        for word in wordsToDelete {
             modelContext.delete(word)
         }
 
