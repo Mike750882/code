@@ -56,6 +56,18 @@ struct PracticeResultsView: View {
         return percent >= reward.thresholdPercent
     }
 
+    /// A robot cheer tiered by score -- generic and grade-based only,
+    /// same as Practice's encouragement tips, not tied to which specific
+    /// words were missed.
+    private var cheerMessage: String {
+        switch percent {
+        case 90...: return "Amazing job! You're a spelling star!"
+        case 70..<90: return "Great work! You're getting really good at this!"
+        case 50..<70: return "Nice effort! A little more practice and you'll have it."
+        default: return "That's okay -- every mistake helps you learn. Let's try again soon!"
+        }
+    }
+
     /// The whole screen scrolls, not just the word list in a fixed-height
     /// sub-region -- in landscape on an iPhone (much less vertical room
     /// than portrait), the score card alone could take up nearly all the
@@ -65,6 +77,7 @@ struct PracticeResultsView: View {
         ScrollView {
             VStack(spacing: 24) {
                 scoreCard
+                RobotTip(message: cheerMessage)
                 if let reward = todaysReward {
                     rewardStatus(reward)
                 }

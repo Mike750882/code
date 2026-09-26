@@ -720,3 +720,20 @@ the app's existing serif/system font pairing, colors only.
   token system existed) and 0.28 (the "card/field borders" tier, the
   dominant real usage in this codebase) for Space/Princess/Circus, whose
   spec instead gives one bold hue meant to be washed out with opacity.
+- **Robot helper** (`DesignSystem/RobotHelper.swift`) — a small friendly
+  character, `RobotAvatar`, drawn entirely from SwiftUI shapes (a rounded
+  head, two eyes, an antenna, a smile) rather than image assets, so it's
+  automatically theme-correct (`Theme.primary`/`Theme.surface`) in every
+  color theme with no per-theme art needed. `RobotTip` pairs it with a
+  short message bubble -- the shape most screens actually use. Message
+  text is always generic and grade/context-based, never a real per-word
+  example sentence: nothing in this app looks those up or generates them,
+  since doing so for real would mean a network call (an LLM or dictionary
+  API) and everything else here runs entirely on-device, so that was
+  deliberately left out rather than half-built. Three placements so far:
+  `AddChildView` (replacing its old icon with the robot on the name-entry
+  screen, both for first launch and adding a sibling from Settings),
+  `PracticeView` (one encouragement line picked once per session from a
+  small pool and left alone -- changing every word would be more
+  distracting than encouraging), and `PracticeResultsView` (a cheer tiered
+  by score band, shown for both Practice and Test results).

@@ -32,9 +32,7 @@ struct AddChildView: View {
         VStack {
             Spacer()
             VStack(spacing: 24) {
-                Image(systemName: "person.crop.circle.badge.plus")
-                    .font(.system(size: 40))
-                    .foregroundStyle(Theme.primary)
+                RobotAvatar(size: 72)
                 Text(title)
                     .font(Theme.display(28))
                     .foregroundStyle(Theme.textPrimary)

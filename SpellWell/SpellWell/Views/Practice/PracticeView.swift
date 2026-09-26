@@ -147,8 +147,23 @@ struct PracticeView: View {
     /// recorded here -- lets Home's daily grade use only the most recent
     /// session's result for a day when a test is retaken.
     @State private var sessionID = UUID()
+    /// Picked once when the session starts and left alone -- a robot
+    /// helper that changed its line every word would be more distracting
+    /// than encouraging.
+    @State private var encouragementTip = PracticeView.encouragementTips.randomElement()!
 
     enum Feedback { case correct, incorrect }
+
+    /// Generic, word-independent encouragement only -- never a real
+    /// per-word example sentence, since nothing in this app looks those
+    /// up (see `RobotTip`'s doc comment for why).
+    private static let encouragementTips = [
+        "You've got this! Take your time.",
+        "Try sounding it out, one letter at a time.",
+        "Say the word out loud before you spell it!",
+        "Mistakes help you learn -- keep going!",
+        "Listen closely, then give it your best shot!"
+    ]
 
     private var words: [SpellingWord] {
         let all = (weekList.words ?? []).sorted(by: { $0.orderIndex < $1.orderIndex })
@@ -196,6 +211,8 @@ struct PracticeView: View {
             VStack(spacing: 0) {
                 if currentWord != nil {
                     topBar
+                    RobotTip(message: encouragementTip)
+                        .padding(.top, 12)
                 }
                 Spacer()
                 if let word = currentWord, let metrics {
