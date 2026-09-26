@@ -21,6 +21,11 @@ struct PracticeResultsView: View {
     let child: Child?
     var onDone: () -> Void
 
+    /// Drives the grade letter's entrance bounce and the sparkle burst --
+    /// starts false so both animate in from `scoreCard`'s `.onAppear`
+    /// rather than the animated state ever being true on first render.
+    @State private var hasAppeared = false
+
     private var correctCount: Int {
         results.filter(\.isCorrect).count
     }
@@ -32,6 +37,10 @@ struct PracticeResultsView: View {
 
     private var grade: String { Grading.letter(forPercent: percent) }
     private var gradeColor: Color { Grading.color(forPercent: percent) }
+    /// A-, A, or A+ (90% and up) -- the threshold for celebrating with a
+    /// sparkle burst on top of the grade letter's entrance bounce, which
+    /// every grade gets.
+    private var isTopGrade: Bool { percent >= 90 }
 
     /// Today's reward, if a grown-up has set one for this weekday --
     /// matches the same "keyed by weekday only" lookup Rewards/Home
@@ -74,9 +83,16 @@ struct PracticeResultsView: View {
 
     private var scoreCard: some View {
         VStack(spacing: 8) {
-            Text(grade)
-                .font(Theme.display(72, weight: .medium))
-                .foregroundStyle(gradeColor)
+            ZStack {
+                if isTopGrade {
+                    SparkleBurst(color: Theme.rewardIcon)
+                }
+                Text(grade)
+                    .font(Theme.display(72, weight: .medium))
+                    .foregroundStyle(gradeColor)
+                    .scaleEffect(hasAppeared ? 1 : 0.4)
+                    .opacity(hasAppeared ? 1 : 0)
+            }
             Text("\(percent)%")
                 .font(Theme.display(24))
                 .foregroundStyle(Theme.textPrimary)
@@ -87,6 +103,50 @@ struct PracticeResultsView: View {
         .padding(28)
         .frame(maxWidth: .infinity)
         .card(borderColor: gradeColor, lineWidth: 1.5)
+        .onAppear {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+                hasAppeared = true
+            }
+        }
+    }
+
+    /// A ring of sparkle icons that pop out from the center and fade --
+    /// pure SwiftUI, no image assets or third-party library, so it works
+    /// the same way in every color theme (tinted with whatever `color`
+    /// it's given).
+    private struct SparkleBurst: View {
+        let color: Color
+
+        @State private var isAnimating = false
+
+        private let sparkleCount = 8
+        private let radius: CGFloat = 64
+
+        var body: some View {
+            ZStack {
+                ForEach(0..<sparkleCount, id: \.self) { index in
+                    let angle = Angle.degrees(Double(index) / Double(sparkleCount) * 360)
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 18))
+                        .foregroundStyle(color)
+                        .offset(
+                            x: isAnimating ? cos(angle.radians) * radius : 0,
+                            y: isAnimating ? sin(angle.radians) * radius : 0
+                        )
+                        .scaleEffect(isAnimating ? 1.3 : 0.2)
+                        .opacity(isAnimating ? 0 : 1)
+                }
+            }
+            .allowsHitTesting(false)
+            .onAppear {
+                // A short delay so the burst reads as a follow-through on
+                // the grade letter's own bounce landing, not simultaneous
+                // with it.
+                withAnimation(.easeOut(duration: 0.9).delay(0.2)) {
+                    isAnimating = true
+                }
+            }
+        }
     }
 
     private func rewardStatus(_ reward: DailyReward) -> some View {

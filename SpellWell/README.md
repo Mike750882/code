@@ -140,6 +140,16 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   word. Practice's results are purely a same-session recap, though --
   see below for why they're never saved anywhere.
 
+  The grade letter bounces in on a spring animation every time
+  (`scoreCard`'s `hasAppeared` state, set `true` from `.onAppear`
+  rather than on first render, so the bounce actually plays). An
+  A-range grade (90% and up) also gets a celebratory `SparkleBurst` --
+  a small private `View` nested in `PracticeResultsView` that rings the
+  grade letter with `sparkle` SF Symbols popping outward and fading, a
+  beat after the bounce lands. Pure SwiftUI (no image assets, no
+  third-party library), tinted with `Theme.rewardIcon` so it's already
+  theme-correct in every color theme without extra work.
+
   Letter placement is slot-indexed (`slotContents: [SlotState]`, one entry
   per blank, `.empty`/`.filled(bankIndex:)`/`.prefilled(Character)` -- see
   "Practice schedule" below), not append-order, so a tile can land in *any*
