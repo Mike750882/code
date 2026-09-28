@@ -22,7 +22,7 @@ struct TourView: View {
         TourPage(
             icon: "hand.wave.fill",
             color: Theme.action,
-            title: "Welcome to SpellWell",
+            title: "Welcome to Spell With Speagle",
             body: "A quick look at how spelling practice, tests, and rewards work."
         ),
         TourPage(
@@ -115,7 +115,7 @@ struct TourView: View {
             .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.primary, lineWidth: 1.5))
             .padding(.bottom, 32)
         }
-        .background(Theme.background.ignoresSafeArea())
+        .speagleBackground()
     }
 
     private func tourPageView(_ page: TourPage) -> some View {

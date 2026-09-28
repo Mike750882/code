@@ -56,7 +56,7 @@ struct PracticeResultsView: View {
         return percent >= reward.thresholdPercent
     }
 
-    /// A robot cheer tiered by score -- generic and grade-based only,
+    /// A Speagle cheer tiered by score -- generic and grade-based only,
     /// same as Practice's encouragement tips, not tied to which specific
     /// words were missed.
     private var cheerMessage: String {
@@ -68,6 +68,12 @@ struct PracticeResultsView: View {
         }
     }
 
+    /// Cheer pose only for a genuinely good result -- matches `isTopGrade`'s
+    /// own 90% bar for the sparkle burst, so Speagle's wings only go up
+    /// alongside the confetti, not for an "okay" score that just happens
+    /// to clear a lower bar.
+    private var cheerPose: SpeaglePose { isTopGrade ? .cheer : .think }
+
     /// The whole screen scrolls, not just the word list in a fixed-height
     /// sub-region -- in landscape on an iPhone (much less vertical room
     /// than portrait), the score card alone could take up nearly all the
@@ -77,7 +83,7 @@ struct PracticeResultsView: View {
         ScrollView {
             VStack(spacing: 24) {
                 scoreCard
-                RobotTip(message: cheerMessage)
+                SpeagleTip(message: cheerMessage, pose: cheerPose)
                 if let reward = todaysReward {
                     rewardStatus(reward)
                 }

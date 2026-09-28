@@ -68,7 +68,7 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.background)
+        .speagleBackground()
         .sheet(isPresented: $showTour) {
             TourView()
         }

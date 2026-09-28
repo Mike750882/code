@@ -93,8 +93,9 @@ struct ContentView: View {
                     // since there's nothing to protect and a parent is
                     // clearly setting up the app for the first time.
                     AddChildView(
-                        title: "Welcome to SpellWell",
+                        title: "Welcome to Spell With Speagle",
                         subtitle: "What's your student's name?",
+                        speagleMessage: "Hi friends, I'm Speagle the eagle. I'm here to help you learn.",
                         onCreated: { child in
                             activeChildID = child.id.uuidString
                         },
@@ -165,7 +166,7 @@ struct ContentView: View {
         } message: {
             Text("Set a passcode, Face ID, or Touch ID on this device in Settings to reset the grown-up PIN.")
         }
-        .background(Theme.background.ignoresSafeArea())
+        .speagleBackground()
         .preferredColorScheme(preferredColorScheme)
         // Forces the whole tree to rebuild when the active child's color
         // profile changes -- Theme's colors are plain static properties,

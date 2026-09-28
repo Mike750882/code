@@ -98,7 +98,7 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.background.ignoresSafeArea())
+        .speagleBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -370,7 +370,7 @@ struct SettingsView: View {
                             syncFridayReminder()
                         }
                     if fridayReminderPermissionDenied {
-                        Text("Notifications are turned off for SpellWell. Enable them in iOS Settings to get this reminder.")
+                        Text("Notifications are turned off for Spell With Speagle. Enable them in iOS Settings to get this reminder.")
                             .font(Theme.body(12))
                             .foregroundStyle(Theme.error)
                     }

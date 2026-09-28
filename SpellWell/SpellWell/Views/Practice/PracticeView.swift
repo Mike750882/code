@@ -156,7 +156,7 @@ struct PracticeView: View {
 
     /// Generic, word-independent encouragement only -- never a real
     /// per-word example sentence, since nothing in this app looks those
-    /// up (see `RobotTip`'s doc comment for why).
+    /// up (see `SpeagleTip`'s doc comment for why).
     private static let encouragementTips = [
         "You've got this! Take your time.",
         "Try sounding it out, one letter at a time.",
@@ -211,7 +211,7 @@ struct PracticeView: View {
             VStack(spacing: 0) {
                 if currentWord != nil {
                     topBar
-                    RobotTip(message: encouragementTip)
+                    SpeagleTip(message: encouragementTip, pose: .think)
                         .padding(.top, 12)
                 }
                 Spacer()
@@ -233,7 +233,7 @@ struct PracticeView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .coordinateSpace(name: "practiceArea")
         }
-        .background(Theme.background.ignoresSafeArea())
+        .speagleBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)

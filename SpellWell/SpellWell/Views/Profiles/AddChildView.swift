@@ -11,6 +11,12 @@ struct AddChildView: View {
 
     var title: String = "Add a student"
     var subtitle: String = "Give them a name to get started."
+    /// Speagle's own line above the name field -- defaults to a short,
+    /// generic prompt for the "add a sibling" reuse from Settings. The
+    /// very first launch (see `ContentView`) overrides this with Speagle's
+    /// full introduction instead, since that's the only time he's
+    /// introducing himself for the first time.
+    var speagleMessage: String = "Let's get another student set up!"
     var onCreated: (Child) -> Void
     /// True only for the very first launch's onboarding screen. A brand
     /// new install briefly has real background work competing for the
@@ -32,7 +38,8 @@ struct AddChildView: View {
         VStack {
             Spacer()
             VStack(spacing: 24) {
-                RobotAvatar(size: 72)
+                Speagle(pose: .wave, size: 100)
+                SpeagleSpeechBubble(message: speagleMessage)
                 Text(title)
                     .font(Theme.display(28))
                     .foregroundStyle(Theme.textPrimary)
@@ -76,7 +83,7 @@ struct AddChildView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.background.ignoresSafeArea())
+        .speagleBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

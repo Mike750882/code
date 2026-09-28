@@ -50,7 +50,7 @@ struct ProgressReportView: View {
         }
         .padding(28)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Theme.background.ignoresSafeArea())
+        .speagleBackground()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .alert(

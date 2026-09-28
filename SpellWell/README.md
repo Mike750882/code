@@ -1,9 +1,18 @@
-# SpellWell
+# Spell With Speagle
 
 A SwiftUI + SwiftData/CloudKit iPad and iPhone app that helps kids ages 6-12
 practice spelling words, with a parent PIN gate and a daily/weekly rewards
 system. Built from a set of six UI mockups (Home, Word practice, Grown-ups
 PIN gate, Add spelling list, Rewards, Settings).
+
+Renamed from "SpellWell" to "Spell With Speagle" for the app's new mascot
+(see "Speagle the eagle mascot" below). This is a **display-name-only**
+rename: the Xcode project, target, scheme, bundle identifier
+(`com.yourcompany.SpellWell`), and folder names are all unchanged, so
+existing Signing & Capabilities setup, CloudKit container, and any
+already-installed builds aren't affected. `project.yml`'s
+`PRODUCT_NAME`/`INFOPLIST_KEY_CFBundleDisplayName` are what make the Home
+Screen and everywhere in-app read "Spell With Speagle."
 
 ## Requirements
 
@@ -720,23 +729,64 @@ the app's existing serif/system font pairing, colors only.
   token system existed) and 0.28 (the "card/field borders" tier, the
   dominant real usage in this codebase) for Space/Princess/Circus, whose
   spec instead gives one bold hue meant to be washed out with opacity.
-- **Robot helper** (`DesignSystem/RobotHelper.swift`) — a small friendly
-  character, `RobotAvatar`, drawn entirely from SwiftUI shapes (a rounded
-  head, two eyes, an antenna, a smile) rather than image assets, so it's
-  automatically theme-correct (`Theme.primary`/`Theme.surface`) in every
-  color theme with no per-theme art needed. `RobotTip` pairs it with a
-  short message bubble -- the shape most screens actually use. Message
-  text is always generic and grade/context-based, never a real per-word
-  example sentence: nothing in this app looks those up or generates them,
-  since doing so for real would mean a network call (an LLM or dictionary
-  API) and everything else here runs entirely on-device, so that was
-  deliberately left out rather than half-built. Three placements so far:
-  `AddChildView` (replacing its old icon with the robot on the name-entry
-  screen, both for first launch and adding a sibling from Settings),
-  `PracticeView` (one encouragement line picked once per session from a
-  small pool and left alone -- changing every word would be more
-  distracting than encouraging), and `PracticeResultsView` (a cheer tiered
-  by score band, shown for both Practice and Test results).
+- **Speagle the eagle mascot** (`DesignSystem/SpeagleHelper.swift`) —
+  replaces the earlier plain-shapes robot character (`RobotAvatar`/
+  `RobotTip`) with real illustrated artwork: a friendly cartoon bald eagle
+  in four poses (`SpeaglePose`: `.wave`, `.point`, `.think`, `.cheer`), each
+  a separate image asset in `Assets.xcassets` rather than a SwiftUI-drawn
+  shape, since matching a supplied character design isn't something
+  role-based colors and primitives can approximate. `Speagle` renders one
+  pose at a given size; `SpeagleTip` pairs it with a short message bubble
+  next to it (the shape most screens use, same role `RobotTip` used to
+  fill); `SpeagleSpeechBubble` is the welcome screen's variant instead --
+  a comic-style bubble with a tail pointing down at Speagle's own head,
+  for when he's introducing himself rather than commenting alongside a
+  smaller avatar. Message text is still always generic and grade/context-
+  based, never a real per-word example sentence, for the same reason as
+  before: that would mean a network call (an LLM or dictionary API), and
+  everything else here runs entirely on-device.
+  - **Placements**: `AddChildView`'s welcome screen (`.wave`, with
+    Speagle's own introduction, "Hi friends, I'm Speagle the eagle. I'm
+    here to help you learn.") and its "add a sibling" reuse from Settings
+    (`.wave`, a shorter generic line -- that's a returning user, not a
+    first launch); `AddListView` (`.point`, guiding a grown-up through
+    entering the week's words); `PracticeView` (`.think`, the same
+    once-per-session encouragement-tip pool as before); `PracticeResultsView`
+    (`.cheer` for a top score, `.think` otherwise, tiered the same way the
+    cheer message already was).
+  - **Art pipeline**: generated via the Canva MCP connector's
+    `generate-image`/`remove-background` tools from a text prompt closely
+    describing the style of a parent-supplied reference photo (this
+    environment has no way to upload a reference image to Canva for true
+    image-to-image generation -- direct network access to canva.com is
+    blocked here -- so each pose was generated from a detailed style
+    description instead and compared by eye against the reference).
+    **The files currently committed under `Assets.xcassets/Speagle*.imageset`
+    and `AppBackground.imageset` are 200x200 preview thumbnails, not
+    production-quality art** -- Canva's generation tools only relay a
+    low-res preview back into this environment, and the full-resolution
+    files live in Canva itself, reachable only from a browser with the
+    account's own login. Before shipping, open each pose in Canva, export
+    the full-resolution PNG (transparent background, already applied for
+    all four poses), and replace the placeholder file in the matching
+    `.imageset` folder -- filenames and `Contents.json` are already set up
+    to just take a better file at the same path. Once real `@2x`/`@3x`
+    files are available, add those scale variants to each `Contents.json`
+    too (currently only `1x` is filled in).
+- **Speagle background** (`DesignSystem/SpeagleBackground.swift`) — a flat
+  cartoon sky/clouds/grass scene, generated the same way as Speagle
+  (Canva, same 200x200-placeholder caveat, background at
+  `Assets.xcassets/AppBackground.imageset`), pinned to the bottom edge via
+  `.speagleBackground()` (a drop-in replacement for the old
+  `.background(Theme.background.ignoresSafeArea())` pattern, now used
+  everywhere that pattern used to be) so the grass stays anchored at the
+  bottom regardless of device size or orientation, fading into
+  `Theme.background` toward the top so cards and text stay legible over
+  it. Only shown for the Default color theme -- Space/Princess/Circus (see
+  "Color themes" above) each commit to their own distinct palette, and a
+  sunny daytime sky would clash outright with Space's dark starfield in
+  particular, so those three keep the plain `Theme.background` fill
+  instead.
 
 ## App Store screenshots
 
