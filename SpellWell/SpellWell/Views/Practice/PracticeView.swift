@@ -253,14 +253,15 @@ struct PracticeView: View {
                             .clipped()
                     }
                     .padding(.trailing, 24)
-                    // Otherwise this stops at the safe area's bottom
-                    // inset (room for the Home indicator), leaving a
-                    // strip of background visible underneath him even
-                    // with zero bottom padding -- the background itself
-                    // ignores the safe area (see .speagleBackground()),
-                    // so without this he doesn't actually reach flush
-                    // with the true bottom edge like the background does.
-                    .ignoresSafeArea(edges: .bottom)
+                    // .ignoresSafeArea() alone doesn't move the overlay's
+                    // own alignment anchor -- "bottomTrailing" still
+                    // aligns to the safe area's bottom inset (room for
+                    // the Home indicator), not the true screen edge the
+                    // background (which does ignore the safe area)
+                    // reaches. Pushing down by the GeometryReader's own
+                    // measured inset closes that gap exactly, on any
+                    // device.
+                    .offset(y: proxy.safeAreaInsets.bottom)
                 }
             }
         }
