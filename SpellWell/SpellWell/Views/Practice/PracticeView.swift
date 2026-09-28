@@ -245,7 +245,8 @@ struct PracticeView: View {
                         }
                         Speagle(pose: .think, size: 384)
                     }
-                    .padding(24)
+                    .padding(.trailing, 24)
+                    .padding(.bottom, 4)
                 }
             }
         }
@@ -331,14 +332,6 @@ struct PracticeView: View {
     /// not a word with its own recording.
     private func hintBubble(_ hint: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Button {
-                speech.speak(hint, voiceIdentifier: weekList.child?.voiceIdentifier)
-            } label: {
-                Image(systemName: "speaker.wave.2.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(Theme.primary)
-                    .frame(width: 32, height: 32)
-            }
             Text(hint)
                 .font(Theme.body(14))
                 .foregroundStyle(Theme.textPrimary)
@@ -348,6 +341,14 @@ struct PracticeView: View {
                 // screen's speech bubble (see SpeagleSpeechBubble).
                 .frame(maxWidth: 200, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
+            Button {
+                speech.speak(hint, voiceIdentifier: weekList.child?.voiceIdentifier)
+            } label: {
+                Image(systemName: "speaker.wave.2.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(Theme.primary)
+                    .frame(width: 32, height: 32)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
