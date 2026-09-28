@@ -36,7 +36,7 @@ private struct SettingsRow<Content: View>: View {
             Text(title).font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
             Text(subtitle)
                 .font(Theme.body(13))
-                .foregroundStyle(Theme.textSecondary)
+                .foregroundStyle(Theme.textPrimary)
         }
     }
 }
@@ -167,7 +167,7 @@ struct SettingsView: View {
                 .foregroundStyle(Theme.textPrimary)
             Text("\(child.name)'s iPad")
                 .font(Theme.body(14))
-                .foregroundStyle(Theme.textSecondary)
+                .foregroundStyle(Theme.textPrimary)
         }
         .padding(.bottom, 16)
     }
@@ -293,7 +293,7 @@ struct SettingsView: View {
             }
             Text(profile.name)
                 .font(Theme.body(12))
-                .foregroundStyle(Theme.textSecondary)
+                .foregroundStyle(Theme.textPrimary)
         }
         .contentShape(Rectangle())
         .onTapGesture {
@@ -324,7 +324,7 @@ struct SettingsView: View {
                 Text("Practice schedule").font(Theme.display(19)).foregroundStyle(Theme.textPrimary)
                 Text("Choose how spelling words are practiced each day.")
                     .font(Theme.body(13))
-                    .foregroundStyle(Theme.textSecondary)
+                    .foregroundStyle(Theme.textPrimary)
             }
 
             ForEach(Self.scheduleWeekdays, id: \.weekday) { entry in
@@ -442,7 +442,7 @@ struct SettingsView: View {
 
     private var syncStatusColor: Color {
         if case .failed = syncMonitor.status { return Theme.error }
-        return Theme.textSecondary
+        return Theme.textPrimary
     }
 
     private var progressRow: some View {

@@ -43,7 +43,7 @@ struct AddListView: View {
         // especially in landscape.
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                SpeagleTip(message: "I'll help you get this week's list ready! Type each word below exactly how it should be spelled -- capital letters count.", pose: .point)
+                SpeagleTip(message: "I'll help you get this week's list ready! Type each word below exactly how it should be spelled, capital letters count.", pose: .point, avatarSize: 96)
                 header
                 wordGrid
                 footer

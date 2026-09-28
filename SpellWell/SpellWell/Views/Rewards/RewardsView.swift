@@ -40,6 +40,11 @@ struct RewardsView: View {
                 }
                 weeklyPrizeCard
                 footer
+                // Sits below everything else so his upward-pointing wing
+                // reads as gesturing back up at the rewards above, rather
+                // than at anything specific down here.
+                Speagle(pose: .point, size: 90)
+                    .frame(maxWidth: .infinity, alignment: .center)
             }
             .padding(28)
             .frame(maxWidth: .infinity)

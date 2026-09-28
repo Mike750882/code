@@ -51,6 +51,12 @@ struct WordListView: View {
                     }
                 }
             }
+            HStack {
+                Spacer()
+                // Tucked in the bottom right, as if he's studying the list
+                // right along with the child.
+                Speagle(pose: .think, size: 76)
+            }
         }
         .padding(28)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
