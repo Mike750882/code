@@ -83,6 +83,7 @@ struct PracticeResultsView: View {
                 }
                 wordList
                 Button("Back to Home", action: onDone)
+                    .accessibilityIdentifier("backToHomeButton")
                     .font(Theme.body(16, weight: .medium))
                     .foregroundStyle(Theme.primary)
                     .padding(.horizontal, 24)

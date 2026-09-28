@@ -459,6 +459,7 @@ struct SettingsView: View {
                 } label: {
                     Text("View report")
                 }
+                .accessibilityIdentifier("viewReportButton")
                 .font(Theme.body(15, weight: .medium))
                 .foregroundStyle(Theme.primary)
                 .padding(.horizontal, 18)

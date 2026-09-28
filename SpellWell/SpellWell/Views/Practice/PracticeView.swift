@@ -386,6 +386,7 @@ struct PracticeView: View {
 
     private var typedAnswerField: some View {
         TextField("Type the word", text: $typedAnswer)
+            .accessibilityIdentifier("typedAnswerField")
             .font(Theme.display(28))
             // Without this, the typed text falls back to the system's
             // own light/dark text color instead of the active theme's --
@@ -504,6 +505,7 @@ struct PracticeView: View {
             }
 
             Button("Check my word") { checkWord() }
+                .accessibilityIdentifier("checkWordButton")
                 .font(Theme.body(16, weight: .medium))
                 .foregroundStyle(Theme.action)
                 .padding(.horizontal, 20)

@@ -1,0 +1,29 @@
+# Apple's current App Store Connect device-size requirements: a 6.9" iPhone
+# and a 13" iPad cover every other size's screenshots too, so these two
+# devices are enough. If your installed Xcode's Simulator runtime names
+# these differently, update the strings below to match `xcrun simctl list
+# devicetypes` -- fastlane needs an exact name match.
+devices([
+  "iPhone 17 Pro Max",
+  "iPad Pro 13-inch (M4)"
+])
+
+languages(["en-US"])
+
+scheme("SpellWell")
+
+output_directory("./fastlane/screenshots")
+
+clear_previous_screenshots(true)
+
+# Real time-of-day/battery/signal in a screenshot looks unpolished and
+# dates the screenshot -- this normalizes the status bar instead.
+override_status_bar(true)
+
+# SpellWellUITests seeds its own in-memory demo data on launch
+# (-UITestSeedDemoData) rather than depending on anything already on the
+# Simulator, so starting from a freshly-erased one each run is safe and
+# keeps results consistent.
+erase_simulator(true)
+
+concurrent_simulators(false)

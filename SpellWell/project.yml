@@ -24,3 +24,30 @@ targets:
         INFOPLIST_KEY_NSMicrophoneUsageDescription: "SpellWell uses the microphone so a grown-up can record their own voice reading each spelling word."
         INFOPLIST_KEY_NSCameraUsageDescription: "SpellWell uses the camera so a grown-up can take a photo of a spelling list to import it."
         INFOPLIST_KEY_NSFaceIDUsageDescription: "SpellWell uses Face ID to verify it's a grown-up before resetting the PIN."
+  SpellWellUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: SpellWellUITests
+    dependencies:
+      - target: SpellWell
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yourcompany.SpellWellUITests
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: SpellWell
+schemes:
+  SpellWell:
+    build:
+      targets:
+        SpellWell: all
+        SpellWellUITests: [test]
+    test:
+      targets:
+        - SpellWellUITests
+    run:
+      config: Debug
+    archive:
+      config: Release

@@ -191,6 +191,7 @@ struct HomeView: View {
         }
         .pickerStyle(.segmented)
         .frame(width: 240)
+        .accessibilityIdentifier("modeToggle")
 
         let description = Text(mode.description)
             .font(Theme.body(14))
@@ -246,6 +247,7 @@ struct HomeView: View {
             .card(background: Theme.surfaceRaised, borderColor: Theme.action, lineWidth: 1.5)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("practiceCard")
         .alert("No words yet", isPresented: $showNoWordsAlert) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -280,6 +282,7 @@ struct HomeView: View {
                 subtitle: weeklyPrizeSubtitle,
                 progress: weeklyPrizeProgress
             ) { onOpenGated(.rewards) }
+            .accessibilityIdentifier("rewardsCard")
 
             SecondaryCard(
                 icon: "slider.horizontal.3",
@@ -287,6 +290,7 @@ struct HomeView: View {
                 title: "Settings",
                 subtitle: "Text size, appearance, PIN and progress."
             ) { onOpenGated(.settings) }
+            .accessibilityIdentifier("settingsCard")
         }
     }
 

@@ -737,3 +737,61 @@ the app's existing serif/system font pairing, colors only.
   small pool and left alone -- changing every word would be more
   distracting than encouraging), and `PracticeResultsView` (a cheer tiered
   by score band, shown for both Practice and Test results).
+
+## App Store screenshots
+
+This was also written without access to a Mac/Xcode/Simulator, so there's
+no way to run the app and take real screenshots by hand either. Apple's App
+Store Connect guidelines call for "accurate screenshots... representing the
+app's user experience," which rules out mockups -- so instead, this adds a
+`fastlane snapshot`-driven UI test (`SpellWellUITests/SpellWellUITests.swift`)
+that drives the actual app in the Simulator and captures real screens.
+
+`testTakeScreenshots()` launches with the `-UITestSeedDemoData` flag, which
+`SpellWellApp.init()` and `Services/UITestSupport.swift` (both `#if DEBUG`-
+gated, so this can never run in a shipped build even by accident) use to
+swap in an in-memory, non-CloudKit `ModelContainer` seeded with a demo
+child ("Alex"), a populated but unanswered current-week word list, daily/
+weekly rewards, and three past weeks of grade history. The test then:
+
+1. Screenshots **Home** as soon as it loads.
+2. Switches to Test mode, starts the test, types through all 10 words
+   (one deliberately mistyped, for a realistic ~90% grade instead of an
+   implausible 100%), and screenshots the **practice/test screen** with
+   the first word typed in.
+3. Screenshots the **results screen** once the grade's bounce-in and
+   sparkle-burst animation have mostly settled.
+4. Creates a demo PIN (1234) to reach **Rewards**, screenshots it, then
+   reaches **Settings → Progress report** with the same PIN and
+   screenshots that too.
+
+Each `accessibilityIdentifier` the test relies on
+(`practiceCard`, `modeToggle`, `typedAnswerField`, `checkWordButton`,
+`backToHomeButton`, `rewardsCard`, `settingsCard`, `viewReportButton`) was
+added directly to the relevant view specifically so the test could target
+real elements reliably instead of fragile text-based queries.
+
+To run it:
+
+1. `xcodegen generate` (this added a new `SpellWellUITests` target, so
+   this step is required even if you've already generated the project
+   before).
+2. Install Fastlane if you don't have it: `brew install fastlane` (or
+   `gem install fastlane` if you prefer RubyGems/Bundler).
+3. `cd SpellWell && fastlane screenshots` — builds the app, runs the UI
+   test on each device listed in `fastlane/Snapfile`, and writes PNGs to
+   `fastlane/screenshots/`.
+
+`fastlane/Snapfile` targets `"iPhone 17 Pro Max"` and
+`"iPad Pro 13-inch (M4)"` — Apple's current 6.9"/13" device-size
+requirement, which also covers every other display size and every
+localization. If your installed Xcode's Simulator runtime uses different
+exact device names, `xcrun simctl list devicetypes` will show what's
+actually available; edit the `devices([...])` list in `Snapfile` to match.
+
+Since this was built and reviewed without ever running it, the first two
+or three screenshots (Home, the test screen, results) are the ones most
+likely to just work — they don't depend on anything beyond the seeded data
+and a couple of taps. Rewards and the Progress report involve more steps
+(creating a PIN, scrolling to find a button, navigating back) and are more
+likely to need a small tweak to element queries or timing on a first run.
