@@ -57,14 +57,21 @@ struct HomeView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            // Tightened from 24pt section spacing / 24pt padding -- with
+            // the "Take a Tour" banner showing (the first couple of
+            // launches) plus the Friday day-grade card added, the old
+            // spacing pushed the bottom row just past the fold on an
+            // iPad, forcing a scroll to see it. This reclaims enough
+            // height that everything fits without scrolling in the
+            // common case, while still leaving normal breathing room.
+            VStack(alignment: .leading, spacing: 16) {
                 header
                 modeToggle
                 practiceCard
                 secondaryCards
                 dailyGradeCards
             }
-            .padding(24)
+            .padding(20)
             .frame(maxWidth: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -225,7 +232,7 @@ struct HomeView: View {
                 onStartPractice(list, mode)
             }
         } label: {
-            VStack(alignment: .leading, spacing: isCompact ? 16 : 24) {
+            VStack(alignment: .leading, spacing: isCompact ? 16 : 18) {
                 HStack {
                     Image(systemName: "square.and.pencil")
                         .font(.system(size: isCompact ? 24 : 33))
@@ -242,7 +249,7 @@ struct HomeView: View {
                     .font(Theme.body(isCompact ? 15 : 26))
                     .foregroundStyle(Theme.textSecondary)
             }
-            .padding(isCompact ? 24 : 42)
+            .padding(isCompact ? 24 : 32)
             .frame(maxWidth: .infinity, alignment: .leading)
             .card(background: Theme.surfaceRaised, borderColor: Theme.action, lineWidth: 1.5)
         }

@@ -38,7 +38,7 @@ struct AddChildView: View {
         VStack {
             Spacer()
             VStack(spacing: 24) {
-                Speagle(pose: .wave, size: 100)
+                Speagle(pose: .wave, size: 200)
                 SpeagleSpeechBubble(message: speagleMessage)
                 Text(title)
                     .font(Theme.display(28))

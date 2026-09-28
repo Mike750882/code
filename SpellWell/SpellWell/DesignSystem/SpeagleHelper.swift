@@ -89,6 +89,15 @@ struct SpeagleSpeechBubble: View {
                 .font(Theme.body(15, weight: .medium))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
+                // Both needed to guarantee wrapping rather than a
+                // truncated single line: an explicit width so the text
+                // has a concrete box to wrap within instead of depending
+                // on an ancestor's `.frame(maxWidth:)` to cascade a
+                // narrower proposal down to it, and `.fixedSize(vertical:
+                // true)` so its height actually expands to fit every
+                // wrapped line instead of being compressed to one.
+                .frame(maxWidth: 320)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 18)
                 .padding(.vertical, 12)
                 .background(Theme.surface)
