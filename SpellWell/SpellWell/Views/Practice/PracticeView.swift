@@ -223,6 +223,13 @@ struct PracticeView: View {
                         letterBank(metrics: metrics)
                     }
                     actionButtons
+                    // Directly under the action row (which includes
+                    // "Skip word"), in the main flow rather than beside
+                    // Speagle.
+                    if showHint, let hint = currentHint {
+                        hintBubble(hint)
+                            .padding(.top, 16)
+                    }
                 } else {
                     PracticeResultsView(results: results, mode: mode, child: weekList.child, onDone: onGoHome)
                 }
@@ -234,34 +241,25 @@ struct PracticeView: View {
             // Pinned to the corner via overlay rather than sitting in the
             // main flow -- at this size, having him inline would push the
             // word/tiles content around instead of just sharing the
-            // screen with it. No standing encouragement bubble anymore --
-            // he's just there, and a requested hint appears right beside
-            // him (see hintBubble) instead of a separate floating tip.
+            // screen with it.
             .overlay(alignment: .bottomTrailing) {
                 if currentWord != nil {
-                    HStack(alignment: .bottom, spacing: 12) {
-                        if showHint, let hint = currentHint {
-                            hintBubble(hint)
-                        }
-                        // Cropped to head-and-torso and sat flush with the
-                        // bottom edge -- like he's standing just below the
-                        // screen, so the hint bubble beside his head reads
-                        // as him saying it rather than a caption floating
-                        // near a full-body illustration.
-                        Speagle(pose: .think, size: 460)
-                            .frame(height: 460 * 0.72, alignment: .top)
-                            .clipped()
-                    }
-                    .padding(.trailing, 24)
-                    // .ignoresSafeArea() alone doesn't move the overlay's
-                    // own alignment anchor -- "bottomTrailing" still
-                    // aligns to the safe area's bottom inset (room for
-                    // the Home indicator), not the true screen edge the
-                    // background (which does ignore the safe area)
-                    // reaches. Pushing down by the GeometryReader's own
-                    // measured inset closes that gap exactly, on any
-                    // device.
-                    .offset(y: proxy.safeAreaInsets.bottom)
+                    // Cropped to head-and-torso and sat flush with the
+                    // bottom edge -- like he's standing just below the
+                    // screen.
+                    Speagle(pose: .think, size: 460)
+                        .frame(height: 460 * 0.72, alignment: .top)
+                        .clipped()
+                        .padding(.trailing, 24)
+                        // .ignoresSafeArea() alone doesn't move the
+                        // overlay's own alignment anchor -- "bottomTrailing"
+                        // still aligns to the safe area's bottom inset
+                        // (room for the Home indicator), not the true
+                        // screen edge the background (which does ignore
+                        // the safe area) reaches. Pushing down by the
+                        // GeometryReader's own measured inset closes that
+                        // gap exactly, on any device.
+                        .offset(y: proxy.safeAreaInsets.bottom)
                 }
             }
         }
@@ -322,10 +320,10 @@ struct PracticeView: View {
     }
 
     /// A "Need a hint?" button for a word that has one and hasn't had it
-    /// revealed yet. Once tapped, the hint itself appears next to Speagle
-    /// instead (see the body's bottom-trailing overlay and `hintBubble`),
-    /// not here. Takes up no space at all for a word with no hint, in
-    /// Test mode, or once the hint is already showing.
+    /// revealed yet. Once tapped, the hint itself appears below the
+    /// action buttons instead (see `hintBubble`), not here. Takes up no
+    /// space at all for a word with no hint, in Test mode, or once the
+    /// hint is already showing.
     @ViewBuilder
     private var hintSection: some View {
         if currentHint != nil, !showHint {
@@ -340,8 +338,9 @@ struct PracticeView: View {
         }
     }
 
-    /// The hint itself, shown beside Speagle once requested. Includes a
-    /// speaker button so a child who can't read yet can still hear it --
+    /// The hint itself, shown directly under the action buttons (below
+    /// "Skip word") once requested. Includes a speaker button so a child
+    /// who can't read yet can still hear it --
     /// same `SpeechService` used to read each spelling word aloud, just
     /// with no recorded custom-voice audio, since a hint is typed text,
     /// not a word with its own recording.
