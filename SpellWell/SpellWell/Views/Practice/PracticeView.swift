@@ -225,10 +225,21 @@ struct PracticeView: View {
                     actionButtons
                     // Directly under the action row (which includes
                     // "Skip word"), in the main flow rather than beside
-                    // Speagle.
-                    if showHint, let hint = currentHint {
-                        hintBubble(hint)
-                            .padding(.top, 16)
+                    // Speagle. Reserves the same height whether the
+                    // bubble is showing or not, for any word that has a
+                    // hint at all -- otherwise revealing it grows the
+                    // content and shifts everything above it upward,
+                    // which could push "Check my word" down into
+                    // Speagle's corner and under his (opaque, tappable)
+                    // overlay, silently eating the tap.
+                    if currentHint != nil {
+                        Group {
+                            if showHint, let hint = currentHint {
+                                hintBubble(hint)
+                            }
+                        }
+                        .frame(minHeight: 90, alignment: .top)
+                        .padding(.top, 16)
                     }
                 } else {
                     PracticeResultsView(results: results, mode: mode, child: weekList.child, onDone: onGoHome)
@@ -250,6 +261,11 @@ struct PracticeView: View {
                     Speagle(pose: .think, size: 460)
                         .frame(height: 460 * 0.72, alignment: .top)
                         .clipped()
+                        // He's purely decorative -- never tappable -- so
+                        // he can never sit on top of and swallow a tap
+                        // meant for a button beneath him, regardless of
+                        // any future layout shift.
+                        .allowsHitTesting(false)
                         .padding(.trailing, 24)
                         // .ignoresSafeArea() alone doesn't move the
                         // overlay's own alignment anchor -- "bottomTrailing"
