@@ -243,10 +243,16 @@ struct PracticeView: View {
                         if showHint, let hint = currentHint {
                             hintBubble(hint)
                         }
-                        Speagle(pose: .think, size: 384)
+                        // Cropped to head-and-torso and sat flush with the
+                        // bottom edge -- like he's standing just below the
+                        // screen, so the hint bubble beside his head reads
+                        // as him saying it rather than a caption floating
+                        // near a full-body illustration.
+                        Speagle(pose: .think, size: 460)
+                            .frame(height: 460 * 0.72, alignment: .top)
+                            .clipped()
                     }
                     .padding(.trailing, 24)
-                    .padding(.bottom, 4)
                 }
             }
         }
