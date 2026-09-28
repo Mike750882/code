@@ -365,6 +365,21 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     Tapping "Save list" with anything still flagged shows a confirmation
     ("Double check these words") with "Review words" or "Save anyway,"
     rather than saving silently or refusing outright.
+  - **Per-word hints** (`SpellingWord.hint`) — a second, optional field
+    under each word ("Hint Speagle can give") where a parent can type a
+    short clue (e.g. "A small red animal" for "fox"). Always exactly what
+    the parent typed, never generated or looked up -- same reasoning as
+    every other Speagle message in this app (see `SpeagleHelper.swift`'s
+    doc comment): a real per-word definition would mean a network call
+    (a dictionary API or an LLM), and this app runs entirely on-device.
+    In `PracticeView`, a word with a hint shows a "Need a hint?" button
+    under "Tap to hear the word"; tapping it reveals the hint in a
+    `SpeagleTip` bubble instead. **Practice only, never Test** — Test is
+    graded, one try per word with no retries, so offering a hint there
+    would undercut what the grade is supposed to mean, the same reason
+    Test never allows retries or a "Skip word" button. A word with no
+    hint (an empty field, or an older list saved before this feature
+    existed -- `hint` defaults to `""`) shows nothing extra at all.
   - **Fixed: saving mid-week erased the whole week's test history** —
     `saveList()` used to delete every existing `SpellingWord` and insert
     brand-new ones on *every* save, even for words whose text never

@@ -13,7 +13,14 @@ struct AddListView: View {
 
     @State private var wordCount: Int = 12
     @State private var wordFields: [String] = Array(repeating: "", count: 12)
-    @FocusState private var focusedField: Int?
+    /// An optional clue per word, parallel to `wordFields` by index --
+    /// Speagle offers it on request during Practice (see PracticeView).
+    @State private var hintFields: [String] = Array(repeating: "", count: 12)
+    private enum FocusField: Hashable {
+        case word(Int)
+        case hint(Int)
+    }
+    @FocusState private var focusedField: FocusField?
 
     @State private var showImportSourceDialog = false
     @State private var showCamera = false
@@ -43,7 +50,7 @@ struct AddListView: View {
         // especially in landscape.
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                SpeagleTip(message: "I'll help you get this week's list ready! Type each word below exactly how it should be spelled, capital letters count.", pose: .point, avatarSize: 96)
+                SpeagleTip(message: "I'll help you get this week's list ready! Type each word below exactly how it should be spelled, capital letters count. Add a hint too, and I'll offer it if they get stuck during practice.", pose: .point, avatarSize: 96)
                 header
                 wordGrid
                 footer
@@ -158,37 +165,53 @@ struct AddListView: View {
     private var wordGrid: some View {
         // .adaptive rather than a fixed 3 columns -- narrower on an
         // iPhone, where 3 columns of number + text field would otherwise
-        // be squeezed uncomfortably tight.
-        let columns = [GridItem(.adaptive(minimum: isCompact ? 140 : 200), spacing: 16)]
-        return LazyVGrid(columns: columns, spacing: 16) {
+        // be squeezed uncomfortably tight. Widened from before now that
+        // each cell holds a second, hint row underneath the word.
+        let columns = [GridItem(.adaptive(minimum: isCompact ? 180 : 260), spacing: 16)]
+        return LazyVGrid(columns: columns, spacing: 20) {
             ForEach(0..<wordFields.count, id: \.self) { index in
                 let flagged = SpellCheckService.isPossiblyMisspelled(wordFields[index])
-                HStack {
-                    Text("\(index + 1)")
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("\(index + 1)")
+                            .font(Theme.body(13))
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(width: 20, alignment: .trailing)
+                        TextField("", text: binding(for: index))
+                            .font(Theme.body(18))
+                            .foregroundStyle(Theme.textPrimary)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(Theme.surface)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(flagged ? Theme.error.opacity(0.7) : Theme.hairline, lineWidth: flagged ? 1.5 : 1)
+                            )
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+                            .focused($focusedField, equals: .word(index))
+                        // Not in the system dictionary -- a nudge to double
+                        // check, not a hard error. A name or uncommon word will
+                        // trip this too, so it's never blocking on its own.
+                        if flagged {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 14))
+                                .foregroundStyle(Theme.error.opacity(0.7))
+                        }
+                    }
+                    // Optional -- Speagle only offers this on request
+                    // during Practice (never Test, to keep it a fair
+                    // one-try assessment), and only for a word that
+                    // actually has one.
+                    TextField("Hint Speagle can give (optional)", text: hintBinding(for: index))
                         .font(Theme.body(13))
                         .foregroundStyle(Theme.textSecondary)
-                        .frame(width: 20, alignment: .trailing)
-                    TextField("", text: binding(for: index))
-                        .font(Theme.body(18))
-                        .foregroundStyle(Theme.textPrimary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                        .background(Theme.surface)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(flagged ? Theme.error.opacity(0.7) : Theme.hairline, lineWidth: flagged ? 1.5 : 1)
-                        )
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .focused($focusedField, equals: index)
-                    // Not in the system dictionary -- a nudge to double
-                    // check, not a hard error. A name or uncommon word will
-                    // trip this too, so it's never blocking on its own.
-                    if flagged {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 14))
-                            .foregroundStyle(Theme.error.opacity(0.7))
-                    }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Theme.surface.opacity(0.6))
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline.opacity(0.6), lineWidth: 1))
+                        .focused($focusedField, equals: .hint(index))
+                        .padding(.leading, 28)
                 }
             }
         }
@@ -246,11 +269,23 @@ struct AddListView: View {
         )
     }
 
+    private func hintBinding(for index: Int) -> Binding<String> {
+        Binding(
+            get: { index < hintFields.count ? hintFields[index] : "" },
+            set: { if index < hintFields.count { hintFields[index] = $0 } }
+        )
+    }
+
     private func resizeFields(to count: Int) {
         if count > wordFields.count {
             wordFields.append(contentsOf: Array(repeating: "", count: count - wordFields.count))
         } else {
             wordFields = Array(wordFields.prefix(count))
+        }
+        if count > hintFields.count {
+            hintFields.append(contentsOf: Array(repeating: "", count: count - hintFields.count))
+        } else {
+            hintFields = Array(hintFields.prefix(count))
         }
     }
 
@@ -274,6 +309,10 @@ struct AddListView: View {
         guard !trimmed.isEmpty else { return }
         wordCount = min(max(trimmed.count, 5), 30)
         wordFields = Array(repeating: "", count: wordCount)
+        // A photo import has no way to supply hints -- reset rather than
+        // leaving stale ones from whatever was typed before misaligned
+        // against the newly imported words.
+        hintFields = Array(repeating: "", count: wordCount)
         for (index, word) in trimmed.enumerated() where index < wordFields.count {
             wordFields[index] = word
         }
@@ -283,10 +322,13 @@ struct AddListView: View {
         guard let list = currentWeekList, let words = list.words, !words.isEmpty else { return }
         wordCount = list.targetWordCount
         var fields = Array(repeating: "", count: max(wordCount, words.count))
+        var hints = Array(repeating: "", count: max(wordCount, words.count))
         for word in words.sorted(by: { $0.orderIndex < $1.orderIndex }) where word.orderIndex < fields.count {
             fields[word.orderIndex] = word.text
+            hints[word.orderIndex] = word.hint
         }
         wordFields = fields
+        hintFields = hints
     }
 
     private func finishSaving() {
@@ -327,14 +369,22 @@ struct AddListView: View {
 
         for (index, text) in wordFields.enumerated() {
             let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmedHint = (index < hintFields.count ? hintFields[index] : "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
             if let existing = existingByIndex.removeValue(forKey: index) {
                 if trimmed.isEmpty {
                     wordsToDelete.append(existing)
-                } else if existing.text != trimmed {
-                    existing.text = trimmed
+                } else {
+                    if existing.text != trimmed {
+                        existing.text = trimmed
+                    }
+                    if existing.hint != trimmedHint {
+                        existing.hint = trimmedHint
+                    }
                 }
             } else if !trimmed.isEmpty {
                 let word = SpellingWord(text: trimmed, orderIndex: index)
+                word.hint = trimmedHint
                 modelContext.insert(word)
                 word.weekList = list
             }

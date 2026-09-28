@@ -151,6 +151,11 @@ struct PracticeView: View {
     /// helper that changed its line every word would be more distracting
     /// than encouraging.
     @State private var encouragementTip = PracticeView.encouragementTips.randomElement()!
+    /// Whether the current word's parent-written hint (if it has one) is
+    /// showing -- reset to false on every new word (see `setUpWord`) so
+    /// it never carries over and accidentally reveals the next word's
+    /// hint before it's asked for.
+    @State private var showHint = false
 
     enum Feedback { case correct, incorrect }
 
@@ -173,6 +178,16 @@ struct PracticeView: View {
 
     private var currentWord: SpellingWord? {
         currentIndex < words.count ? words[currentIndex] : nil
+    }
+
+    /// The current word's parent-written hint, or nil if it doesn't have
+    /// one -- gates whether "Need a hint?" shows at all. Test never offers
+    /// a hint (only Practice does): Test is graded, one try per word, and
+    /// a hint mid-test would undercut what the grade is supposed to mean.
+    private var currentHint: String? {
+        guard mode == .practice, let hint = currentWord?.hint else { return nil }
+        let trimmed = hint.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     private var usedBankIndices: Set<Int> {
@@ -215,6 +230,7 @@ struct PracticeView: View {
                 Spacer()
                 if let word = currentWord, let metrics {
                     hearWordSection(word: word)
+                    hintSection
                     if currentWordMode == .typed {
                         typedAnswerField
                     } else {
@@ -295,6 +311,29 @@ struct PracticeView: View {
             }
         }
         .padding(.bottom, 40)
+    }
+
+    /// Either a "Need a hint?" button (a word with one, not yet revealed)
+    /// or the hint itself once tapped -- shown from Speagle so it reads as
+    /// him offering it, same as everywhere else he shows up. Takes up no
+    /// space at all for a word with no hint, or in Test mode.
+    @ViewBuilder
+    private var hintSection: some View {
+        if let hint = currentHint {
+            if showHint {
+                SpeagleTip(message: hint, pose: .think, avatarSize: 40)
+                    .padding(.bottom, 24)
+            } else {
+                Button {
+                    withAnimation { showHint = true }
+                } label: {
+                    Label("Need a hint?", systemImage: "lightbulb.fill")
+                        .font(Theme.body(15, weight: .medium))
+                        .foregroundStyle(Theme.primary)
+                }
+                .padding(.bottom, 24)
+            }
+        }
     }
 
     private func answerSlots(wordLength: Int, metrics: TileMetrics) -> some View {
@@ -528,6 +567,7 @@ struct PracticeView: View {
         feedback = nil
         typedAnswer = ""
         currentResultIndex = nil
+        showHint = false
         guard let word = currentWord else {
             slotContents = []
             fillOrder = []

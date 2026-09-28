@@ -113,6 +113,12 @@ final class SpellingWord {
     var id: UUID = UUID()
     var text: String = ""
     var orderIndex: Int = 0
+    /// An optional parent-written clue (e.g. "A small red animal" for
+    /// "fox") -- Speagle offers it on request during Practice, never
+    /// during Test, so a child can be nudged without it undermining a
+    /// graded, one-try-per-word test. Never generated or looked up:
+    /// always exactly what the parent typed.
+    var hint: String = ""
     /// A parent-recorded pronunciation, played instead of the system voice when present.
     @Attribute(.externalStorage) var customAudioData: Data?
 
