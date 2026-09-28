@@ -253,6 +253,14 @@ struct PracticeView: View {
                             .clipped()
                     }
                     .padding(.trailing, 24)
+                    // Otherwise this stops at the safe area's bottom
+                    // inset (room for the Home indicator), leaving a
+                    // strip of background visible underneath him even
+                    // with zero bottom padding -- the background itself
+                    // ignores the safe area (see .speagleBackground()),
+                    // so without this he doesn't actually reach flush
+                    // with the true bottom edge like the background does.
+                    .ignoresSafeArea(edges: .bottom)
                 }
             }
         }
