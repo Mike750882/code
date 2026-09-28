@@ -21,7 +21,7 @@ struct PracticeResultsView: View {
     let child: Child?
     var onDone: () -> Void
 
-    /// Drives the grade letter's entrance bounce and the sparkle burst --
+    /// Drives the grade letter's entrance bounce and the confetti burst --
     /// starts false so both animate in from `scoreCard`'s `.onAppear`
     /// rather than the animated state ever being true on first render.
     @State private var hasAppeared = false
@@ -37,10 +37,10 @@ struct PracticeResultsView: View {
 
     private var grade: String { Grading.letter(forPercent: percent) }
     private var gradeColor: Color { Grading.color(forPercent: percent) }
-    /// A-, A, or A+ (90% and up) -- the threshold for celebrating with a
-    /// sparkle burst on top of the grade letter's entrance bounce, which
-    /// every grade gets.
-    private var isTopGrade: Bool { percent >= 90 }
+    /// A or B (80% and up, matching Grading.letter's B- cutoff) -- the
+    /// threshold for celebrating with a confetti burst on top of the
+    /// grade letter's entrance bounce, which every grade gets.
+    private var isTopGrade: Bool { percent >= 80 }
 
     /// Today's reward, if a grown-up has set one for this weekday --
     /// matches the same "keyed by weekday only" lookup Rewards/Home
@@ -69,9 +69,9 @@ struct PracticeResultsView: View {
     }
 
     /// Cheer pose only for a genuinely good result -- matches `isTopGrade`'s
-    /// own 90% bar for the sparkle burst, so Speagle's wings only go up
-    /// alongside the confetti, not for an "okay" score that just happens
-    /// to clear a lower bar.
+    /// own 80% (A/B) bar for the confetti burst, so Speagle's wings only
+    /// go up alongside the confetti, not for an "okay" score that just
+    /// happens to clear a lower bar.
     private var cheerPose: SpeaglePose { isTopGrade ? .cheer : .think }
 
     /// The whole screen scrolls, not just the word list in a fixed-height
@@ -105,7 +105,7 @@ struct PracticeResultsView: View {
         VStack(spacing: 8) {
             ZStack {
                 if isTopGrade {
-                    SparkleBurst(color: Theme.rewardIcon)
+                    ConfettiBurst()
                 }
                 Text(grade)
                     .font(Theme.display(72, weight: .medium))
@@ -130,41 +130,56 @@ struct PracticeResultsView: View {
         }
     }
 
-    /// A ring of sparkle icons that pop out from the center and fade --
-    /// pure SwiftUI, no image assets or third-party library, so it works
-    /// the same way in every color theme (tinted with whatever `color`
-    /// it's given).
-    private struct SparkleBurst: View {
-        let color: Color
+    /// A shower of colored confetti pieces that fall and tumble past the
+    /// grade letter -- pure SwiftUI, no image assets or third-party
+    /// library. Uses a fixed festive palette rather than a theme color:
+    /// confetti's whole appeal is being multicolored, the same way
+    /// `Theme.success`/`Theme.error` are fixed regardless of theme for a
+    /// different reason (a consistent right/wrong meaning).
+    private struct ConfettiBurst: View {
+        private struct Piece: Identifiable {
+            let id = UUID()
+            let color: Color
+            let startX: CGFloat
+            let delay: Double
+            let duration: Double
+            let rotation: Double
+            let size: CGFloat
+        }
 
+        private static let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple, .pink]
+
+        // A default @State initial value is computed once, when this
+        // view's identity first appears -- not recomputed on every parent
+        // re-render -- so each piece's random path stays stable for the
+        // whole animation instead of jumping mid-fall.
+        @State private var pieces: [Piece] = (0..<24).map { index in
+            Piece(
+                color: colors[index % colors.count],
+                startX: CGFloat.random(in: -110...110),
+                delay: Double.random(in: 0...0.25),
+                duration: Double.random(in: 1.0...1.5),
+                rotation: Double.random(in: 200...600) * (Bool.random() ? 1 : -1),
+                size: CGFloat.random(in: 7...12)
+            )
+        }
         @State private var isAnimating = false
-
-        private let sparkleCount = 8
-        private let radius: CGFloat = 64
 
         var body: some View {
             ZStack {
-                ForEach(0..<sparkleCount, id: \.self) { index in
-                    let angle = Angle.degrees(Double(index) / Double(sparkleCount) * 360)
-                    Image(systemName: "sparkle")
-                        .font(.system(size: 18))
-                        .foregroundStyle(color)
-                        .offset(
-                            x: isAnimating ? cos(angle.radians) * radius : 0,
-                            y: isAnimating ? sin(angle.radians) * radius : 0
-                        )
-                        .scaleEffect(isAnimating ? 1.3 : 0.2)
+                ForEach(pieces) { piece in
+                    Rectangle()
+                        .fill(piece.color)
+                        .frame(width: piece.size, height: piece.size * 0.45)
+                        .rotationEffect(.degrees(isAnimating ? piece.rotation : 0))
+                        .offset(x: piece.startX, y: isAnimating ? 170 : -30)
                         .opacity(isAnimating ? 0 : 1)
+                        .animation(.easeIn(duration: piece.duration).delay(piece.delay), value: isAnimating)
                 }
             }
             .allowsHitTesting(false)
             .onAppear {
-                // A short delay so the burst reads as a follow-through on
-                // the grade letter's own bounce landing, not simultaneous
-                // with it.
-                withAnimation(.easeOut(duration: 0.9).delay(0.2)) {
-                    isAnimating = true
-                }
+                isAnimating = true
             }
         }
     }

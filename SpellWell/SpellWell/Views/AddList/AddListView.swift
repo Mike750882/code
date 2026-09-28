@@ -205,7 +205,7 @@ struct AddListView: View {
                     // actually has one.
                     TextField("Hint Speagle can give (optional)", text: hintBinding(for: index))
                         .font(Theme.body(13))
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.textPrimary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
                         .background(Theme.surface.opacity(0.6))
