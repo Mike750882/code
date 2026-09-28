@@ -760,23 +760,28 @@ the app's existing serif/system font pairing, colors only.
     environment has no way to upload a reference image to Canva for true
     image-to-image generation -- direct network access to canva.com is
     blocked here -- so each pose was generated from a detailed style
-    description instead and compared by eye against the reference).
-    **The files currently committed under `Assets.xcassets/Speagle*.imageset`
-    and `AppBackground.imageset` are 200x200 preview thumbnails, not
-    production-quality art** -- Canva's generation tools only relay a
-    low-res preview back into this environment, and the full-resolution
-    files live in Canva itself, reachable only from a browser with the
-    account's own login. Before shipping, open each pose in Canva, export
-    the full-resolution PNG (transparent background, already applied for
-    all four poses), and replace the placeholder file in the matching
-    `.imageset` folder -- filenames and `Contents.json` are already set up
-    to just take a better file at the same path. Once real `@2x`/`@3x`
-    files are available, add those scale variants to each `Contents.json`
-    too (currently only `1x` is filled in).
+    description instead and compared by eye against the reference). The
+    committed files under `Assets.xcassets/Speagle*.imageset` are the real
+    full-resolution exports (1200x1200 PNGs, transparent background,
+    already applied for all four poses) -- getting them out of Canva took
+    an extra hop, since this environment can't download from canva.com
+    directly either: `separate-image-layers` turned each generated image
+    into a proper Canva design, `export-design` produced a pre-signed
+    direct-download link (a different host than canva.com's own domain,
+    reachable from a normal browser even though this environment still
+    couldn't fetch it), and the exported PNGs were then attached back into
+    the conversation and dropped into the asset catalog from there. Each
+    `.imageset`'s `Contents.json` currently declares a single `1x`
+    universal entry rather than separate `@2x`/`@3x` files -- one 1200px
+    source is already far larger than Speagle is ever displayed at
+    (`Speagle`/`SpeagleTip` always render it `.resizable()` into an
+    explicit small frame, so the source pixels are what matters, not the
+    scale bucket they're filed under), so this isn't a quality shortcut,
+    just fewer files to keep in sync if the art changes again later.
 - **Speagle background** (`DesignSystem/SpeagleBackground.swift`) — a flat
-  cartoon sky/clouds/grass scene, generated the same way as Speagle
-  (Canva, same 200x200-placeholder caveat, background at
-  `Assets.xcassets/AppBackground.imageset`), pinned to the bottom edge via
+  cartoon sky/clouds/grass scene, generated and exported the same way as
+  Speagle (2000x1124 PNG, `Assets.xcassets/AppBackground.imageset`),
+  pinned to the bottom edge via
   `.speagleBackground()` (a drop-in replacement for the old
   `.background(Theme.background.ignoresSafeArea())` pattern, now used
   everywhere that pattern used to be) so the grass stays anchored at the
