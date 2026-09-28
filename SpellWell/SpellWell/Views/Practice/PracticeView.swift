@@ -147,10 +147,6 @@ struct PracticeView: View {
     /// recorded here -- lets Home's daily grade use only the most recent
     /// session's result for a day when a test is retaken.
     @State private var sessionID = UUID()
-    /// Picked once when the session starts and left alone -- a robot
-    /// helper that changed its line every word would be more distracting
-    /// than encouraging.
-    @State private var encouragementTip = PracticeView.encouragementTips.randomElement()!
     /// Whether the current word's parent-written hint (if it has one) is
     /// showing -- reset to false on every new word (see `setUpWord`) so
     /// it never carries over and accidentally reveals the next word's
@@ -158,17 +154,6 @@ struct PracticeView: View {
     @State private var showHint = false
 
     enum Feedback { case correct, incorrect }
-
-    /// Generic, word-independent encouragement only -- never a real
-    /// per-word example sentence, since nothing in this app looks those
-    /// up (see `SpeagleTip`'s doc comment for why).
-    private static let encouragementTips = [
-        "You've got this! Take your time.",
-        "Try sounding it out, one letter at a time.",
-        "Say the word out loud before you spell it!",
-        "Mistakes help you learn -- keep going!",
-        "Listen closely, then give it your best shot!"
-    ]
 
     private var words: [SpellingWord] {
         let all = (weekList.words ?? []).sorted(by: { $0.orderIndex < $1.orderIndex })
@@ -247,13 +232,20 @@ struct PracticeView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .coordinateSpace(name: "practiceArea")
             // Pinned to the corner via overlay rather than sitting in the
-            // main flow -- at 4x his old size, having him inline would
-            // push the word/tiles content around instead of just sharing
-            // the screen with it.
-            .overlay(alignment: .bottomLeading) {
+            // main flow -- at this size, having him inline would push the
+            // word/tiles content around instead of just sharing the
+            // screen with it. No standing encouragement bubble anymore --
+            // he's just there, and a requested hint appears right beside
+            // him (see hintBubble) instead of a separate floating tip.
+            .overlay(alignment: .bottomTrailing) {
                 if currentWord != nil {
-                    SpeagleTip(message: encouragementTip, pose: .think, avatarSize: 192)
-                        .padding(24)
+                    HStack(alignment: .bottom, spacing: 12) {
+                        if showHint, let hint = currentHint {
+                            hintBubble(hint)
+                        }
+                        Speagle(pose: .think, size: 384)
+                    }
+                    .padding(24)
                 }
             }
         }
@@ -313,27 +305,58 @@ struct PracticeView: View {
         .padding(.bottom, 40)
     }
 
-    /// Either a "Need a hint?" button (a word with one, not yet revealed)
-    /// or the hint itself once tapped -- shown from Speagle so it reads as
-    /// him offering it, same as everywhere else he shows up. Takes up no
-    /// space at all for a word with no hint, or in Test mode.
+    /// A "Need a hint?" button for a word that has one and hasn't had it
+    /// revealed yet. Once tapped, the hint itself appears next to Speagle
+    /// instead (see the body's bottom-trailing overlay and `hintBubble`),
+    /// not here. Takes up no space at all for a word with no hint, in
+    /// Test mode, or once the hint is already showing.
     @ViewBuilder
     private var hintSection: some View {
-        if let hint = currentHint {
-            if showHint {
-                SpeagleTip(message: hint, pose: .think, avatarSize: 40)
-                    .padding(.bottom, 24)
-            } else {
-                Button {
-                    withAnimation { showHint = true }
-                } label: {
-                    Label("Need a hint?", systemImage: "lightbulb.fill")
-                        .font(Theme.body(15, weight: .medium))
-                        .foregroundStyle(Theme.primary)
-                }
-                .padding(.bottom, 24)
+        if currentHint != nil, !showHint {
+            Button {
+                withAnimation { showHint = true }
+            } label: {
+                Label("Need a hint?", systemImage: "lightbulb.fill")
+                    .font(Theme.body(15, weight: .medium))
+                    .foregroundStyle(Theme.primary)
             }
+            .padding(.bottom, 24)
         }
+    }
+
+    /// The hint itself, shown beside Speagle once requested. Includes a
+    /// speaker button so a child who can't read yet can still hear it --
+    /// same `SpeechService` used to read each spelling word aloud, just
+    /// with no recorded custom-voice audio, since a hint is typed text,
+    /// not a word with its own recording.
+    private func hintBubble(_ hint: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Button {
+                speech.speak(hint, voiceIdentifier: weekList.child?.voiceIdentifier)
+            } label: {
+                Image(systemName: "speaker.wave.2.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(Theme.primary)
+                    .frame(width: 32, height: 32)
+            }
+            Text(hint)
+                .font(Theme.body(14))
+                .foregroundStyle(Theme.textPrimary)
+                .multilineTextAlignment(.leading)
+                // Explicit width + fixedSize so it reliably wraps instead
+                // of a truncated single line -- same fix as the welcome
+                // screen's speech bubble (see SpeagleSpeechBubble).
+                .frame(maxWidth: 200, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Theme.surface)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.controlCornerRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.controlCornerRadius, style: .continuous)
+                .stroke(Theme.hairline, lineWidth: 1)
+        )
     }
 
     private func answerSlots(wordLength: Int, metrics: TileMetrics) -> some View {
