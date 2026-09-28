@@ -40,11 +40,6 @@ struct RewardsView: View {
                 }
                 weeklyPrizeCard
                 footer
-                // Sits below everything else so his upward-pointing wing
-                // reads as gesturing back up at the rewards above, rather
-                // than at anything specific down here.
-                Speagle(pose: .point, size: 90)
-                    .frame(maxWidth: .infinity, alignment: .center)
             }
             .padding(28)
             .frame(maxWidth: .infinity)
@@ -214,16 +209,25 @@ struct RewardsView: View {
             .padding(.vertical, 10)
             .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.primary, lineWidth: 1.5))
 
+        // His point pose's upward wing reads as gesturing back up at the
+        // rewards above, now that he's standing right beside the button
+        // instead of down at the very bottom of the page.
+        let speagle = Speagle(pose: .point, size: 360)
+
         return Group {
             if isCompact {
                 VStack(alignment: .leading, spacing: 12) {
                     caption
-                    saveButton
+                    HStack(alignment: .bottom, spacing: 12) {
+                        speagle
+                        saveButton
+                    }
                 }
             } else {
-                HStack {
+                HStack(alignment: .bottom) {
                     caption
                     Spacer()
+                    speagle
                     saveButton
                 }
             }

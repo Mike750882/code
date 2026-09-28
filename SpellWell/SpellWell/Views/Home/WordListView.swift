@@ -55,7 +55,7 @@ struct WordListView: View {
                 Spacer()
                 // Tucked in the bottom right, as if he's studying the list
                 // right along with the child.
-                Speagle(pose: .think, size: 76)
+                Speagle(pose: .think, size: 304)
             }
         }
         .padding(28)

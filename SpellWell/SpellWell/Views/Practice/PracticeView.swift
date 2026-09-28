@@ -211,8 +211,6 @@ struct PracticeView: View {
             VStack(spacing: 0) {
                 if currentWord != nil {
                     topBar
-                    SpeagleTip(message: encouragementTip, pose: .think)
-                        .padding(.top, 12)
                 }
                 Spacer()
                 if let word = currentWord, let metrics {
@@ -232,6 +230,16 @@ struct PracticeView: View {
             .padding(24)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .coordinateSpace(name: "practiceArea")
+            // Pinned to the corner via overlay rather than sitting in the
+            // main flow -- at 4x his old size, having him inline would
+            // push the word/tiles content around instead of just sharing
+            // the screen with it.
+            .overlay(alignment: .bottomLeading) {
+                if currentWord != nil {
+                    SpeagleTip(message: encouragementTip, pose: .think, avatarSize: 192)
+                        .padding(24)
+                }
+            }
         }
         .speagleBackground()
         .navigationTitle("")
