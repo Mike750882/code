@@ -35,7 +35,7 @@ struct TourView: View {
             icon: "slider.horizontal.3",
             color: Theme.tile,
             title: "The Settings screen",
-            body: "Settings is where a grown-up can change the PIN, pick which voice reads the words, view the weekly progress report, and sync data between family devices."
+            body: "Settings are where a grown-up can change the PIN, pick which voice reads the words, view the weekly progress report, and sync data between family devices."
         ),
         TourPage(
             icon: "person.2.fill",
@@ -47,7 +47,7 @@ struct TourView: View {
             icon: "list.bullet",
             color: Theme.tile,
             title: "This week's words",
-            body: "Tap the \"This week's words\" button under your streak on Home anytime to see the full list of words before you practice or take the test. No PIN needed, it's just there to help you study."
+            body: "Tap the \"This week's words\" button on Home anytime to see the full list of words before you practice or take the test. No PIN needed, it's just there to help you study."
         ),
         TourPage(
             icon: "checkmark.seal.fill",
