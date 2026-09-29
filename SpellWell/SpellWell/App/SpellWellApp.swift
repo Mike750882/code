@@ -7,6 +7,20 @@ struct SpellWellApp: App {
     let container: ModelContainer
 
     init() {
+        // A fresh install/reinstall clears UserDefaults but not the
+        // Keychain -- Keychain items are tied to the device, not to a
+        // particular install, by iOS design (deliberate, so the PIN
+        // survives an app update; see KeychainService's doc comment).
+        // Without this, deleting and reinstalling to get a clean slate
+        // would keep silently accepting the old PIN forever, with no way
+        // to set a new one short of remembering the old one to reach
+        // "Change PIN" in Settings. Detected via AppLaunchTracker's own
+        // launch count (0 only on a genuinely fresh install, since it's
+        // UserDefaults-backed and resets on delete) -- if that's 0 but a
+        // PIN still exists, it's stale, left over from before this install.
+        if AppLaunchTracker.launchCount == 0 && KeychainService.hasPIN() {
+            KeychainService.clearPIN()
+        }
         AppLaunchTracker.recordLaunch()
         do {
             let schema = Schema([
