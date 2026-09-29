@@ -6,7 +6,10 @@ import SwiftUI
 /// and Progress Report).
 struct WordListView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     let words: [SpellingWord]
+
+    private var isCompact: Bool { horizontalSizeClass == .compact }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -61,7 +64,7 @@ struct WordListView: View {
         // list and squeezed it short. Non-interactive so he can never
         // sit on top of and block a tap on a word row or "Done."
         .overlay(alignment: .bottomTrailing) {
-            Speagle(pose: .point, size: 200)
+            Speagle(pose: .point, size: isCompact ? 120 : 200)
                 // The art points up-and-to-the-right by default; mirrored
                 // here since he's sitting in the bottom-right corner and
                 // the word list he's pointing at is to his left.

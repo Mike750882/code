@@ -8,6 +8,9 @@ import SwiftUI
 struct AddChildView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    private var isCompact: Bool { horizontalSizeClass == .compact }
 
     var title: String = "Add a student"
     var subtitle: String = "Give them a name to get started."
@@ -38,7 +41,7 @@ struct AddChildView: View {
         VStack {
             Spacer()
             VStack(spacing: 24) {
-                Speagle(pose: .wave, size: 200)
+                Speagle(pose: .wave, size: isCompact ? 140 : 200)
                 SpeagleSpeechBubble(message: speagleMessage)
                 Text(title)
                     .font(Theme.display(28))

@@ -83,7 +83,10 @@ private enum SlotState: Equatable {
 /// getting it right first, so nothing can leave them stuck on one word.
 struct PracticeView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @StateObject private var speech = SpeechService()
+
+    private var isCompact: Bool { horizontalSizeClass == .compact }
 
     let weekList: WeekList
     let mode: PracticeMode
@@ -234,9 +237,13 @@ struct PracticeView: View {
                 if currentWord != nil {
                     // Cropped to head-and-torso and sat flush with the
                     // bottom edge -- like he's standing just below the
-                    // screen.
-                    Speagle(pose: .think, size: 460)
-                        .frame(height: 460 * 0.72, alignment: .top)
+                    // screen. Much smaller on compact -- at the iPad
+                    // size he covered the typed-answer field and part of
+                    // "Check my word" on an iPhone's much narrower,
+                    // shorter screen.
+                    let speagleSize: CGFloat = isCompact ? 180 : 460
+                    Speagle(pose: .think, size: speagleSize)
+                        .frame(height: speagleSize * 0.72, alignment: .top)
                         .clipped()
                         // He's purely decorative -- never tappable -- so
                         // he can never sit on top of and swallow a tap

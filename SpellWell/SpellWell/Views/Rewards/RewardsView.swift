@@ -211,8 +211,12 @@ struct RewardsView: View {
 
         // His point pose's upward wing reads as gesturing back up at the
         // rewards above, now that he's standing right beside the button
-        // instead of down at the very bottom of the page.
-        let speagle = Speagle(pose: .point, size: 360)
+        // instead of down at the very bottom of the page. Much smaller on
+        // compact -- at the iPad size, he alone was wider than an
+        // iPhone's entire content column, forcing the whole row (and
+        // everything above it in the VStack) wider than the screen and
+        // clipping trailing text like "70% right" off the edge.
+        let speagle = Speagle(pose: .point, size: isCompact ? 90 : 360)
 
         return Group {
             if isCompact {
