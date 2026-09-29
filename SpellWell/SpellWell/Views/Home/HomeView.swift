@@ -444,7 +444,7 @@ private struct DayGradeCard: View {
             ProgressView(value: Double(percent ?? 0) / 100)
                 .tint(Theme.primary)
             if isTappable {
-                Text("Retake \(missedCount) missed word\(missedCount == 1 ? "" : "s")")
+                Text("Practice \(missedCount) missed word\(missedCount == 1 ? "" : "s")")
                     .font(Theme.body(12, weight: .medium))
                     .foregroundStyle(Theme.primary)
             }
