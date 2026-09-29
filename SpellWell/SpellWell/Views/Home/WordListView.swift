@@ -55,5 +55,15 @@ struct WordListView: View {
         .padding(28)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .speagleBackground()
+        // An overlay, not part of the VStack's flow -- floating over the
+        // corner like this doesn't take height away from the ScrollView
+        // above it, unlike an earlier attempt that sat inline below the
+        // list and squeezed it short. Non-interactive so he can never
+        // sit on top of and block a tap on a word row or "Done."
+        .overlay(alignment: .bottomTrailing) {
+            Speagle(pose: .point, size: 200)
+                .allowsHitTesting(false)
+                .padding(20)
+        }
     }
 }
