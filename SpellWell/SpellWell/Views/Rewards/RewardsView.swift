@@ -24,48 +24,27 @@ struct RewardsView: View {
     @FocusState private var focusedField: Field?
 
     var body: some View {
-        // A GeometryReader just to read the safe-area inset -- lets the
-        // corner Speagle push down by exactly that amount so he reaches
-        // the true bottom edge (see the overlay below), same technique
-        // PracticeView uses.
-        GeometryReader { proxy in
-            // Everything shares one ScrollView -- previously only the
-            // daily rows scrolled while the header, weekly prize card,
-            // and Save button sat in a fixed layout outside it, so
-            // nothing could scroll a field out from under the keyboard,
-            // especially in landscape where there's much less vertical
-            // space to begin with.
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    header
-                    Divider().overlay(Theme.hairline)
-                    VStack(spacing: 0) {
-                        ForEach(weekdayLabels, id: \.weekday) { entry in
-                            dailyRow(weekday: entry.weekday, label: entry.label)
-                            Divider().overlay(Theme.hairline)
-                        }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                header
+                Divider().overlay(Theme.hairline)
+                VStack(spacing: 0) {
+                    ForEach(weekdayLabels, id: \.weekday) { entry in
+                        dailyRow(weekday: entry.weekday, label: entry.label)
+                        Divider().overlay(Theme.hairline)
                     }
-                    // Weekly prize card and the Save button/caption sit at
-                    // the bottom of the page, after all four daily rows,
-                    // like earlier builds -- restored after a brief
-                    // experiment moving them up top.
-                    weeklyPrizeCard
-                    footer
                 }
-                .padding(28)
-                // Room at the bottom so the last row doesn't sit behind
-                // the corner Speagle overlay.
-                .padding(.bottom, 140)
-                .frame(maxWidth: .infinity)
+                // Weekly prize card and the Save button/caption sit at
+                // the bottom of the page, after all four daily rows,
+                // like earlier builds -- restored after a brief
+                // experiment moving them up top.
+                weeklyPrizeCard
+                footer
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .overlay(alignment: .bottomTrailing) {
-                Speagle(pose: .cheer, size: isCompact ? 130 : 280)
-                    .allowsHitTesting(false)
-                    .padding(.trailing, 20)
-                    .offset(y: proxy.safeAreaInsets.bottom)
-            }
+            .padding(28)
+            .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .speagleBackground()
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle("")
