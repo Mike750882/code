@@ -212,6 +212,7 @@ struct AddListView: View {
                         .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.hairline.opacity(0.6), lineWidth: 1))
                         .focused($focusedField, equals: .hint(index))
                         .padding(.leading, 28)
+                        .grammarAssisted()
                 }
             }
         }
@@ -403,5 +404,23 @@ struct AddListView: View {
         // Home) -- a freshly inserted object only gets a permanent,
         // resolvable identifier once its context has actually been saved.
         try? modelContext.save()
+    }
+}
+
+private extension View {
+    /// Turns on Apple's Writing Tools (proofread/rewrite, including
+    /// grammar correction, not just spelling) for the hint field -- the
+    /// most that's realistically available without adding a network
+    /// dependency this app deliberately avoids everywhere else. Only
+    /// does anything on Apple Intelligence-capable hardware running iOS
+    /// 18.1+; older devices/OSes just get the field as it already
+    /// behaved (plain system autocorrect, no grammar help), no error.
+    @ViewBuilder
+    func grammarAssisted() -> some View {
+        if #available(iOS 18.0, *) {
+            writingToolsBehavior(.complete)
+        } else {
+            self
+        }
     }
 }
