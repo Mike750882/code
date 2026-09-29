@@ -369,7 +369,7 @@ struct HomeView: View {
                     label: entry.label,
                     percent: testPercent(onWeekday: entry.weekday),
                     missedCount: missed.count,
-                    showsEarnedBadge: entry.weekday == todayWeekday && earnedTodaysReward
+                    earnedRewardText: (entry.weekday == todayWeekday && earnedTodaysReward) ? todaysDailyReward?.rewardText : nil
                 ) {
                     guard let list = thisWeekList, !missed.isEmpty else { return }
                     onReviewMissedWords(list, missed)
@@ -418,13 +418,16 @@ private struct DayGradeCard: View {
     let label: String
     let percent: Int?
     let missedCount: Int
-    /// True only for today's own card, and only once today's test grade
-    /// clears today's reward threshold -- see `HomeView.earnedTodaysReward`.
-    var showsEarnedBadge: Bool = false
+    /// Today's reward text, only for today's own card and only once
+    /// today's test grade clears today's reward threshold -- see
+    /// `HomeView.earnedTodaysReward`. nil hides the badge entirely; when
+    /// set, it's also what the badge's tap shows.
+    var earnedRewardText: String? = nil
     var onRetakeMissed: () -> Void
 
     private var isTappable: Bool { missedCount > 0 }
     @State private var isPulsing = false
+    @State private var showingRewardDetail = false
 
     var body: some View {
         let card = VStack(spacing: 10) {
@@ -449,16 +452,8 @@ private struct DayGradeCard: View {
         .padding(18)
         .frame(maxWidth: .infinity)
         .card(borderColor: isTappable ? Theme.primary.opacity(0.4) : Theme.hairline)
-        .overlay(alignment: .top) {
-            if showsEarnedBadge {
-                earnedBadge
-                    // Half-overlapping the card's own top edge, like a
-                    // notification badge, rather than squeezed inside it.
-                    .offset(y: -14)
-            }
-        }
 
-        return Group {
+        let tappableCard = Group {
             if isTappable {
                 Button(action: onRetakeMissed) { card }
                     .buttonStyle(.plain)
@@ -466,6 +461,31 @@ private struct DayGradeCard: View {
                 card
             }
         }
+
+        // The badge is a sibling overlay on top of tappableCard, not
+        // nested inside its Button's label -- a Button inside another
+        // Button's label doesn't reliably receive its own taps in
+        // SwiftUI, and this card can be tappable (retake missed words)
+        // at the same time it's showing the earned badge.
+        return tappableCard
+            .overlay(alignment: .top) {
+                if let rewardText = earnedRewardText {
+                    Button {
+                        showingRewardDetail = true
+                    } label: {
+                        earnedBadge
+                    }
+                    .buttonStyle(.plain)
+                    // Half-overlapping the card's own top edge, like a
+                    // notification badge, rather than squeezed inside it.
+                    .offset(y: -14)
+                    .alert("Today's Reward", isPresented: $showingRewardDetail) {
+                        Button("OK", role: .cancel) {}
+                    } message: {
+                        Text(rewardText)
+                    }
+                }
+            }
     }
 
     /// A gently pulsing pill so a parent checking Home later (after the
@@ -490,7 +510,7 @@ private struct DayGradeCard: View {
             .overlay(Capsule().stroke(Theme.rewardIcon, lineWidth: 1))
             .shadow(color: Theme.reward.opacity(isPulsing ? 0.7 : 0.25), radius: isPulsing ? 10 : 3)
             .scaleEffect(isPulsing ? 1.08 : 0.94)
-            .accessibilityLabel("You've earned today's reward")
+            .accessibilityLabel("You've earned today's reward. Double tap to see what it is.")
             .onAppear {
                 withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
                     isPulsing = true

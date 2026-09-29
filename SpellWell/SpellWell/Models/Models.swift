@@ -44,6 +44,12 @@ final class Child {
     var fridayNotificationHour: Int = 7
     var fridayNotificationMinute: Int = 0
 
+    /// Whether "Need a hint?" is also offered during Test, not just
+    /// Practice -- off by default, a parent opts in from Settings. Test
+    /// is meant to be a one-try, no-help assessment, so this stays an
+    /// explicit choice rather than the default.
+    var allowHintsDuringTest: Bool = false
+
     @Relationship(deleteRule: .cascade, inverse: \WeekList.child)
     var weekLists: [WeekList]? = []
 

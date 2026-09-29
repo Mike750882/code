@@ -375,13 +375,30 @@ structural, but don't be surprised by a typo or an API signature mismatch.
     In `PracticeView`, a word with a hint shows a "Hear a hint" button
     (yellow lightbulb) under "Tap to hear the word"; tapping it reads the
     hint aloud immediately via `SpeechService` -- no visible bubble at
-    all, same as tapping the word itself to hear it. **Practice only,
-    never Test** — Test is graded, one try per word with no retries, so
-    offering a hint there would undercut what the grade is supposed to
-    mean, the same reason Test never allows retries or a "Skip word"
-    button. A word with no hint (an empty field, or an older list saved
-    before this feature existed -- `hint` defaults to `""`) shows nothing
-    extra at all.
+    all, same as tapping the word itself to hear it. **Practice always;
+    Test only if a parent turns it on** (`Child.allowHintsDuringTest`,
+    Settings → "Hints during Test," off by default) — Test is graded,
+    one try per word with no retries, so a hint there is an explicit
+    opt-in rather than the default, the same reason Test never allows
+    retries or a "Skip word" button on its own. A word with no hint (an
+    empty field, or an older list saved before this feature existed --
+    `hint` defaults to `""`) shows nothing extra at all, in either mode.
+  - **Persistent "Reward Earned!" badge** (`HomeView.earnedTodaysReward`) —
+    `PracticeResultsView`'s reward-earned status only ever showed right
+    after finishing a test; once you navigated away (back to Home,
+    closed the app, whatever), a parent who wasn't watching in the
+    moment had no way to check later. Home now computes the same
+    "today's test score >= today's `DailyReward.thresholdPercent`"
+    check itself and shows a gently pulsing gold "Reward Earned!" pill
+    on the corner of *today's own* day-grade card (never any other
+    day's) whenever it's true. Tapping the badge shows an alert with
+    that day's actual `DailyReward.rewardText`, so a parent can check
+    what the reward actually is without having to remember or dig
+    through the Rewards screen. Uses `Theme.reward`/`rewardIcon` (the
+    weekly-prize star's gold) with plain black text -- not
+    `Theme.rewardText`, which every color theme sets to the same hue as
+    `Theme.reward` itself, so it would be nearly invisible on top of a
+    solid `Theme.reward` fill.
   - **Fixed: saving mid-week erased the whole week's test history** —
     `saveList()` used to delete every existing `SpellingWord` and insert
     brand-new ones on *every* save, even for words whose text never
@@ -679,10 +696,6 @@ structural, but don't be surprised by a typo or an API signature mismatch.
   layer exists (`AudioRecorderService.swift`) but isn't wired into any UI
   control yet. It should attach to each word row on the Add List screen and
   write into `SpellingWord.customAudioData`.
-- **Reward "earned" state** — `DailyReward`/`WeeklyPrize` store thresholds,
-  and Home computes a live percentage, but nothing yet marks a specific day
-  as earned/unearned for the "Movie night on Friday" style copy shown on the
-  mockup's secondary card ("Earned at 80% for the week. You are at 76%.").
 - **Apple's kids-category review**: a bare 4-digit PIN is generally fine to
   gate content, but if you ever add purchases or outbound links behind it,
   add an extra "prove you're an adult" step (e.g. a math challenge) — Apple

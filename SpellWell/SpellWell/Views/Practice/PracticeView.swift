@@ -164,11 +164,13 @@ struct PracticeView: View {
     }
 
     /// The current word's parent-written hint, or nil if it doesn't have
-    /// one -- gates whether "Need a hint?" shows at all. Test never offers
-    /// a hint (only Practice does): Test is graded, one try per word, and
-    /// a hint mid-test would undercut what the grade is supposed to mean.
+    /// one -- gates whether "Need a hint?" shows at all. Always allowed in
+    /// Practice; in Test, only if the parent has explicitly turned that on
+    /// in Settings (`Child.allowHintsDuringTest`, off by default) -- Test
+    /// is otherwise a one-try, no-help assessment.
     private var currentHint: String? {
-        guard mode == .practice, let hint = currentWord?.hint else { return nil }
+        let allowedInMode = mode == .practice || (mode == .test && (weekList.child?.allowHintsDuringTest ?? false))
+        guard allowedInMode, let hint = currentWord?.hint else { return nil }
         let trimmed = hint.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
     }

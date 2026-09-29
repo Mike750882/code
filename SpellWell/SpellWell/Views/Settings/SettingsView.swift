@@ -80,6 +80,8 @@ struct SettingsView: View {
                 Divider().overlay(Theme.hairline)
                 practiceScheduleRow
                 Divider().overlay(Theme.hairline)
+                testHintsRow
+                Divider().overlay(Theme.hairline)
                 fridayReminderRow
                 Divider().overlay(Theme.hairline)
                 pinRow
@@ -346,6 +348,23 @@ struct SettingsView: View {
             }
         }
         .padding(.vertical, 20)
+    }
+
+    /// Direct binding to the model, not a local @State mirror -- unlike
+    /// Friday's reminder toggle, flipping this has no side effect (no
+    /// notification to (re)schedule), so there's nothing an onAppear-synced
+    /// mirror would buy over reading/writing straight through.
+    private var testHintsRow: some View {
+        SettingsRow(
+            title: "Hints during Test",
+            subtitle: "Let \"Need a hint?\" show up during Test too, not just Practice. Off by default, since Test is meant to be a one-try, no-help assessment."
+        ) {
+            Toggle("Allow hints during Test", isOn: Binding(
+                get: { child.allowHintsDuringTest },
+                set: { child.allowHintsDuringTest = $0 }
+            ))
+            .tint(Theme.primary)
+        }
     }
 
     private var fridayReminderRow: some View {
