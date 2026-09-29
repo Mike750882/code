@@ -479,10 +479,8 @@ private struct DayGradeCard: View {
                     // Half-overlapping the card's own top edge, like a
                     // notification badge, rather than squeezed inside it.
                     .offset(y: -14)
-                    .alert("Today's Reward", isPresented: $showingRewardDetail) {
-                        Button("OK", role: .cancel) {}
-                    } message: {
-                        Text(rewardText)
+                    .sheet(isPresented: $showingRewardDetail) {
+                        RewardEarnedView(rewardText: rewardText)
                     }
                 }
             }

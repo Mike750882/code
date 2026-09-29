@@ -32,14 +32,19 @@ struct RewardsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 header
+                // Weekly prize + Save moved up here, right under the
+                // header, rather than after all four daily rows -- so
+                // saving doesn't require scrolling past everything else
+                // first.
+                weeklyPrizeCard
+                footer
+                Divider().overlay(Theme.hairline)
                 VStack(spacing: 0) {
                     ForEach(weekdayLabels, id: \.weekday) { entry in
                         dailyRow(weekday: entry.weekday, label: entry.label)
                         Divider().overlay(Theme.hairline)
                     }
                 }
-                weeklyPrizeCard
-                footer
             }
             .padding(28)
             .frame(maxWidth: .infinity)
