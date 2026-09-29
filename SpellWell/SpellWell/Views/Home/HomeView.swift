@@ -339,6 +339,22 @@ struct HomeView: View {
         (2, "Monday"), (3, "Tuesday"), (4, "Wednesday"), (5, "Thursday"), (6, "Friday")
     ]
 
+    private var todayWeekday: Int { Calendar.current.component(.weekday, from: Date()) }
+
+    private var todaysDailyReward: DailyReward? {
+        child.dailyRewards?.first(where: { $0.weekday == todayWeekday })
+    }
+
+    /// True once today's test has been taken and its grade clears
+    /// today's reward threshold -- the same "earned" check
+    /// `PracticeResultsView` shows right after finishing the test, made
+    /// persistent here so a parent who wasn't watching in the moment can
+    /// still see it later, on Home, without having to remember to check.
+    private var earnedTodaysReward: Bool {
+        guard let reward = todaysDailyReward, let percent = testPercent(onWeekday: todayWeekday) else { return false }
+        return percent >= reward.thresholdPercent
+    }
+
     /// Same reasoning as `secondaryCards` -- exactly 5 equal columns on
     /// regular width so the cards spread across the full row, adaptive
     /// (wrapping down to fewer per row) on compact.
@@ -349,7 +365,12 @@ struct HomeView: View {
         return LazyVGrid(columns: columns, spacing: 16) {
             ForEach(Self.weekdayLabels, id: \.weekday) { entry in
                 let missed = missedWords(onWeekday: entry.weekday)
-                DayGradeCard(label: entry.label, percent: testPercent(onWeekday: entry.weekday), missedCount: missed.count) {
+                DayGradeCard(
+                    label: entry.label,
+                    percent: testPercent(onWeekday: entry.weekday),
+                    missedCount: missed.count,
+                    showsEarnedBadge: entry.weekday == todayWeekday && earnedTodaysReward
+                ) {
                     guard let list = thisWeekList, !missed.isEmpty else { return }
                     onReviewMissedWords(list, missed)
                 }
@@ -397,9 +418,13 @@ private struct DayGradeCard: View {
     let label: String
     let percent: Int?
     let missedCount: Int
+    /// True only for today's own card, and only once today's test grade
+    /// clears today's reward threshold -- see `HomeView.earnedTodaysReward`.
+    var showsEarnedBadge: Bool = false
     var onRetakeMissed: () -> Void
 
     private var isTappable: Bool { missedCount > 0 }
+    @State private var isPulsing = false
 
     var body: some View {
         let card = VStack(spacing: 10) {
@@ -424,6 +449,14 @@ private struct DayGradeCard: View {
         .padding(18)
         .frame(maxWidth: .infinity)
         .card(borderColor: isTappable ? Theme.primary.opacity(0.4) : Theme.hairline)
+        .overlay(alignment: .top) {
+            if showsEarnedBadge {
+                earnedBadge
+                    // Half-overlapping the card's own top edge, like a
+                    // notification badge, rather than squeezed inside it.
+                    .offset(y: -14)
+            }
+        }
 
         return Group {
             if isTappable {
@@ -433,6 +466,36 @@ private struct DayGradeCard: View {
                 card
             }
         }
+    }
+
+    /// A gently pulsing pill so a parent checking Home later (after the
+    /// results screen -- the only other place this shows -- is long
+    /// gone) can still tell at a glance that today's reward was earned.
+    /// `Theme.reward`/`rewardIcon` -- the same warm gold used for the
+    /// weekly-prize star -- rather than a fixed yellow, so it still
+    /// looks right under every color theme, not just Default.
+    private var earnedBadge: some View {
+        Text("Reward Earned!")
+            .font(Theme.body(11, weight: .bold))
+            // Not Theme.rewardText -- every color theme sets it to the
+            // same (or a very close) hue as Theme.reward itself, so on
+            // top of a solid Theme.reward fill it would be nearly
+            // invisible. Plain black reads clearly against all four
+            // themes' gold, which is always light-to-mid brightness.
+            .foregroundStyle(.black)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Theme.reward)
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(Theme.rewardIcon, lineWidth: 1))
+            .shadow(color: Theme.reward.opacity(isPulsing ? 0.7 : 0.25), radius: isPulsing ? 10 : 3)
+            .scaleEffect(isPulsing ? 1.08 : 0.94)
+            .accessibilityLabel("You've earned today's reward")
+            .onAppear {
+                withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
+                    isPulsing = true
+                }
+            }
     }
 }
 
