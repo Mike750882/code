@@ -1,9 +1,11 @@
 import SwiftUI
 
 /// Shown when a parent taps the "Reward Earned!" badge on today's
-/// day-grade card -- the same header/background/Speagle-corner treatment
-/// as `WordListView`, rather than a plain system alert, so it feels like
-/// part of the app instead of a generic iOS dialog box.
+/// day-grade card -- the same header/background treatment as
+/// `WordListView` (with a big, centered, celebrating Speagle instead of
+/// his usual small corner spot, since this is the one screen that's
+/// entirely about celebrating), rather than a plain system alert, so it
+/// feels like part of the app instead of a generic iOS dialog box.
 struct RewardEarnedView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -47,10 +49,9 @@ struct RewardEarnedView: View {
         .padding(28)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .speagleBackground()
-        .overlay(alignment: .bottomTrailing) {
-            Speagle(pose: .cheer, size: isCompact ? 120 : 200)
+        .overlay(alignment: .center) {
+            Speagle(pose: .cheer, size: isCompact ? 240 : 400)
                 .allowsHitTesting(false)
-                .padding(20)
         }
     }
 }
