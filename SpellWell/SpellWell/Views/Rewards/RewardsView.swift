@@ -24,32 +24,48 @@ struct RewardsView: View {
     @FocusState private var focusedField: Field?
 
     var body: some View {
-        // Everything shares one ScrollView -- previously only the daily
-        // rows scrolled while the header, weekly prize card, and Save
-        // button sat in a fixed layout outside it, so nothing could scroll
-        // a field out from under the keyboard, especially in landscape
-        // where there's much less vertical space to begin with.
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                header
-                // Weekly prize + Save moved up here, right under the
-                // header, rather than after all four daily rows -- so
-                // saving doesn't require scrolling past everything else
-                // first.
-                weeklyPrizeCard
-                footer
-                Divider().overlay(Theme.hairline)
-                VStack(spacing: 0) {
-                    ForEach(weekdayLabels, id: \.weekday) { entry in
-                        dailyRow(weekday: entry.weekday, label: entry.label)
-                        Divider().overlay(Theme.hairline)
+        // A GeometryReader just to read the safe-area inset -- lets the
+        // corner Speagle push down by exactly that amount so he reaches
+        // the true bottom edge (see the overlay below), same technique
+        // PracticeView uses.
+        GeometryReader { proxy in
+            // Everything shares one ScrollView -- previously only the
+            // daily rows scrolled while the header, weekly prize card,
+            // and Save button sat in a fixed layout outside it, so
+            // nothing could scroll a field out from under the keyboard,
+            // especially in landscape where there's much less vertical
+            // space to begin with.
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    header
+                    // Weekly prize + Save moved up here, right under the
+                    // header, rather than after all four daily rows --
+                    // so saving doesn't require scrolling past
+                    // everything else first.
+                    weeklyPrizeCard
+                    footer
+                    Divider().overlay(Theme.hairline)
+                    VStack(spacing: 0) {
+                        ForEach(weekdayLabels, id: \.weekday) { entry in
+                            dailyRow(weekday: entry.weekday, label: entry.label)
+                            Divider().overlay(Theme.hairline)
+                        }
                     }
                 }
+                .padding(28)
+                // Room at the bottom so the last row doesn't sit behind
+                // the corner Speagle overlay.
+                .padding(.bottom, 140)
+                .frame(maxWidth: .infinity)
             }
-            .padding(28)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .overlay(alignment: .bottomTrailing) {
+                Speagle(pose: .cheer, size: isCompact ? 130 : 280)
+                    .allowsHitTesting(false)
+                    .padding(.trailing, 20)
+                    .offset(y: proxy.safeAreaInsets.bottom)
+            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .speagleBackground()
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle("")
@@ -214,29 +230,16 @@ struct RewardsView: View {
             .padding(.vertical, 10)
             .overlay(RoundedRectangle(cornerRadius: Theme.controlCornerRadius).stroke(Theme.primary, lineWidth: 1.5))
 
-        // His point pose's upward wing reads as gesturing back up at the
-        // rewards above, now that he's standing right beside the button
-        // instead of down at the very bottom of the page. Much smaller on
-        // compact -- at the iPad size, he alone was wider than an
-        // iPhone's entire content column, forcing the whole row (and
-        // everything above it in the VStack) wider than the screen and
-        // clipping trailing text like "70% right" off the edge.
-        let speagle = Speagle(pose: .point, size: isCompact ? 90 : 360)
-
         return Group {
             if isCompact {
                 VStack(alignment: .leading, spacing: 12) {
                     caption
-                    HStack(alignment: .bottom, spacing: 12) {
-                        speagle
-                        saveButton
-                    }
+                    saveButton
                 }
             } else {
-                HStack(alignment: .bottom) {
+                HStack {
                     caption
                     Spacer()
-                    speagle
                     saveButton
                 }
             }
