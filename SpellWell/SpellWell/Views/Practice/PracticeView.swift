@@ -147,11 +147,6 @@ struct PracticeView: View {
     /// recorded here -- lets Home's daily grade use only the most recent
     /// session's result for a day when a test is retaken.
     @State private var sessionID = UUID()
-    /// Whether the current word's parent-written hint (if it has one) is
-    /// showing -- reset to false on every new word (see `setUpWord`) so
-    /// it never carries over and accidentally reveals the next word's
-    /// hint before it's asked for.
-    @State private var showHint = false
 
     enum Feedback { case correct, incorrect }
 
@@ -223,24 +218,6 @@ struct PracticeView: View {
                         letterBank(metrics: metrics)
                     }
                     actionButtons
-                    // Directly under the action row (which includes
-                    // "Skip word"), in the main flow rather than beside
-                    // Speagle. Reserves the same height whether the
-                    // bubble is showing or not, for any word that has a
-                    // hint at all -- otherwise revealing it grows the
-                    // content and shifts everything above it upward,
-                    // which could push "Check my word" down into
-                    // Speagle's corner and under his (opaque, tappable)
-                    // overlay, silently eating the tap.
-                    if currentHint != nil {
-                        Group {
-                            if showHint, let hint = currentHint {
-                                hintBubble(hint)
-                            }
-                        }
-                        .frame(minHeight: 90, alignment: .top)
-                        .padding(.top, 16)
-                    }
                 } else {
                     PracticeResultsView(results: results, mode: mode, child: weekList.child, onDone: onGoHome)
                 }
@@ -335,59 +312,28 @@ struct PracticeView: View {
         .padding(.bottom, 40)
     }
 
-    /// A "Need a hint?" button for a word that has one and hasn't had it
-    /// revealed yet. Once tapped, the hint itself appears below the
-    /// action buttons instead (see `hintBubble`), not here. Takes up no
-    /// space at all for a word with no hint, in Test mode, or once the
-    /// hint is already showing.
+    /// A "Hear a hint" button for a word that has one -- no visible bubble
+    /// at all, tapping it just reads the hint aloud immediately (same
+    /// `SpeechService` used to read each spelling word aloud, just with no
+    /// recorded custom-voice audio, since a hint is typed text, not a
+    /// word with its own recording). Takes up no space at all for a word
+    /// with no hint, or in Test mode.
     @ViewBuilder
     private var hintSection: some View {
-        if currentHint != nil, !showHint {
-            Button {
-                withAnimation { showHint = true }
-            } label: {
-                Label("Need a hint?", systemImage: "lightbulb.fill")
-                    .font(Theme.body(15, weight: .medium))
-                    .foregroundStyle(Theme.primary)
-            }
-            .padding(.bottom, 24)
-        }
-    }
-
-    /// The hint itself, shown directly under the action buttons (below
-    /// "Skip word") once requested. Includes a speaker button so a child
-    /// who can't read yet can still hear it --
-    /// same `SpeechService` used to read each spelling word aloud, just
-    /// with no recorded custom-voice audio, since a hint is typed text,
-    /// not a word with its own recording.
-    private func hintBubble(_ hint: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Text(hint)
-                .font(Theme.body(14))
-                .foregroundStyle(Theme.textPrimary)
-                .multilineTextAlignment(.leading)
-                // Explicit width + fixedSize so it reliably wraps instead
-                // of a truncated single line -- same fix as the welcome
-                // screen's speech bubble (see SpeagleSpeechBubble).
-                .frame(maxWidth: 200, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
+        if let hint = currentHint {
             Button {
                 speech.speak(hint, voiceIdentifier: weekList.child?.voiceIdentifier)
             } label: {
-                Image(systemName: "speaker.wave.2.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(Theme.primary)
-                    .frame(width: 32, height: 32)
+                HStack(spacing: 6) {
+                    Image(systemName: "lightbulb.fill")
+                        .foregroundStyle(.yellow)
+                    Text("Hear a hint")
+                        .foregroundStyle(Theme.primary)
+                }
+                .font(Theme.body(15, weight: .medium))
             }
+            .padding(.bottom, 24)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(Theme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.controlCornerRadius, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.controlCornerRadius, style: .continuous)
-                .stroke(Theme.hairline, lineWidth: 1)
-        )
     }
 
     private func answerSlots(wordLength: Int, metrics: TileMetrics) -> some View {
@@ -621,7 +567,6 @@ struct PracticeView: View {
         feedback = nil
         typedAnswer = ""
         currentResultIndex = nil
-        showHint = false
         guard let word = currentWord else {
             slotContents = []
             fillOrder = []
