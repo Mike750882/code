@@ -62,6 +62,10 @@ struct WordListView: View {
         // sit on top of and block a tap on a word row or "Done."
         .overlay(alignment: .bottomTrailing) {
             Speagle(pose: .point, size: 200)
+                // The art points up-and-to-the-right by default; mirrored
+                // here since he's sitting in the bottom-right corner and
+                // the word list he's pointing at is to his left.
+                .scaleEffect(x: -1, y: 1)
                 .allowsHitTesting(false)
                 .padding(20)
         }
