@@ -54,7 +54,7 @@ struct RewardEarnedView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .speagleBackground()
             .overlay {
-                Speagle(pose: .cheer, size: isCompact ? 480 : 800)
+                Speagle(pose: .cheer, size: isCompact ? 240 : 400)
                     .allowsHitTesting(false)
                     .position(x: proxy.size.width / 2, y: proxy.size.height * 2 / 3)
             }
