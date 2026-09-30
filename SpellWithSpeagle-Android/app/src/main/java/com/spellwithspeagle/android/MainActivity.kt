@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
         val app = application as SpellWithSpeagleApp
 
         setContent {
-            val activeChild by activeChildFlow(app).collectAsStateWithLifecycle(initial = LoadState.Loading)
+            val activeChild by activeChildFlow(app).collectAsStateWithLifecycle(initialValue = LoadState.Loading)
             val colorProfile = when (val state = activeChild) {
                 is LoadState.Ready -> ColorProfile.byId(state.child?.colorProfile)
                 else -> ColorProfile.Default

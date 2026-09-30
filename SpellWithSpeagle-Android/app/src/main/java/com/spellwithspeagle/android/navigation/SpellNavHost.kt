@@ -6,7 +6,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.spellwithspeagle.android.data.model.PracticeMode
 import com.spellwithspeagle.android.ui.home.HomeScreen
 import com.spellwithspeagle.android.ui.home.PracticeOrTest
 import com.spellwithspeagle.android.ui.practice.PracticeScreen
@@ -48,17 +47,15 @@ fun SpellNavHost(hasChildren: Boolean) {
         }
         composable(
             route = Routes.PRACTICE,
+            // "mode"/"restrictTo" aren't read here -- they land in
+            // PracticeViewModel's SavedStateHandle automatically, since the
+            // ViewModel is scoped to this NavBackStackEntry.
             arguments = listOf(
                 navArgument("mode") { type = NavType.StringType },
                 navArgument("restrictTo") { type = NavType.StringType; defaultValue = "" }
             )
-        ) { backStackEntry ->
-            val modeArg = backStackEntry.arguments?.getString("mode") ?: PracticeOrTest.PRACTICE.name
-            val restrictArg = backStackEntry.arguments?.getString("restrictTo").orEmpty()
-            val restrictToWordIds = if (restrictArg.isBlank()) null else restrictArg.split(",")
+        ) {
             PracticeScreen(
-                mode = if (modeArg == PracticeOrTest.TEST.name) PracticeMode.TEST else PracticeMode.PRACTICE,
-                restrictToWordIds = restrictToWordIds,
                 onGoHome = {
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.HOME) { inclusive = true }
