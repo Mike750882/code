@@ -33,13 +33,17 @@ import com.spellwithspeagle.android.R
 fun SpeagleBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     Box(modifier = modifier.fillMaxSize().background(SpellTheme.colors.background)) {
         if (LocalColorProfileId.current == ColorProfile.Default.id) {
+            // Crop (not FillWidth) so the scene covers the full screen height
+            // on a tall phone, not just a short band matching the image's
+            // own wide-landscape aspect ratio -- BottomCenter keeps the
+            // grass line pinned to the bottom edge while the extra height
+            // crops in from the sides instead of leaving blank space above.
             Image(
                 painter = painterResource(R.drawable.app_background),
                 contentDescription = null,
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomStart)
+                contentScale = ContentScale.Crop,
+                alignment = Alignment.BottomCenter,
+                modifier = Modifier.fillMaxSize()
             )
             // Fades the top half of the image into the flat background color
             // so cards/text placed near the top of a screen stay legible.
