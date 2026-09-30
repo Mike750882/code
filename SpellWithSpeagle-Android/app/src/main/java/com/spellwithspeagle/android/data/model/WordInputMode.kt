@@ -24,6 +24,15 @@ enum class WordInputMode {
             TYPED -> "Type it from memory"
         }
 
+    /** Short label for a compact UI control, e.g. a Settings chip. */
+    val shortLabel: String
+        get() = when (this) {
+            TILES_SCAFFOLDED -> "Scaffolded"
+            TILES_FULL -> "Full tiles"
+            HALF_AND_HALF -> "Half & half"
+            TYPED -> "Typed"
+        }
+
     companion object {
         /**
          * Friday (day 6) is always [TYPED] -- the real weekly test, not one
