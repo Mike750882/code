@@ -46,7 +46,7 @@ class SpeechService(context: Context) {
 
     /** Speaks [text] once TTS has finished initializing, in [voiceName] if given and available. */
     fun speak(text: String, voiceName: String? = null) {
-        val action = {
+        val action: () -> Unit = {
             if (!voiceName.isNullOrBlank()) {
                 val voice = tts.voices?.firstOrNull { it.name.contains(voiceName, ignoreCase = true) }
                 if (voice != null) tts.voice = voice
@@ -71,7 +71,7 @@ class SpeechService(context: Context) {
                     if (id == utteranceId) trySend(Unit)
                 }
             })
-            val action = {
+            val action: () -> Unit = {
                 if (!voiceName.isNullOrBlank()) {
                     val voice = tts.voices?.firstOrNull { it.name.contains(voiceName, ignoreCase = true) }
                     if (voice != null) tts.voice = voice
