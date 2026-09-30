@@ -78,32 +78,49 @@ signature mismatch), same caveat the iOS README carries for Xcode.
 - **First-run flow** -- zero profiles on launch goes straight to a
   no-PIN-gate "what's your name?" screen (`ui/profiles/AddChildScreen.kt`),
   same reasoning as iOS: nothing to protect yet on a fresh install.
-
-## What's next
-
-Not yet built -- the natural next rounds, same shape as the iOS feature
-list in `../SpellWell/README.md`:
-
-- **Parent PIN gate UI** -- `PinService` exists but nothing calls it yet;
-  no PIN-entry pad, no "Settings/Add List/Rewards are gated" enforcement.
-- **Add spelling list** screen (word grid, per-word hint field, photo
-  import via CameraX/ML Kit text recognition as the on-device OCR
-  equivalent of iOS's Vision framework).
-- **Rewards** screen (per-weekday reward text + threshold, weekly prize
-  editor) -- the data model and Home's read side already exist, just no
-  editor UI yet.
-- **Settings** screen -- voice picker + preview, color theme picker, PIN
-  change, practice-schedule (the four `WordInputMode`s -- already modeled
-  in `data/model/WordInputMode.kt` -- aren't wired into Practice's UI yet,
-  which currently always shows a plain typed field regardless of
-  weekday), Friday reminder toggle (`WorkManager` + a notification channel
-  is the natural fit), hints-during-test toggle, progress report chart.
-- **Multiple profiles UI** -- `ActiveChildStore`/`SpellingRepository`
-  support it (each `Child` is already fully isolated), but there's no
-  profile switcher/manager screen yet.
+- **Parent PIN gate** (`ui/gate/PinGateScreen.kt`) -- a shared 0-9 keypad +
+  masked-dot display (`ui/components/PinPad.kt`) matching iOS's PINPad,
+  checked fresh on every visit to Add List/Rewards/Settings (never cached
+  across visits, same as iOS's `ParentGate.verify`). No PIN set yet goes
+  straight into a two-step create-and-confirm flow instead of failing a
+  check against nothing. Settings' "Change PIN" reuses the same screen in
+  a forced-create mode.
+- **Add spelling list** (`ui/addlist`) -- a numbered word list with an
+  optional hint field per word, add/remove rows, "Save list" writes
+  through `SpellingRepository.saveWords` (the order-index-matching save
+  that preserves a word's test history across edits, same as iOS).
+- **Rewards** (`ui/rewards`) -- per-weekday (Mon-Thu) reward text +
+  accuracy-threshold slider, plus a weekly prize title + threshold.
+  Reuses each row's existing database id on save so editing a reward
+  updates it in place instead of inserting a duplicate row.
+- **Settings** (`ui/settings`) -- color theme picker (4 swatches), voice
+  picker + "Preview" (speaks "Spell With Speagle"), per-weekday practice
+  schedule (`WordInputMode` chips for Monday-Thursday), hints-during-test
+  toggle, Friday reminder toggle (persisted, not yet wired to an actual
+  notification -- see below), "Change PIN," and a plain-text progress
+  summary (one line per week, correct/total) in place of a chart for now.
+- **Multiple profiles support** in the data layer
+  (`ActiveChildStore`/`SpellingRepository`, each `Child` fully isolated)
+  -- still no switcher/manager *screen* to add or change which profile is
+  active (see below).
+- **Multiple profiles UI** -- add-a-sibling / switch-profile / remove
+  screen (`ProfilesView` on iOS). The data layer already supports it.
 - **Letter-tile input modes** -- Practice currently always uses a typed
-  field; the scaffolded/full-tiles/half-and-half modes from iOS still
-  need a Compose equivalent of the drag-and-drop letter tiles.
+  field, regardless of what Settings' practice-schedule picker says;
+  `WordInputMode` is stored and editable, just not read by Practice yet.
+  The scaffolded/full-tiles/half-and-half modes from iOS still need a
+  Compose equivalent of the drag-and-drop letter tiles.
+- **Friday reminder notifications** -- the toggle in Settings persists
+  `Child.fridayNotificationEnabled`, but nothing schedules an actual
+  notification yet. `WorkManager` + a notification channel is the natural
+  fit (the local, on-device equivalent of iOS's
+  `UNCalendarNotificationTrigger`).
+- **Photo import for Add List** -- iOS uses on-device Vision OCR;
+  CameraX + ML Kit Text Recognition is the Android equivalent, not wired
+  up here yet.
+- **Progress report chart** -- Settings currently shows a plain per-week
+  text summary instead of the graphical chart iOS's `ProgressReportView`
+  has.
 - **App icon** -- the legacy `mipmap-xxxhdpi/ic_launcher.png` is the raw
   1024px iOS icon export dropped in as-is (works, but isn't a proper
   Android adaptive icon). Regenerate via Android Studio's Image Asset

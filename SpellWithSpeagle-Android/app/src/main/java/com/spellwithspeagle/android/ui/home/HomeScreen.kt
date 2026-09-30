@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spellwithspeagle.android.domain.Grading
 import com.spellwithspeagle.android.ui.AppViewModelProvider
+import com.spellwithspeagle.android.ui.gate.GateDestination
 import com.spellwithspeagle.android.ui.speagle.Speagle
 import com.spellwithspeagle.android.ui.speagle.SpeaglePose
 import com.spellwithspeagle.android.ui.theme.SpellTheme
@@ -49,6 +50,7 @@ enum class PracticeOrTest { PRACTICE, TEST }
 @Composable
 fun HomeScreen(
     onStartSession: (mode: PracticeOrTest, restrictToWordIds: List<String>?) -> Unit,
+    onOpenGated: (GateDestination) -> Unit,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -113,6 +115,12 @@ fun HomeScreen(
                         color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f)
                     )
                 }
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                SecondaryCard(label = "Add list", modifier = Modifier.weight(1f)) { onOpenGated(GateDestination.ADD_LIST) }
+                SecondaryCard(label = "Rewards", modifier = Modifier.weight(1f)) { onOpenGated(GateDestination.REWARDS) }
+                SecondaryCard(label = "Settings", modifier = Modifier.weight(1f)) { onOpenGated(GateDestination.SETTINGS) }
             }
 
             Text("This week", style = SpellTheme.display(18.sp, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
@@ -198,5 +206,19 @@ private fun DayGradeCard(day: DayGradeUi, onClick: () -> Unit, onBadgeClick: () 
                 Text("★", color = androidx.compose.ui.graphics.Color.Black, style = SpellTheme.body(10.sp))
             }
         }
+    }
+}
+
+@Composable
+private fun SecondaryCard(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(SpellTheme.controlCornerRadius))
+            .background(SpellTheme.colors.surface)
+            .clickable { onClick() }
+            .padding(vertical = 14.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(label, style = SpellTheme.body(14.sp, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
     }
 }
