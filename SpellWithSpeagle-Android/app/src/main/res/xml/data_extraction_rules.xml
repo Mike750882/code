@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- allowBackup is off and this app has no cloud/device-transfer backup path,
+     so the parent PIN (EncryptedSharedPreferences) never outlives a real
+     uninstall+reinstall, matching the iOS Keychain-local behavior. -->
+<data-extraction-rules>
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+        <exclude domain="sharedpref" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" />
+    </device-transfer>
+</data-extraction-rules>

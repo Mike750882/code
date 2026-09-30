@@ -1,0 +1,8 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Compose draws the actual UI; this is only the pre-Compose window
+         theme used briefly during activity startup. -->
+    <style name="Theme.SpellWithSpeagle" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">#F1EFEE</item>
+        <item name="android:windowBackground">#F1EFEE</item>
+    </style>
+</resources>
