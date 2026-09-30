@@ -53,6 +53,7 @@ private val SCHEDULE_DAYS = listOf(
     Calendar.THURSDAY to "Thursday"
 )
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     onChangePin: () -> Unit,
