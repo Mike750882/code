@@ -208,7 +208,7 @@ struct SettingsView: View {
                 Spacer()
 
                 Button {
-                    previewSpeech.speak("Spell Well", voiceIdentifier: selectedVoiceIdentifier)
+                    previewSpeech.speak("Spell With Speagle", voiceIdentifier: selectedVoiceIdentifier)
                 } label: {
                     Label("Preview", systemImage: "play.circle")
                 }
