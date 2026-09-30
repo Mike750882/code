@@ -18,7 +18,7 @@ data class WeekSummary(val weekOf: Long, val correct: Int, val total: Int)
 data class SettingsUiState(
     val isLoading: Boolean = true,
     val child: Child? = null,
-    val voices: List<String> = emptyList(),
+    val voices: List<SpeechService.VoiceOption> = emptyList(),
     val weeksSummary: List<WeekSummary> = emptyList()
 )
 
@@ -34,7 +34,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             val id = activeChildStore.activeChildId.first() ?: return@launch
             val child = repository.observeChild(id).first() ?: return@launch
-            val voices = speechService.availableVoices().map { it.name }
+            val voices = speechService.availableVoices()
             val weekLists = repository.observeWeekLists(id).first()
             val summaries = weekLists.map { weekList ->
                 val words = repository.observeWords(weekList.id).first()

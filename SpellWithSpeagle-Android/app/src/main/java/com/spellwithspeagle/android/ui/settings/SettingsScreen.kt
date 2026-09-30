@@ -104,15 +104,20 @@ fun SettingsScreen(
             item {
                 SettingsSection(title = "Voice") {
                     if (state.voices.isEmpty()) {
-                        Text("No extra voices found on this device -- using the system default.", color = SpellTheme.colors.textSecondary, style = SpellTheme.body(13.sp))
+                        Text(
+                            "No extra voices found on this device -- using the system default. " +
+                                "More can be installed from Settings -> Languages & input -> Text-to-speech output.",
+                            color = SpellTheme.colors.textSecondary,
+                            style = SpellTheme.body(13.sp)
+                        )
                     } else {
-                        state.voices.forEach { voiceName ->
+                        state.voices.forEach { voice ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth().clickable { viewModel.setVoice(voiceName) }
+                                modifier = Modifier.fillMaxWidth().clickable { viewModel.setVoice(voice.id) }
                             ) {
-                                RadioButton(selected = child.voiceIdentifier == voiceName, onClick = { viewModel.setVoice(voiceName) })
-                                Text(voiceName, color = SpellTheme.colors.textPrimary)
+                                RadioButton(selected = child.voiceIdentifier == voice.id, onClick = { viewModel.setVoice(voice.id) })
+                                Text(voice.label, color = SpellTheme.colors.textPrimary)
                             }
                         }
                     }

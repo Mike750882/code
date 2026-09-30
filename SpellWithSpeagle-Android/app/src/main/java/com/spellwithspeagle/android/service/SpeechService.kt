@@ -29,26 +29,52 @@ class SpeechService(context: Context) {
     }
 
     /**
-     * Curated shortlist of voice names to offer in Settings, mirroring
-     * iOS's `SettingsView.allowedVoiceNames`. Not every name will have a
-     * matching installed Android TTS voice on every device -- [availableVoices]
-     * filters this list down to what's actually installed.
+     * A voice option for the Settings picker: [id] is the underlying
+     * [Voice.getName] (opaque, engine-specific -- e.g. "en-us-x-tpf-local"),
+     * stored as-is in [com.spellwithspeagle.android.data.model.Child.voiceIdentifier];
+     * [label] is a readable string built from the voice's locale + quality
+     * for display, since Android TTS voices don't have friendly names the
+     * way iOS's AVSpeechSynthesisVoice list does (no "Samantha"/"Moira" here
+     * -- those are Apple-specific personas with no Android equivalent).
      */
-    val allowedVoiceNames = listOf("Tessa", "Superstar", "Samantha", "Rishi", "Moira", "Kathy", "Karen", "Junior", "Fred", "Daniel")
+    data class VoiceOption(val id: String, val label: String)
 
-    /** Installed system voices whose name contains one of [allowedVoiceNames], in that preference order. */
-    fun availableVoices(): List<Voice> {
+    /**
+     * Every installed on-device voice (no [Voice.isNetworkConnectionRequired],
+     * matching this app's on-device-only design) matching the current
+     * device language, best quality first. A bare emulator often has very
+     * few or none installed at all -- Settings -> System -> Languages &
+     * input -> Text-to-speech output -> (engine) -> Install voice data adds
+     * more, and a real device typically ships with several already.
+     */
+    fun availableVoices(): List<VoiceOption> {
         val installed = runCatching { tts.voices ?: emptySet() }.getOrDefault(emptySet())
-        return allowedVoiceNames.mapNotNull { wanted ->
-            installed.firstOrNull { it.name.contains(wanted, ignoreCase = true) }
-        }
+        val deviceLanguage = Locale.getDefault().language
+        return installed
+            .filterNot { it.isNetworkConnectionRequired }
+            .filter { it.locale.language == deviceLanguage }
+            .sortedWith(compareByDescending<Voice> { it.quality }.thenBy { it.name })
+            .map { voice -> VoiceOption(id = voice.name, label = labelFor(voice)) }
     }
 
-    /** Speaks [text] once TTS has finished initializing, in [voiceName] if given and available. */
-    fun speak(text: String, voiceName: String? = null) {
+    private fun labelFor(voice: Voice): String {
+        val qualityLabel = when (voice.quality) {
+            Voice.QUALITY_VERY_HIGH -> "Very high quality"
+            Voice.QUALITY_HIGH -> "High quality"
+            Voice.QUALITY_NORMAL -> "Normal quality"
+            Voice.QUALITY_LOW -> "Low quality"
+            Voice.QUALITY_VERY_LOW -> "Very low quality"
+            else -> null
+        }
+        val localeName = voice.locale.displayName
+        return if (qualityLabel != null) "$localeName -- $qualityLabel" else localeName
+    }
+
+    /** Speaks [text] once TTS has finished initializing, in [voiceId] if given and available. */
+    fun speak(text: String, voiceId: String? = null) {
         val action: () -> Unit = {
-            if (!voiceName.isNullOrBlank()) {
-                val voice = tts.voices?.firstOrNull { it.name.contains(voiceName, ignoreCase = true) }
+            if (!voiceId.isNullOrBlank()) {
+                val voice = tts.voices?.firstOrNull { it.name == voiceId }
                 if (voice != null) tts.voice = voice
             }
             tts.stop()
@@ -58,7 +84,7 @@ class SpeechService(context: Context) {
     }
 
     /** Speaks [text] and suspends until playback completes -- useful for sequencing (e.g. word, then feedback). */
-    suspend fun speakAndAwait(text: String, voiceName: String? = null) {
+    suspend fun speakAndAwait(text: String, voiceId: String? = null) {
         val utteranceId = UUID.randomUUID().toString()
         callbackFlow {
             tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
@@ -72,8 +98,8 @@ class SpeechService(context: Context) {
                 }
             })
             val action: () -> Unit = {
-                if (!voiceName.isNullOrBlank()) {
-                    val voice = tts.voices?.firstOrNull { it.name.contains(voiceName, ignoreCase = true) }
+                if (!voiceId.isNullOrBlank()) {
+                    val voice = tts.voices?.firstOrNull { it.name == voiceId }
                     if (voice != null) tts.voice = voice
                 }
                 tts.stop()
