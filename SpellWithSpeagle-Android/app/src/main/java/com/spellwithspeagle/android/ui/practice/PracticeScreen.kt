@@ -44,6 +44,7 @@ import com.spellwithspeagle.android.domain.Grading
 import com.spellwithspeagle.android.ui.AppViewModelProvider
 import com.spellwithspeagle.android.ui.speagle.Speagle
 import com.spellwithspeagle.android.ui.speagle.SpeaglePose
+import com.spellwithspeagle.android.ui.theme.SpeagleBackground
 import com.spellwithspeagle.android.ui.theme.SpellTheme
 
 @Composable
@@ -53,7 +54,8 @@ fun PracticeScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    Scaffold(containerColor = SpellTheme.colors.background) { padding ->
+    SpeagleBackground {
+    Scaffold(containerColor = Color.Transparent) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
                 state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = SpellTheme.colors.primary)
@@ -62,6 +64,7 @@ fun PracticeScreen(
                 else -> PracticeBody(state = state, viewModel = viewModel, onGoHome = onGoHome)
             }
         }
+    }
     }
 }
 

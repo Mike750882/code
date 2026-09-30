@@ -65,6 +65,9 @@ private fun ColorProfile.resolve(darkTheme: Boolean): SpellColors = SpellColors(
 
 val LocalSpellColors = staticCompositionLocalOf { ColorProfile.Default.resolve(darkTheme = false) }
 
+/** The active [ColorProfile.id] -- lets a screen ask "am I on Default?" (e.g. [SpeagleBackground]) without threading the profile through every call site. */
+val LocalColorProfileId = staticCompositionLocalOf { ColorProfile.Default.id }
+
 /**
  * App-wide design constants, mirroring iOS `Theme`'s static helpers
  * (`Theme.display(_:weight:)`, `Theme.cardCornerRadius`, etc.) so call
@@ -98,7 +101,7 @@ fun SpellWithSpeagleTheme(
     content: @Composable () -> Unit
 ) {
     val colors = colorProfile.resolve(darkTheme)
-    CompositionLocalProvider(LocalSpellColors provides colors) {
+    CompositionLocalProvider(LocalSpellColors provides colors, LocalColorProfileId provides colorProfile.id) {
         MaterialTheme(
             typography = AppTypography,
             content = content

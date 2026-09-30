@@ -25,6 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spellwithspeagle.android.ui.AppViewModelProvider
 import com.spellwithspeagle.android.ui.speagle.Speagle
 import com.spellwithspeagle.android.ui.speagle.SpeaglePose
+import com.spellwithspeagle.android.ui.theme.SpeagleBackground
 import com.spellwithspeagle.android.ui.theme.SpellTheme
 
 /** First-ever launch (zero children): no PIN gate, nothing to protect yet. */
@@ -35,7 +36,8 @@ fun AddChildScreen(
 ) {
     var name by remember { mutableStateOf("") }
 
-    Scaffold(containerColor = SpellTheme.colors.background) { padding ->
+    SpeagleBackground {
+    Scaffold(containerColor = androidx.compose.ui.graphics.Color.Transparent) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -66,5 +68,6 @@ fun AddChildScreen(
                 Text("Let's go!")
             }
         }
+    }
     }
 }

@@ -43,6 +43,7 @@ import com.spellwithspeagle.android.ui.AppViewModelProvider
 import com.spellwithspeagle.android.ui.gate.GateDestination
 import com.spellwithspeagle.android.ui.speagle.Speagle
 import com.spellwithspeagle.android.ui.speagle.SpeaglePose
+import com.spellwithspeagle.android.ui.theme.SpeagleBackground
 import com.spellwithspeagle.android.ui.theme.SpellTheme
 
 enum class PracticeOrTest { PRACTICE, TEST }
@@ -57,7 +58,8 @@ fun HomeScreen(
     var mode by remember { mutableStateOf(PracticeOrTest.PRACTICE) }
     var rewardDialog by remember { mutableStateOf<DayGradeUi?>(null) }
 
-    Scaffold(containerColor = SpellTheme.colors.background) { padding ->
+    SpeagleBackground {
+    Scaffold(containerColor = androidx.compose.ui.graphics.Color.Transparent) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -155,6 +157,7 @@ fun HomeScreen(
                 }
             }
         }
+    }
     }
 
     rewardDialog?.let { day ->

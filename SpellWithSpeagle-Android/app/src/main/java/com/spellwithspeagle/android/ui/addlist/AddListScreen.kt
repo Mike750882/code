@@ -35,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spellwithspeagle.android.ui.AppViewModelProvider
 import com.spellwithspeagle.android.ui.speagle.Speagle
 import com.spellwithspeagle.android.ui.speagle.SpeaglePose
+import com.spellwithspeagle.android.ui.theme.SpeagleBackground
 import com.spellwithspeagle.android.ui.theme.SpellTheme
 
 @Composable
@@ -44,7 +45,8 @@ fun AddListScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    Scaffold(containerColor = SpellTheme.colors.background) { padding ->
+    SpeagleBackground {
+    Scaffold(containerColor = androidx.compose.ui.graphics.Color.Transparent) { padding ->
         if (state.isLoading) {
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = SpellTheme.colors.primary)
@@ -108,5 +110,6 @@ fun AddListScreen(
                 }
             }
         }
+    }
     }
 }

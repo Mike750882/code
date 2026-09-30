@@ -23,6 +23,7 @@ import com.spellwithspeagle.android.ui.components.PinDots
 import com.spellwithspeagle.android.ui.components.PinPad
 import com.spellwithspeagle.android.ui.speagle.Speagle
 import com.spellwithspeagle.android.ui.speagle.SpeaglePose
+import com.spellwithspeagle.android.ui.theme.SpeagleBackground
 import com.spellwithspeagle.android.ui.theme.SpellTheme
 
 /** Where a successful PIN check should go. CHANGE_PIN always forces the create/confirm flow, even if a PIN already exists. */
@@ -97,7 +98,8 @@ fun PinGateScreen(
         else -> "Enter parent PIN"
     }
 
-    Scaffold(containerColor = SpellTheme.colors.background) { padding ->
+    SpeagleBackground {
+    Scaffold(containerColor = androidx.compose.ui.graphics.Color.Transparent) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -115,5 +117,6 @@ fun PinGateScreen(
                 Text("Cancel", color = SpellTheme.colors.textSecondary)
             }
         }
+    }
     }
 }

@@ -40,6 +40,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spellwithspeagle.android.data.model.WordInputMode
 import com.spellwithspeagle.android.ui.AppViewModelProvider
 import com.spellwithspeagle.android.ui.theme.ColorProfile
+import com.spellwithspeagle.android.ui.theme.SpeagleBackground
 import com.spellwithspeagle.android.ui.theme.SpellTheme
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -62,7 +63,8 @@ fun SettingsScreen(
     val state by viewModel.uiState.collectAsState()
     val child = state.child
 
-    Scaffold(containerColor = SpellTheme.colors.background) { padding ->
+    SpeagleBackground {
+    Scaffold(containerColor = Color.Transparent) { padding ->
         if (state.isLoading || child == null) {
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = SpellTheme.colors.primary)
@@ -195,6 +197,7 @@ fun SettingsScreen(
                 }
             }
         }
+    }
     }
 }
 

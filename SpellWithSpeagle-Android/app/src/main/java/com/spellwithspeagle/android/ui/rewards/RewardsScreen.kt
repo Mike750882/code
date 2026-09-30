@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spellwithspeagle.android.ui.AppViewModelProvider
+import com.spellwithspeagle.android.ui.theme.SpeagleBackground
 import com.spellwithspeagle.android.ui.theme.SpellTheme
 
 @Composable
@@ -40,7 +41,8 @@ fun RewardsScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    Scaffold(containerColor = SpellTheme.colors.background) { padding ->
+    SpeagleBackground {
+    Scaffold(containerColor = androidx.compose.ui.graphics.Color.Transparent) { padding ->
         if (state.isLoading) {
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = SpellTheme.colors.primary)
@@ -120,5 +122,6 @@ fun RewardsScreen(
                 }
             }
         }
+    }
     }
 }
