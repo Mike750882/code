@@ -13,6 +13,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -25,6 +27,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +49,7 @@ fun AddListScreen(
     viewModel: AddListViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val state by viewModel.uiState.collectAsState()
+    var showSpellCheckDialog by remember { mutableStateOf(false) }
 
     SpeagleBackground {
     Scaffold(containerColor = androidx.compose.ui.graphics.Color.Transparent) { padding ->
@@ -80,8 +86,12 @@ fun AddListScreen(
                             onValueChange = { viewModel.updateWord(index, it) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
+                            isError = entry.isMisspelled,
                             placeholder = { Text("Word") }
                         )
+                        if (entry.isMisspelled) {
+                            Icon(Icons.Default.Warning, contentDescription = "Not in dictionary -- double check this word", tint = SpellTheme.colors.error)
+                        }
                         IconButton(onClick = { viewModel.removeWordSlot(index) }) {
                             Icon(Icons.Default.Delete, contentDescription = "Remove word", tint = SpellTheme.colors.textSecondary)
                         }
@@ -102,7 +112,9 @@ fun AddListScreen(
             }
             item {
                 Button(
-                    onClick = { viewModel.save(onDone) },
+                    onClick = {
+                        if (viewModel.hasMisspellings()) showSpellCheckDialog = true else viewModel.save(onDone)
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = SpellTheme.colors.primary)
                 ) {
@@ -111,5 +123,26 @@ fun AddListScreen(
             }
         }
     }
+    }
+
+    if (showSpellCheckDialog) {
+        AlertDialog(
+            onDismissRequest = { showSpellCheckDialog = false },
+            title = { Text("Double check these words") },
+            text = {
+                Text("Some words aren't in the dictionary. That's often fine -- names and uncommon words always get flagged -- just make sure they're spelled the way you want.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSpellCheckDialog = false
+                    viewModel.save(onDone)
+                }) {
+                    Text("Save anyway")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSpellCheckDialog = false }) { Text("Review words") }
+            }
+        )
     }
 }

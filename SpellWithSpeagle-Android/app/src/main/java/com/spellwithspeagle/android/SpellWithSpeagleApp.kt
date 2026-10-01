@@ -7,6 +7,7 @@ import com.spellwithspeagle.android.service.ActiveChildStore
 import com.spellwithspeagle.android.service.FridayReminderScheduler
 import com.spellwithspeagle.android.service.PinService
 import com.spellwithspeagle.android.service.SpeechService
+import com.spellwithspeagle.android.service.SpellCheckService
 
 class SpellWithSpeagleApp : Application() {
     lateinit var repository: SpellingRepository
@@ -16,6 +17,8 @@ class SpellWithSpeagleApp : Application() {
     lateinit var pinService: PinService
         private set
     lateinit var activeChildStore: ActiveChildStore
+        private set
+    lateinit var spellCheckService: SpellCheckService
         private set
 
     override fun onCreate() {
@@ -32,6 +35,7 @@ class SpellWithSpeagleApp : Application() {
         speechService = SpeechService(this)
         pinService = PinService(this)
         activeChildStore = ActiveChildStore(this)
+        spellCheckService = SpellCheckService(this)
         FridayReminderScheduler.ensureChannel(this)
     }
 

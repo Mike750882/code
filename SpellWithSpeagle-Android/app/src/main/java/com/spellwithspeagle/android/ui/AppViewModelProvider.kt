@@ -32,7 +32,7 @@ object AppViewModelProvider {
             AddChildViewModel(spellApp().repository, spellApp().activeChildStore)
         }
         initializer {
-            AddListViewModel(spellApp().repository, spellApp().activeChildStore)
+            AddListViewModel(spellApp().repository, spellApp().activeChildStore, spellApp().spellCheckService)
         }
         initializer {
             RewardsViewModel(spellApp().repository, spellApp().activeChildStore)
