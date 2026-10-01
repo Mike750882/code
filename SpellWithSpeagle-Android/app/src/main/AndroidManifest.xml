@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- POST_NOTIFICATIONS (Friday test reminder) and CAMERA (Add List photo
-         import) will be added once those features land; this manifest only
-         declares what the current slice actually uses. -->
+    <!-- Friday test reminder notification -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Add List photo import -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:name=".SpellWithSpeagleApp"

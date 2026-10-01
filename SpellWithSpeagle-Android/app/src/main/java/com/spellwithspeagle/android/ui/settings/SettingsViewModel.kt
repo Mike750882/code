@@ -59,6 +59,7 @@ class SettingsViewModel(
     fun setInputMode(weekday: Int, mode: WordInputMode) = updateChild { WordInputMode.fieldFor(weekday, mode)(it) }
     fun setAllowHintsDuringTest(allow: Boolean) = updateChild { it.copy(allowHintsDuringTest = allow) }
     fun setFridayReminder(enabled: Boolean) = updateChild { it.copy(fridayNotificationEnabled = enabled) }
+    fun setFridayReminderTime(hour: Int, minute: Int) = updateChild { it.copy(fridayNotificationHour = hour, fridayNotificationMinute = minute) }
     fun setAppearance(appearance: String) = updateChild { it.copy(appearance = appearance) }
     fun setTextScale(scale: Double) = updateChild { it.copy(textScale = scale) }
 

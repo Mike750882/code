@@ -1,5 +1,10 @@
 package com.spellwithspeagle.android.ui.settings
 
+import android.Manifest
+import android.app.TimePickerDialog
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,17 +46,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spellwithspeagle.android.data.model.WordInputMode
+import com.spellwithspeagle.android.service.FridayReminderScheduler
 import com.spellwithspeagle.android.service.SpeechService
 import com.spellwithspeagle.android.ui.AppViewModelProvider
 import com.spellwithspeagle.android.ui.theme.ColorProfile
 import com.spellwithspeagle.android.ui.theme.SpeagleBackground
 import com.spellwithspeagle.android.ui.theme.SpellTheme
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 
 private val SCHEDULE_DAYS = listOf(
     Calendar.MONDAY to "Monday",
@@ -193,10 +202,13 @@ fun SettingsScreen(
                         Text("Hints during Test", color = SpellTheme.colors.textPrimary)
                         Switch(checked = child.allowHintsDuringTest, onCheckedChange = { viewModel.setAllowHintsDuringTest(it) })
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                        Text("Friday test reminder", color = SpellTheme.colors.textPrimary)
-                        Switch(checked = child.fridayNotificationEnabled, onCheckedChange = { viewModel.setFridayReminder(it) })
-                    }
+                    FridayReminderRow(
+                        enabled = child.fridayNotificationEnabled,
+                        hour = child.fridayNotificationHour,
+                        minute = child.fridayNotificationMinute,
+                        onEnabledChange = viewModel::setFridayReminder,
+                        onTimeChange = viewModel::setFridayReminderTime
+                    )
                 }
             }
 
@@ -279,6 +291,65 @@ private fun VoiceDropdown(
             }
         }
     }
+}
+
+@Composable
+private fun FridayReminderRow(
+    enabled: Boolean,
+    hour: Int,
+    minute: Int,
+    onEnabledChange: (Boolean) -> Unit,
+    onTimeChange: (Int, Int) -> Unit
+) {
+    val context = LocalContext.current
+    // Scheduling happens regardless of whether this grants -- the OS simply
+    // won't display the notification if it was denied, same fallback iOS
+    // uses for a denied notification permission.
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            Text("Friday test reminder", color = SpellTheme.colors.textPrimary)
+            Switch(
+                checked = enabled,
+                onCheckedChange = { checked ->
+                    onEnabledChange(checked)
+                    if (checked) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        FridayReminderScheduler.schedule(context, hour, minute)
+                    } else {
+                        FridayReminderScheduler.cancel(context)
+                    }
+                }
+            )
+        }
+        if (enabled) {
+            TextButton(onClick = {
+                TimePickerDialog(
+                    context,
+                    { _, h, m ->
+                        onTimeChange(h, m)
+                        FridayReminderScheduler.schedule(context, h, m)
+                    },
+                    hour,
+                    minute,
+                    false
+                ).show()
+            }) {
+                Text("At ${formatTime(hour, minute)}", color = SpellTheme.colors.primary)
+            }
+        }
+    }
+}
+
+private fun formatTime(hour: Int, minute: Int): String {
+    val calendar = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, hour)
+        set(Calendar.MINUTE, minute)
+    }
+    return SimpleDateFormat("h:mm a", Locale.getDefault()).format(calendar.time)
 }
 
 @Composable
