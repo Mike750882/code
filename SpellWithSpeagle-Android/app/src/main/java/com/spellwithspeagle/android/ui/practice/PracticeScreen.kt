@@ -1,15 +1,19 @@
 package com.spellwithspeagle.android.ui.practice
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spellwithspeagle.android.data.model.PracticeMode
+import com.spellwithspeagle.android.data.model.WordInputMode
 import com.spellwithspeagle.android.domain.Grading
 import com.spellwithspeagle.android.ui.AppViewModelProvider
 import com.spellwithspeagle.android.ui.speagle.Speagle
@@ -130,13 +136,17 @@ private fun PracticeBody(state: PracticeUiState, viewModel: PracticeViewModel, o
 
             Spacer(Modifier.height(28.dp))
 
-            OutlinedTextField(
-                value = state.typedAnswer,
-                onValueChange = viewModel::onAnswerChanged,
-                singleLine = true,
-                textStyle = SpellTheme.display(24.sp, FontWeight.Bold),
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (state.inputMode == WordInputMode.TYPED) {
+                OutlinedTextField(
+                    value = state.typedAnswer,
+                    onValueChange = viewModel::onAnswerChanged,
+                    singleLine = true,
+                    textStyle = SpellTheme.display(24.sp, FontWeight.Bold),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
+                TileAnswerArea(state = state, viewModel = viewModel)
+            }
 
             state.feedback?.let { feedback ->
                 Spacer(Modifier.height(12.dp))
@@ -164,12 +174,71 @@ private fun PracticeBody(state: PracticeUiState, viewModel: PracticeViewModel, o
             Button(
                 onClick = { viewModel.checkAnswer() },
                 modifier = Modifier.weight(1f),
-                enabled = state.typedAnswer.isNotBlank() && state.feedback == null,
+                enabled = !state.answerText.isNullOrBlank() && state.feedback == null,
                 colors = ButtonDefaults.buttonColors(containerColor = SpellTheme.colors.action)
             ) {
                 Text("Check my word", color = Color.White)
             }
         }
+    }
+}
+
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun TileAnswerArea(state: PracticeUiState, viewModel: PracticeViewModel) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            state.slots.forEachIndexed { index, slot ->
+                SlotTile(slot = slot, bankLetters = state.bankLetters, onClick = { viewModel.tapSlot(index) })
+            }
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            state.bankLetters.forEachIndexed { index, letter ->
+                if (index < state.bankUsed.size && !state.bankUsed[index]) {
+                    BankTile(letter = letter, onClick = { viewModel.tapBankTile(index) })
+                }
+            }
+        }
+        if (state.fillOrder.isNotEmpty()) {
+            TextButton(onClick = { viewModel.takeOneBack() }) {
+                Text("Take one back", color = SpellTheme.colors.primary)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SlotTile(slot: SlotState, bankLetters: List<Char>, onClick: () -> Unit) {
+    val text = when (slot) {
+        is SlotState.Prefilled -> slot.char.toString()
+        is SlotState.Filled -> bankLetters.getOrNull(slot.bankIndex)?.toString().orEmpty()
+        SlotState.Empty -> ""
+    }
+    val background = if (slot is SlotState.Prefilled) SpellTheme.colors.surfaceRaised else SpellTheme.colors.surface
+    var modifier = Modifier
+        .size(width = 44.dp, height = 52.dp)
+        .clip(RoundedCornerShape(8.dp))
+        .background(background)
+        .border(2.dp, SpellTheme.colors.tile, RoundedCornerShape(8.dp))
+    if (slot is SlotState.Filled) modifier = modifier.clickable(onClick = onClick)
+
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Text(text, style = SpellTheme.display(24.sp, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
+    }
+}
+
+@Composable
+private fun BankTile(letter: Char, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(width = 44.dp, height = 52.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(SpellTheme.colors.tile.copy(alpha = 0.15f))
+            .border(2.dp, SpellTheme.colors.tile, RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(letter.toString(), style = SpellTheme.display(24.sp, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
     }
 }
 
