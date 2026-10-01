@@ -11,6 +11,7 @@ import com.spellwithspeagle.android.ui.home.HomeViewModel
 import com.spellwithspeagle.android.ui.practice.PracticeViewModel
 import com.spellwithspeagle.android.ui.profiles.AddChildViewModel
 import com.spellwithspeagle.android.ui.profiles.ProfilesViewModel
+import com.spellwithspeagle.android.ui.progress.ProgressReportViewModel
 import com.spellwithspeagle.android.ui.rewards.RewardsViewModel
 import com.spellwithspeagle.android.ui.settings.SettingsViewModel
 import com.spellwithspeagle.android.ui.wordlist.WordListViewModel
@@ -44,6 +45,9 @@ object AppViewModelProvider {
         }
         initializer {
             WordListViewModel(spellApp().repository, spellApp().activeChildStore)
+        }
+        initializer {
+            ProgressReportViewModel(spellApp().repository, spellApp().activeChildStore)
         }
     }
 }

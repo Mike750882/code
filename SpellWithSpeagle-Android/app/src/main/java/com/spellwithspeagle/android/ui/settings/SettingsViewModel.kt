@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.spellwithspeagle.android.data.model.Child
 import com.spellwithspeagle.android.data.model.WordInputMode
 import com.spellwithspeagle.android.data.repository.SpellingRepository
+import com.spellwithspeagle.android.domain.WeekUtils
 import com.spellwithspeagle.android.service.ActiveChildStore
 import com.spellwithspeagle.android.service.SpeechService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,13 +14,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-data class WeekSummary(val weekOf: Long, val correct: Int, val total: Int)
-
 data class SettingsUiState(
     val isLoading: Boolean = true,
     val child: Child? = null,
     val voices: List<SpeechService.VoiceOption> = emptyList(),
-    val weeksSummary: List<WeekSummary> = emptyList()
+    /** This week only, correct/total -- an activity count, not a graded score. The full history lives in the Progress Report screen. */
+    val thisWeekCorrect: Int = 0,
+    val thisWeekTotal: Int = 0
 )
 
 class SettingsViewModel(
@@ -35,13 +36,20 @@ class SettingsViewModel(
             val id = activeChildStore.activeChildId.first() ?: return@launch
             val child = repository.observeChild(id).first() ?: return@launch
             val voices = speechService.availableVoices()
-            val weekLists = repository.observeWeekLists(id).first()
-            val summaries = weekLists.map { weekList ->
+            val weekList = repository.observeWeekList(id, WeekUtils.startOfWeek()).first()
+            val attempts = if (weekList == null) {
+                emptyList()
+            } else {
                 val words = repository.observeWords(weekList.id).first()
-                val attempts = repository.attemptsForWords(words.map { it.id })
-                WeekSummary(weekList.weekOf, attempts.count { it.isCorrect }, attempts.size)
-            }.sortedByDescending { it.weekOf }
-            _uiState.value = SettingsUiState(isLoading = false, child = child, voices = voices, weeksSummary = summaries)
+                repository.attemptsForWords(words.map { it.id })
+            }
+            _uiState.value = SettingsUiState(
+                isLoading = false,
+                child = child,
+                voices = voices,
+                thisWeekCorrect = attempts.count { it.isCorrect },
+                thisWeekTotal = attempts.size
+            )
         }
     }
 

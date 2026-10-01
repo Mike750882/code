@@ -14,6 +14,7 @@ import com.spellwithspeagle.android.ui.home.PracticeOrTest
 import com.spellwithspeagle.android.ui.practice.PracticeScreen
 import com.spellwithspeagle.android.ui.profiles.AddChildScreen
 import com.spellwithspeagle.android.ui.profiles.ProfilesScreen
+import com.spellwithspeagle.android.ui.progress.ProgressReportScreen
 import com.spellwithspeagle.android.ui.rewards.RewardsScreen
 import com.spellwithspeagle.android.ui.settings.SettingsScreen
 import com.spellwithspeagle.android.ui.wordlist.WordListScreen
@@ -29,6 +30,7 @@ private object Routes {
     const val SETTINGS = "settings"
     const val PROFILES = "profiles"
     const val WORD_LIST = "word_list"
+    const val PROGRESS_REPORT = "progress_report"
 
     fun practice(mode: PracticeOrTest, restrictToWordIds: List<String>?): String {
         val restrict = restrictToWordIds?.joinToString(",").orEmpty()
@@ -112,8 +114,12 @@ fun SpellNavHost(hasChildren: Boolean) {
             SettingsScreen(
                 onChangePin = { navController.navigate(Routes.gate(GateDestination.CHANGE_PIN)) },
                 onOpenProfiles = { navController.navigate(Routes.PROFILES) },
+                onOpenProgressReport = { navController.navigate(Routes.PROGRESS_REPORT) },
                 onBack = { navController.popBackStack(Routes.HOME, inclusive = false) }
             )
+        }
+        composable(Routes.PROGRESS_REPORT) {
+            ProgressReportScreen(onBack = { navController.popBackStack() })
         }
         composable(
             route = Routes.PRACTICE,

@@ -51,10 +51,7 @@ import com.spellwithspeagle.android.ui.AppViewModelProvider
 import com.spellwithspeagle.android.ui.theme.ColorProfile
 import com.spellwithspeagle.android.ui.theme.SpeagleBackground
 import com.spellwithspeagle.android.ui.theme.SpellTheme
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 
 private val SCHEDULE_DAYS = listOf(
     Calendar.MONDAY to "Monday",
@@ -68,6 +65,7 @@ private val SCHEDULE_DAYS = listOf(
 fun SettingsScreen(
     onChangePin: () -> Unit,
     onOpenProfiles: () -> Unit,
+    onOpenProgressReport: () -> Unit,
     onBack: () -> Unit,
     viewModel: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
@@ -204,19 +202,13 @@ fun SettingsScreen(
 
             item {
                 SettingsSection(title = "Progress") {
-                    if (state.weeksSummary.isEmpty()) {
-                        Text("No practice recorded yet.", color = SpellTheme.colors.textSecondary, style = SpellTheme.body(13.sp))
-                    } else {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            state.weeksSummary.forEach { week ->
-                                val percent = if (week.total == 0) 0 else (week.correct * 100) / week.total
-                                Text(
-                                    "Week of ${formatWeek(week.weekOf)}: $percent% (${week.correct}/${week.total})",
-                                    color = SpellTheme.colors.textSecondary,
-                                    style = SpellTheme.body(13.sp)
-                                )
-                            }
-                        }
+                    Text(
+                        if (state.thisWeekTotal == 0) "No practice recorded this week yet." else "This week: ${state.thisWeekCorrect} of ${state.thisWeekTotal} correct",
+                        color = SpellTheme.colors.textSecondary,
+                        style = SpellTheme.body(13.sp)
+                    )
+                    TextButton(onClick = onOpenProgressReport) {
+                        Text("View report", color = SpellTheme.colors.primary)
                     }
                 }
             }
@@ -303,6 +295,3 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
         content()
     }
 }
-
-private fun formatWeek(weekOf: Long): String =
-    SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(weekOf))
