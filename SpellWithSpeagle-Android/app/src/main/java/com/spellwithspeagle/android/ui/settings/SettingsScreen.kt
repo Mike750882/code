@@ -16,11 +16,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -28,6 +32,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spellwithspeagle.android.data.model.WordInputMode
+import com.spellwithspeagle.android.service.SpeechService
 import com.spellwithspeagle.android.ui.AppViewModelProvider
 import com.spellwithspeagle.android.ui.theme.ColorProfile
 import com.spellwithspeagle.android.ui.theme.SpeagleBackground
@@ -111,15 +119,11 @@ fun SettingsScreen(
                             style = SpellTheme.body(13.sp)
                         )
                     } else {
-                        state.voices.forEach { voice ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth().clickable { viewModel.setVoice(voice.id) }
-                            ) {
-                                RadioButton(selected = child.voiceIdentifier == voice.id, onClick = { viewModel.setVoice(voice.id) })
-                                Text(voice.label, color = SpellTheme.colors.textPrimary)
-                            }
-                        }
+                        VoiceDropdown(
+                            voices = state.voices,
+                            selectedId = child.voiceIdentifier,
+                            onSelect = viewModel::setVoice
+                        )
                     }
                     Button(
                         onClick = { viewModel.previewVoice(child.voiceIdentifier) },
@@ -203,6 +207,46 @@ fun SettingsScreen(
             }
         }
     }
+    }
+}
+
+@Composable
+private fun VoiceDropdown(
+    voices: List<SpeechService.VoiceOption>,
+    selectedId: String,
+    onSelect: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedLabel = voices.firstOrNull { it.id == selectedId }?.label ?: "Choose a voice"
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(SpellTheme.controlCornerRadius))
+                .border(1.dp, SpellTheme.colors.hairline, RoundedCornerShape(SpellTheme.controlCornerRadius))
+                .clickable { expanded = true }
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(selectedLabel, color = SpellTheme.colors.textPrimary)
+            Icon(Icons.Default.ArrowDropDown, contentDescription = "Choose a voice", tint = SpellTheme.colors.textSecondary)
+        }
+        // DropdownMenu scrolls internally on its own once its content is
+        // taller than fits, so this stays compact however many voices are
+        // offered instead of pushing the rest of Settings off-screen.
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            voices.forEach { voice ->
+                DropdownMenuItem(
+                    text = { Text(voice.label) },
+                    onClick = {
+                        onSelect(voice.id)
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }
 

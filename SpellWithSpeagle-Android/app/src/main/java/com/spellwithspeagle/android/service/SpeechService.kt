@@ -32,61 +32,50 @@ class SpeechService(context: Context) {
      * A voice option for the Settings picker: [id] is the underlying
      * [Voice.getName] (opaque, engine-specific -- e.g. "en-us-x-tpf-local"),
      * stored as-is in [com.spellwithspeagle.android.data.model.Child.voiceIdentifier];
-     * [label] is a readable string built from the voice's locale + quality
-     * for display, since Android TTS voices don't have friendly names the
-     * way iOS's AVSpeechSynthesisVoice list does (no "Samantha"/"Moira" here
-     * -- those are Apple-specific personas with no Android equivalent).
+     * [label] is one of [FRIENDLY_VOICE_NAMES] -- Android TTS voices carry
+     * no built-in friendly name the way iOS's AVSpeechSynthesisVoice list
+     * does (no real "Samantha"/"Moira" here), so a short fixed name is
+     * assigned to each of the handful offered, same spirit as iOS's curated
+     * shortlist even though the underlying engine is different.
      */
     data class VoiceOption(val id: String, val label: String)
 
     /**
-     * Every installed on-device voice (no [Voice.isNetworkConnectionRequired],
-     * matching this app's on-device-only design) matching the current
-     * device language, best quality first. A bare emulator often has very
-     * few or none installed at all -- Settings -> System -> Languages &
-     * input -> Text-to-speech output -> (engine) -> Install voice data adds
-     * more, and a real device typically ships with several already.
+     * English accents most people actually reach for, in preference order;
+     * [java.util.Locale.getCountry] (ISO 3166-1 alpha-2) of each.
+     */
+    private val PREFERRED_COUNTRIES = listOf("US", "GB", "AU", "CA", "IN", "NZ", "ZA", "IE", "NG")
+    private val FRIENDLY_VOICE_NAMES = listOf("Ava", "Max", "Luna", "Leo", "Zoe")
+
+    /**
+     * Up to [FRIENDLY_VOICE_NAMES.size] on-device voices (no
+     * [Voice.isNetworkConnectionRequired], matching this app's
+     * on-device-only design), one per accent, nearest the top of
+     * [PREFERRED_COUNTRIES] first. A bare emulator often has very few or
+     * none installed at all -- Settings -> System -> Languages & input ->
+     * Text-to-speech output -> (engine) -> Install voice data adds more,
+     * and a real device typically ships with several already.
      */
     fun availableVoices(): List<VoiceOption> {
         val installed = runCatching { tts.voices ?: emptySet() }.getOrDefault(emptySet())
         val deviceLanguage = Locale.getDefault().language
-        val sorted = installed
+
+        // One voice per accent (the best-quality one available for it) --
+        // several identical-sounding duplicates per accent aren't useful to
+        // offer, and would only crowd out other accents from the top 5.
+        val bestPerCountry = installed
             .filterNot { it.isNetworkConnectionRequired }
             .filter { it.locale.language == deviceLanguage }
-            .sortedWith(compareByDescending<Voice> { it.quality }.thenBy { it.locale.displayName }.thenBy { it.name })
+            .groupBy { it.locale.country }
+            .mapNotNull { (_, voices) -> voices.maxByOrNull { it.quality } }
 
-        // Android TTS engines commonly register several distinct voices per
-        // locale (different speaker models), but unlike iOS's named
-        // AVSpeechSynthesisVoice list, Voice itself carries no friendly
-        // per-voice name -- locale + quality is all there is to build a
-        // label from, so same-locale/same-quality voices would otherwise
-        // show as identical, indistinguishable rows. Number them instead.
-        val baseLabelCounts = sorted.groupingBy { labelFor(it) }.eachCount()
-        val seenSoFar = mutableMapOf<String, Int>()
-        return sorted.map { voice ->
-            val base = labelFor(voice)
-            val label = if ((baseLabelCounts[base] ?: 1) > 1) {
-                val n = (seenSoFar[base] ?: 0) + 1
-                seenSoFar[base] = n
-                "$base (Voice $n)"
-            } else {
-                base
-            }
-            VoiceOption(id = voice.name, label = label)
+        val ordered = bestPerCountry.sortedBy { voice ->
+            PREFERRED_COUNTRIES.indexOf(voice.locale.country).let { if (it == -1) Int.MAX_VALUE else it }
         }
-    }
 
-    private fun labelFor(voice: Voice): String {
-        val qualityLabel = when (voice.quality) {
-            Voice.QUALITY_VERY_HIGH -> "Very high quality"
-            Voice.QUALITY_HIGH -> "High quality"
-            Voice.QUALITY_NORMAL -> "Normal quality"
-            Voice.QUALITY_LOW -> "Low quality"
-            Voice.QUALITY_VERY_LOW -> "Very low quality"
-            else -> null
+        return ordered.take(FRIENDLY_VOICE_NAMES.size).mapIndexed { index, voice ->
+            VoiceOption(id = voice.name, label = FRIENDLY_VOICE_NAMES[index])
         }
-        val localeName = voice.locale.displayName
-        return if (qualityLabel != null) "$localeName -- $qualityLabel" else localeName
     }
 
     /** Speaks [text] once TTS has finished initializing, in [voiceId] if given and available. */
