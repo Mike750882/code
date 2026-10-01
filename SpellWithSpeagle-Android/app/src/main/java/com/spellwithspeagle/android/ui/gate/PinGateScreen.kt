@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -18,7 +19,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.fragment.app.FragmentActivity
 import com.spellwithspeagle.android.SpellWithSpeagleApp
+import com.spellwithspeagle.android.service.BiometricAuthService
 import com.spellwithspeagle.android.ui.components.PinDots
 import com.spellwithspeagle.android.ui.components.PinPad
 import com.spellwithspeagle.android.ui.speagle.Speagle
@@ -47,12 +50,36 @@ fun PinGateScreen(
 ) {
     val context = LocalContext.current
     val pinService = remember { (context.applicationContext as SpellWithSpeagleApp).pinService }
+    val biometricAuthService = remember { BiometricAuthService() }
 
     var mode by remember { mutableStateOf(if (destination == GateDestination.CHANGE_PIN || !pinService.hasPin()) Mode.CREATE else Mode.VERIFY) }
     var stage by remember { mutableStateOf(Stage.ENTER) }
     var firstPin by remember { mutableStateOf("") }
     var digits by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    /** True once a forgotten-PIN reset has been biometrically verified -- forces the create flow even though a PIN already existed. */
+    var recoveredViaBiometric by remember { mutableStateOf(false) }
+    var showNoDeviceAuthDialog by remember { mutableStateOf(false) }
+
+    fun startForgotPinFlow() {
+        val activity = context as? FragmentActivity ?: return
+        if (!biometricAuthService.canAuthenticate(activity)) {
+            showNoDeviceAuthDialog = true
+            return
+        }
+        biometricAuthService.authenticate(
+            activity = activity,
+            onSuccess = {
+                recoveredViaBiometric = true
+                mode = Mode.CREATE
+                stage = Stage.ENTER
+                digits = ""
+                firstPin = ""
+                error = null
+            },
+            onFailure = { /* cancelled or failed -- stay on the normal PIN-entry screen */ }
+        )
+    }
 
     fun onDigit(digit: Char) {
         if (digits.length >= 4) return
@@ -90,9 +117,10 @@ fun PinGateScreen(
         }
     }
 
+    val isResettingPin = destination == GateDestination.CHANGE_PIN || recoveredViaBiometric
     val title = when {
-        mode == Mode.CREATE && destination == GateDestination.CHANGE_PIN && stage == Stage.ENTER -> "Set a new PIN"
-        mode == Mode.CREATE && destination == GateDestination.CHANGE_PIN && stage == Stage.CONFIRM -> "Confirm your new PIN"
+        mode == Mode.CREATE && isResettingPin && stage == Stage.ENTER -> "Set a new PIN"
+        mode == Mode.CREATE && isResettingPin && stage == Stage.CONFIRM -> "Confirm your new PIN"
         mode == Mode.CREATE && stage == Stage.ENTER -> "Grown-ups: set a PIN"
         mode == Mode.CREATE && stage == Stage.CONFIRM -> "Confirm your PIN"
         else -> "Enter parent PIN"
@@ -113,10 +141,28 @@ fun PinGateScreen(
             PinDots(length = 4, filled = digits.length)
             error?.let { message -> Text(message, color = SpellTheme.colors.error, style = SpellTheme.body(14.sp)) }
             PinPad(onDigit = ::onDigit, onDelete = { if (digits.isNotEmpty()) digits = digits.dropLast(1) })
+            if (mode == Mode.VERIFY) {
+                TextButton(onClick = ::startForgotPinFlow) {
+                    Text("Forgot your PIN?", color = SpellTheme.colors.primary)
+                }
+            }
             TextButton(onClick = onCancel) {
                 Text("Cancel", color = SpellTheme.colors.textSecondary)
             }
         }
     }
+    }
+
+    if (showNoDeviceAuthDialog) {
+        AlertDialog(
+            onDismissRequest = { showNoDeviceAuthDialog = false },
+            confirmButton = {
+                TextButton(onClick = { showNoDeviceAuthDialog = false }) { Text("OK") }
+            },
+            title = { Text("No screen lock set up") },
+            text = {
+                Text("This device has no fingerprint, face unlock, PIN, pattern, or password set up, so there's no way to verify it's a grown-up. Set one up in your device's Settings app, then try again.")
+            }
+        )
     }
 }

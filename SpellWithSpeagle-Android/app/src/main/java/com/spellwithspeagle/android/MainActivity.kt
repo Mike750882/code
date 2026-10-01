@@ -1,9 +1,9 @@
 package com.spellwithspeagle.android
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.fragment.app.FragmentActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
@@ -19,7 +19,13 @@ import com.spellwithspeagle.android.ui.theme.SpellWithSpeagleTheme
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-class MainActivity : ComponentActivity() {
+/**
+ * FragmentActivity (rather than plain ComponentActivity) because
+ * BiometricPrompt (used by the "Forgot PIN?" recovery flow) requires one
+ * -- it still supports Compose's setContent {} fine, since FragmentActivity
+ * extends ComponentActivity.
+ */
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
