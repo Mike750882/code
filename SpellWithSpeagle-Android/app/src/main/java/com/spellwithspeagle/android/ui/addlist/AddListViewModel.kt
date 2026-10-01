@@ -60,6 +60,13 @@ class AddListViewModel(
 
     fun hasMisspellings(): Boolean = _uiState.value.entries.any { it.isMisspelled }
 
+    /** Recognized words replace the current draft, matching iOS's photo-import behavior. */
+    fun importWords(words: List<String>) {
+        if (words.isEmpty()) return
+        _uiState.value = _uiState.value.copy(entries = words.map { WordEntry(text = it) })
+        words.indices.forEach { index -> updateWord(index, words[index]) }
+    }
+
     private fun updateEntry(index: Int, transform: (WordEntry) -> WordEntry) {
         val entries = _uiState.value.entries.toMutableList()
         if (index !in entries.indices) return
