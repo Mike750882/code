@@ -27,7 +27,7 @@ signature mismatch), same caveat the iOS README carries for Xcode.
    first time.
 3. Run the `app` configuration on an emulator or device (API 26+).
 
-## What's implemented (first vertical slice)
+## What's implemented
 
 - **Gradle project** -- `settings.gradle.kts`, root/`app` build scripts,
   a version catalog (`gradle/libs.versions.toml`), and a committed Gradle
@@ -93,37 +93,61 @@ signature mismatch), same caveat the iOS README carries for Xcode.
   accuracy-threshold slider, plus a weekly prize title + threshold.
   Reuses each row's existing database id on save so editing a reward
   updates it in place instead of inserting a duplicate row.
-- **Settings** (`ui/settings`) -- color theme picker (4 swatches), voice
-  picker + "Preview" (speaks "Spell With Speagle"), per-weekday practice
-  schedule (`WordInputMode` chips for Monday-Thursday), hints-during-test
-  toggle, Friday reminder toggle (persisted, not yet wired to an actual
-  notification -- see below), "Change PIN," and a plain-text progress
-  summary (one line per week, correct/total) in place of a chart for now.
-- **Multiple profiles support** in the data layer
-  (`ActiveChildStore`/`SpellingRepository`, each `Child` fully isolated)
-  -- still no switcher/manager *screen* to add or change which profile is
-  active (see below).
-- **Multiple profiles UI** -- add-a-sibling / switch-profile / remove
-  screen (`ProfilesView` on iOS). The data layer already supports it.
-- **Letter-tile input modes** -- Practice currently always uses a typed
-  field, regardless of what Settings' practice-schedule picker says;
-  `WordInputMode` is stored and editable, just not read by Practice yet.
-  The scaffolded/full-tiles/half-and-half modes from iOS still need a
-  Compose equivalent of the drag-and-drop letter tiles.
-- **Friday reminder notifications** -- the toggle in Settings persists
-  `Child.fridayNotificationEnabled`, but nothing schedules an actual
-  notification yet. `WorkManager` + a notification channel is the natural
-  fit (the local, on-device equivalent of iOS's
-  `UNCalendarNotificationTrigger`).
-- **Photo import for Add List** -- iOS uses on-device Vision OCR;
-  CameraX + ML Kit Text Recognition is the Android equivalent, not wired
-  up here yet.
-- **Progress report chart** -- Settings currently shows a plain per-week
-  text summary instead of the graphical chart iOS's `ProgressReportView`
-  has.
+- **Settings** (`ui/settings`) -- color theme picker (4 swatches),
+  appearance (system/light/dark) and text-size slider, a scrollable
+  voice-picker dropdown capped to the 5 best on-device TTS voices with
+  friendly names and a "Preview" button, per-weekday practice schedule
+  (`WordInputMode` chips, 2-per-row, for Monday-Thursday), hints-during-test
+  toggle, a real Friday reminder toggle + time picker, "Student profiles,"
+  "Take a Tour," "Change PIN," and a "View report" link into the full
+  Progress Report screen.
+- **Multiple profiles** (`ui/profiles`) -- add-a-sibling, switch active
+  profile, and remove-profile screen (`ProfilesScreen`/`ProfilesViewModel`),
+  on top of the `ActiveChildStore`/`SpellingRepository` data layer that
+  already isolated each `Child` fully.
+- **Full Progress Report** (`ui/progress`) -- per-week accuracy history
+  with a graphical bar chart (Compose Canvas), not just a plain-text
+  summary, matching iOS's `ProgressReportView`.
+- **Forgot PIN recovery** -- `BiometricAuthService` (`androidx.biometric`
+  `BiometricPrompt`) lets a grown-up who forgot the PIN reset it after a
+  fingerprint/face check, gated on `MainActivity` being a `FragmentActivity`.
+- **Friday reminder notifications** (`service/FridayReminderWorker.kt`) --
+  a real local notification via `WorkManager`, self-rescheduling every
+  Friday at the chosen time (there's no native "every Friday" `WorkManager`
+  schedule, so a one-time request reschedules itself on completion), the
+  on-device equivalent of iOS's `UNCalendarNotificationTrigger`.
+- **Misspelling double-check in Add List** -- `SpellCheckService`
+  (Android's on-device `TextServicesManager`/`SpellCheckerSession`, bridged
+  to coroutines) flags words not in the system dictionary with a warning
+  icon and a "save anyway / review" confirmation, the Android equivalent of
+  iOS's `UITextChecker` pass.
+- **Letter-tile input modes** -- `PracticeScreen`'s `TileAnswerArea` now
+  implements all of Scaffolded/Full tiles/Half & half/Typed from
+  `WordInputMode`, tap-to-place/tap-to-return letter tiles (no drag
+  gesture, to avoid the extra gesture-handling risk), reading the
+  per-weekday mode Settings already stored.
+- **Photo import for Add List** -- on-device ML Kit Text Recognition
+  (`TextRecognitionService`) via the system camera or gallery picker
+  (`ActivityResultContracts.TakePicturePreview`/`GetContent`), the Android
+  equivalent of iOS's on-device Vision OCR.
+- **Take a Tour onboarding** (`ui/tour/TourScreen.kt`) -- a 10-page,
+  skippable `HorizontalPager` walkthrough narrated by Speagle, reachable
+  any time from a "Take a Tour" button in Settings, plus a dismissible
+  banner on Home for a new install's first two launches
+  (`AppLaunchTracker`, DataStore-backed).
 - **App icon** -- the legacy `mipmap-xxxhdpi/ic_launcher.png` is the raw
   1024px iOS icon export dropped in as-is (works, but isn't a proper
   Android adaptive icon). Regenerate via Android Studio's Image Asset
   tool (right-click `res` -> New -> Image Asset) once a dedicated
   foreground/background split exists, the same way the iOS README notes
   the launcher icon is swappable.
+
+## What's next
+
+- **iCloud/cross-device sync** -- intentionally out of scope for this
+  port; iOS's CloudKit sync has no direct Android equivalent and each
+  platform's data stays device-local.
+- Known open bug report: the Settings voice "Preview" button was reported
+  not working by a user; unconfirmed whether word playback in Practice is
+  also affected. Needs a Logcat capture (filtered on "TextToSpeech") to
+  diagnose further.
