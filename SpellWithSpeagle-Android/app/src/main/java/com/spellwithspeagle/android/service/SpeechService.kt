@@ -50,11 +50,30 @@ class SpeechService(context: Context) {
     fun availableVoices(): List<VoiceOption> {
         val installed = runCatching { tts.voices ?: emptySet() }.getOrDefault(emptySet())
         val deviceLanguage = Locale.getDefault().language
-        return installed
+        val sorted = installed
             .filterNot { it.isNetworkConnectionRequired }
             .filter { it.locale.language == deviceLanguage }
-            .sortedWith(compareByDescending<Voice> { it.quality }.thenBy { it.name })
-            .map { voice -> VoiceOption(id = voice.name, label = labelFor(voice)) }
+            .sortedWith(compareByDescending<Voice> { it.quality }.thenBy { it.locale.displayName }.thenBy { it.name })
+
+        // Android TTS engines commonly register several distinct voices per
+        // locale (different speaker models), but unlike iOS's named
+        // AVSpeechSynthesisVoice list, Voice itself carries no friendly
+        // per-voice name -- locale + quality is all there is to build a
+        // label from, so same-locale/same-quality voices would otherwise
+        // show as identical, indistinguishable rows. Number them instead.
+        val baseLabelCounts = sorted.groupingBy { labelFor(it) }.eachCount()
+        val seenSoFar = mutableMapOf<String, Int>()
+        return sorted.map { voice ->
+            val base = labelFor(voice)
+            val label = if ((baseLabelCounts[base] ?: 1) > 1) {
+                val n = (seenSoFar[base] ?: 0) + 1
+                seenSoFar[base] = n
+                "$base (Voice $n)"
+            } else {
+                base
+            }
+            VoiceOption(id = voice.name, label = label)
+        }
     }
 
     private fun labelFor(voice: Voice): String {
