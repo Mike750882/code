@@ -19,9 +19,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -29,25 +33,30 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spellwithspeagle.android.domain.Grading
+import com.spellwithspeagle.android.service.AppLaunchTracker
 import com.spellwithspeagle.android.ui.AppViewModelProvider
 import com.spellwithspeagle.android.ui.gate.GateDestination
 import com.spellwithspeagle.android.ui.speagle.Speagle
 import com.spellwithspeagle.android.ui.speagle.SpeaglePose
 import com.spellwithspeagle.android.ui.theme.SpeagleBackground
 import com.spellwithspeagle.android.ui.theme.SpellTheme
+import kotlinx.coroutines.launch
 
 enum class PracticeOrTest { PRACTICE, TEST }
 
@@ -56,11 +65,19 @@ fun HomeScreen(
     onStartSession: (mode: PracticeOrTest, restrictToWordIds: List<String>?) -> Unit,
     onOpenGated: (GateDestination) -> Unit,
     onOpenWordList: () -> Unit,
+    onOpenTour: () -> Unit,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val state by viewModel.uiState.collectAsState()
     var mode by remember { mutableStateOf(PracticeOrTest.PRACTICE) }
     var rewardDialog by remember { mutableStateOf<DayGradeUi?>(null) }
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var showTourBanner by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        showTourBanner = AppLaunchTracker.shouldShowTourBanner(context)
+    }
 
     SpeagleBackground {
     Scaffold(containerColor = androidx.compose.ui.graphics.Color.Transparent) { padding ->
@@ -85,6 +102,31 @@ fun HomeScreen(
                         style = SpellTheme.body(15.sp),
                         color = SpellTheme.colors.textSecondary
                     )
+                }
+            }
+
+            if (showTourBanner) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(SpellTheme.cardCornerRadius))
+                        .background(SpellTheme.colors.tile.copy(alpha = 0.15f))
+                        .clickable { onOpenTour() }
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        "Take a Tour",
+                        style = SpellTheme.body(14.sp, FontWeight.Bold),
+                        color = SpellTheme.colors.primary
+                    )
+                    IconButton(onClick = {
+                        showTourBanner = false
+                        scope.launch { AppLaunchTracker.dismissTourBanner(context) }
+                    }) {
+                        Icon(Icons.Default.Close, contentDescription = "Dismiss", tint = SpellTheme.colors.textSecondary)
+                    }
                 }
             }
 

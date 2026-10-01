@@ -75,6 +75,7 @@ fun SettingsScreen(
     onChangePin: () -> Unit,
     onOpenProfiles: () -> Unit,
     onOpenProgressReport: () -> Unit,
+    onOpenTour: () -> Unit,
     onBack: () -> Unit,
     viewModel: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
@@ -232,6 +233,15 @@ fun SettingsScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = SpellTheme.colors.tile)
                 ) {
                     Text("Student profiles")
+                }
+            }
+            item {
+                Button(
+                    onClick = onOpenTour,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = SpellTheme.colors.tile)
+                ) {
+                    Text("Take a Tour")
                 }
             }
             item {

@@ -17,6 +17,7 @@ import com.spellwithspeagle.android.ui.profiles.ProfilesScreen
 import com.spellwithspeagle.android.ui.progress.ProgressReportScreen
 import com.spellwithspeagle.android.ui.rewards.RewardsScreen
 import com.spellwithspeagle.android.ui.settings.SettingsScreen
+import com.spellwithspeagle.android.ui.tour.TourScreen
 import com.spellwithspeagle.android.ui.wordlist.WordListScreen
 
 private object Routes {
@@ -31,6 +32,7 @@ private object Routes {
     const val PROFILES = "profiles"
     const val WORD_LIST = "word_list"
     const val PROGRESS_REPORT = "progress_report"
+    const val TOUR = "tour"
 
     fun practice(mode: PracticeOrTest, restrictToWordIds: List<String>?): String {
         val restrict = restrictToWordIds?.joinToString(",").orEmpty()
@@ -66,11 +68,15 @@ fun SpellNavHost(hasChildren: Boolean) {
                 onOpenGated = { destination ->
                     navController.navigate(Routes.gate(destination))
                 },
-                onOpenWordList = { navController.navigate(Routes.WORD_LIST) }
+                onOpenWordList = { navController.navigate(Routes.WORD_LIST) },
+                onOpenTour = { navController.navigate(Routes.TOUR) }
             )
         }
         composable(Routes.WORD_LIST) {
             WordListScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.TOUR) {
+            TourScreen(onDone = { navController.popBackStack() })
         }
         composable(Routes.ADD_CHILD_SIBLING) {
             AddChildScreen(onChildAdded = { navController.popBackStack(Routes.HOME, inclusive = false) })
@@ -115,6 +121,7 @@ fun SpellNavHost(hasChildren: Boolean) {
                 onChangePin = { navController.navigate(Routes.gate(GateDestination.CHANGE_PIN)) },
                 onOpenProfiles = { navController.navigate(Routes.PROFILES) },
                 onOpenProgressReport = { navController.navigate(Routes.PROGRESS_REPORT) },
+                onOpenTour = { navController.navigate(Routes.TOUR) },
                 onBack = { navController.popBackStack(Routes.HOME, inclusive = false) }
             )
         }
