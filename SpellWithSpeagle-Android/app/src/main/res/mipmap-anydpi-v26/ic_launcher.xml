@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Real adaptive icon (API 26+) instead of the flat legacy bitmap. The
+    foreground is the same raw 1024px icon export used as the legacy
+    fallback, not a properly inset/safe-zone-padded asset -- launchers that
+    mask to a circle or squircle will crop its corners tighter than ideal.
+    Regenerate via Android Studio's Image Asset tool (right-click res ->
+    New -> Image Asset) once a dedicated foreground-only asset with
+    transparent padding exists.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>

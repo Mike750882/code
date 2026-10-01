@@ -1,0 +1,4 @@
+<resources>
+    <!-- Default theme's background -- used as the adaptive icon's background layer. -->
+    <color name="ic_launcher_background">#F1EFEE</color>
+</resources>

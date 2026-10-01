@@ -26,6 +26,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -65,6 +67,7 @@ private val SCHEDULE_DAYS = listOf(
 @Composable
 fun SettingsScreen(
     onChangePin: () -> Unit,
+    onOpenProfiles: () -> Unit,
     onBack: () -> Unit,
     viewModel: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
@@ -106,6 +109,32 @@ fun SettingsScreen(
                             )
                         }
                     }
+                }
+            }
+
+            item {
+                SettingsSection(title = "Appearance") {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("system" to "System", "light" to "Light", "dark" to "Dark").forEach { (value, label) ->
+                            FilterChip(
+                                selected = child.appearance == value,
+                                onClick = { viewModel.setAppearance(value) },
+                                label = { Text(label) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                SettingsSection(title = "Text size") {
+                    Text("friend", style = SpellTheme.body((17 * child.textScale).sp, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
+                    Slider(
+                        value = child.textScale.toFloat(),
+                        onValueChange = { viewModel.setTextScale(it.toDouble()) },
+                        valueRange = 0.8f..1.6f,
+                        colors = SliderDefaults.colors(thumbColor = SpellTheme.colors.primary, activeTrackColor = SpellTheme.colors.primary)
+                    )
                 }
             }
 
@@ -192,6 +221,15 @@ fun SettingsScreen(
                 }
             }
 
+            item {
+                Button(
+                    onClick = onOpenProfiles,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = SpellTheme.colors.tile)
+                ) {
+                    Text("Student profiles")
+                }
+            }
             item {
                 Button(
                     onClick = onChangePin,

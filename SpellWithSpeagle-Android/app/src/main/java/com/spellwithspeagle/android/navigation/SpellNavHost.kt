@@ -13,17 +13,22 @@ import com.spellwithspeagle.android.ui.home.HomeScreen
 import com.spellwithspeagle.android.ui.home.PracticeOrTest
 import com.spellwithspeagle.android.ui.practice.PracticeScreen
 import com.spellwithspeagle.android.ui.profiles.AddChildScreen
+import com.spellwithspeagle.android.ui.profiles.ProfilesScreen
 import com.spellwithspeagle.android.ui.rewards.RewardsScreen
 import com.spellwithspeagle.android.ui.settings.SettingsScreen
+import com.spellwithspeagle.android.ui.wordlist.WordListScreen
 
 private object Routes {
     const val ADD_CHILD = "add_child"
+    const val ADD_CHILD_SIBLING = "add_child_sibling"
     const val HOME = "home"
     const val PRACTICE = "practice/{mode}?restrictTo={restrictTo}"
     const val GATE = "gate/{destination}"
     const val ADD_LIST = "add_list"
     const val REWARDS = "rewards"
     const val SETTINGS = "settings"
+    const val PROFILES = "profiles"
+    const val WORD_LIST = "word_list"
 
     fun practice(mode: PracticeOrTest, restrictToWordIds: List<String>?): String {
         val restrict = restrictToWordIds?.joinToString(",").orEmpty()
@@ -58,7 +63,21 @@ fun SpellNavHost(hasChildren: Boolean) {
                 },
                 onOpenGated = { destination ->
                     navController.navigate(Routes.gate(destination))
-                }
+                },
+                onOpenWordList = { navController.navigate(Routes.WORD_LIST) }
+            )
+        }
+        composable(Routes.WORD_LIST) {
+            WordListScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.ADD_CHILD_SIBLING) {
+            AddChildScreen(onChildAdded = { navController.popBackStack(Routes.HOME, inclusive = false) })
+        }
+        composable(Routes.PROFILES) {
+            ProfilesScreen(
+                onAddStudent = { navController.navigate(Routes.ADD_CHILD_SIBLING) },
+                onProfileSwitched = { navController.popBackStack(Routes.HOME, inclusive = false) },
+                onBack = { navController.popBackStack() }
             )
         }
         composable(
@@ -92,6 +111,7 @@ fun SpellNavHost(hasChildren: Boolean) {
         composable(Routes.SETTINGS) {
             SettingsScreen(
                 onChangePin = { navController.navigate(Routes.gate(GateDestination.CHANGE_PIN)) },
+                onOpenProfiles = { navController.navigate(Routes.PROFILES) },
                 onBack = { navController.popBackStack(Routes.HOME, inclusive = false) }
             )
         }

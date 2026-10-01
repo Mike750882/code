@@ -51,6 +51,8 @@ class SettingsViewModel(
     fun setInputMode(weekday: Int, mode: WordInputMode) = updateChild { WordInputMode.fieldFor(weekday, mode)(it) }
     fun setAllowHintsDuringTest(allow: Boolean) = updateChild { it.copy(allowHintsDuringTest = allow) }
     fun setFridayReminder(enabled: Boolean) = updateChild { it.copy(fridayNotificationEnabled = enabled) }
+    fun setAppearance(appearance: String) = updateChild { it.copy(appearance = appearance) }
+    fun setTextScale(scale: Double) = updateChild { it.copy(textScale = scale) }
 
     private fun updateChild(transform: (Child) -> Child) {
         val current = _uiState.value.child ?: return

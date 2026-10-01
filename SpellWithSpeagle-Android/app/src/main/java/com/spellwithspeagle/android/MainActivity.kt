@@ -31,8 +31,10 @@ class MainActivity : ComponentActivity() {
                 is LoadState.Ready -> ColorProfile.byId(state.child?.colorProfile)
                 else -> ColorProfile.Default
             }
+            val appearance = (activeChild as? LoadState.Ready)?.child?.appearance ?: "system"
+            val textScale = (activeChild as? LoadState.Ready)?.child?.textScale ?: 1.0
 
-            SpellWithSpeagleTheme(colorProfile = colorProfile) {
+            SpellWithSpeagleTheme(colorProfile = colorProfile, appearance = appearance, textScale = textScale) {
                 Surface(modifier = Modifier.fillMaxSize(), color = androidx.compose.ui.graphics.Color.Transparent) {
                     when (val state = activeChild) {
                         is LoadState.Loading -> LoadingIndicator()

@@ -8,9 +8,11 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -91,17 +93,36 @@ private val AppTypography = Typography()
 
 /**
  * [colorProfile] should come from the active [com.spellwithspeagle.android.data.model.Child];
- * "Default" is the only profile that follows [darkTheme] -- the other three
- * fix their own look, same as iOS.
+ * "Default" is the only profile that follows [appearance] -- the other
+ * three fix their own look regardless of it, same as iOS.
+ *
+ * [appearance] is [com.spellwithspeagle.android.data.model.Child.appearance]
+ * verbatim ("system" | "light" | "dark"). [textScale] is
+ * [com.spellwithspeagle.android.data.model.Child.textScale], applied as a
+ * multiplier on top of the device's own font-scale setting via
+ * [LocalDensity] so every `sp`-sized text in the app grows/shrinks
+ * together, matching iOS's text-size slider.
  */
 @Composable
 fun SpellWithSpeagleTheme(
     colorProfile: ColorProfile = ColorProfile.Default,
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    appearance: String = "system",
+    textScale: Double = 1.0,
     content: @Composable () -> Unit
 ) {
+    val systemDark = isSystemInDarkTheme()
+    val darkTheme = when (appearance) {
+        "light" -> false
+        "dark" -> true
+        else -> systemDark
+    }
     val colors = colorProfile.resolve(darkTheme)
-    CompositionLocalProvider(LocalSpellColors provides colors, LocalColorProfileId provides colorProfile.id) {
+    val density = LocalDensity.current
+    CompositionLocalProvider(
+        LocalSpellColors provides colors,
+        LocalColorProfileId provides colorProfile.id,
+        LocalDensity provides Density(density.density, density.fontScale * textScale.toFloat())
+    ) {
         MaterialTheme(
             typography = AppTypography,
             content = content

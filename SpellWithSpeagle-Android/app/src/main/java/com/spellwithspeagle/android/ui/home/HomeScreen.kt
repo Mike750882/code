@@ -1,6 +1,7 @@
 package com.spellwithspeagle.android.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -54,6 +55,7 @@ enum class PracticeOrTest { PRACTICE, TEST }
 fun HomeScreen(
     onStartSession: (mode: PracticeOrTest, restrictToWordIds: List<String>?) -> Unit,
     onOpenGated: (GateDestination) -> Unit,
+    onOpenWordList: () -> Unit,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -84,6 +86,20 @@ fun HomeScreen(
                         color = SpellTheme.colors.textSecondary
                     )
                 }
+            }
+
+            // Ungated (unlike the Add List/Rewards/Settings cards below) --
+            // just a study aid for the child, not something that needs a
+            // grown-up's PIN.
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(SpellTheme.colors.surface)
+                    .border(1.dp, SpellTheme.colors.hairline, RoundedCornerShape(50))
+                    .clickable { onOpenWordList() }
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text("This week's words", style = SpellTheme.body(13.sp, FontWeight.Bold), color = SpellTheme.colors.primary)
             }
 
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {

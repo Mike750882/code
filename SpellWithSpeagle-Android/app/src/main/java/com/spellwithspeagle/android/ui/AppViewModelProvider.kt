@@ -10,8 +10,10 @@ import com.spellwithspeagle.android.ui.addlist.AddListViewModel
 import com.spellwithspeagle.android.ui.home.HomeViewModel
 import com.spellwithspeagle.android.ui.practice.PracticeViewModel
 import com.spellwithspeagle.android.ui.profiles.AddChildViewModel
+import com.spellwithspeagle.android.ui.profiles.ProfilesViewModel
 import com.spellwithspeagle.android.ui.rewards.RewardsViewModel
 import com.spellwithspeagle.android.ui.settings.SettingsViewModel
+import com.spellwithspeagle.android.ui.wordlist.WordListViewModel
 
 private fun CreationExtras.spellApp(): SpellWithSpeagleApp =
     this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as SpellWithSpeagleApp
@@ -36,6 +38,12 @@ object AppViewModelProvider {
         }
         initializer {
             SettingsViewModel(spellApp().repository, spellApp().activeChildStore, spellApp().speechService)
+        }
+        initializer {
+            ProfilesViewModel(spellApp().repository, spellApp().activeChildStore)
+        }
+        initializer {
+            WordListViewModel(spellApp().repository, spellApp().activeChildStore)
         }
     }
 }
