@@ -142,7 +142,8 @@ fun SettingsScreen(
                                 Text(label, style = SpellTheme.body(14.sp, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
                                 FlowRow(
                                     horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                    maxItemsInEachRow = 2
                                 ) {
                                     WordInputMode.entries.forEach { mode ->
                                         val selected = WordInputMode.forWeekday(weekday, child) == mode
