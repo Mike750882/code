@@ -2,7 +2,7 @@
 <!--
     Real adaptive icon (API 26+) instead of the flat legacy bitmap. The
     foreground is the same raw 1024px icon export used as the legacy
-    fallback, not a properly inset/safe-zone-padded asset -- launchers that
+    fallback, not a properly inset/safe-zone-padded asset; launchers that
     mask to a circle or squircle will crop its corners tighter than ideal.
     Regenerate via Android Studio's Image Asset tool (right-click res ->
     New -> Image Asset) once a dedicated foreground-only asset with
