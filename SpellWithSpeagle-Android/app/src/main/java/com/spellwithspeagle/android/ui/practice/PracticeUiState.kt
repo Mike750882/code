@@ -46,11 +46,10 @@ data class PracticeUiState(
 
     /** The word as currently spelled out, or null while any tile mode slot is still empty. Always non-null (possibly blank) for TYPED. */
     val answerText: String?
-        get() = if (inputMode == WordInputMode.TYPED) {
-            typedAnswer
-        } else {
+        get(): String? {
+            if (inputMode == WordInputMode.TYPED) return typedAnswer
             if (slots.any { it is SlotState.Empty }) return null
-            buildString {
+            return buildString {
                 slots.forEach { slot ->
                     when (slot) {
                         is SlotState.Prefilled -> append(slot.char)
