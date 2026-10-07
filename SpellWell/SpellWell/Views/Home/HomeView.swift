@@ -547,9 +547,14 @@ private struct SecondaryCard: View {
                     .font(Theme.body(13))
                     .foregroundStyle(Theme.textSecondary)
                     .lineLimit(2)
-                if let progress {
-                    ProgressView(value: progress).tint(Theme.reward)
-                }
+                // Always reserve this row's height, even when there's no
+                // progress to show -- otherwise this card (the only one
+                // that ever passes `progress`) is taller than its two
+                // siblings in the row, since a LazyVGrid sizes each cell
+                // to its own content rather than matching row height.
+                ProgressView(value: progress ?? 0)
+                    .tint(Theme.reward)
+                    .opacity(progress == nil ? 0 : 1)
             }
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
