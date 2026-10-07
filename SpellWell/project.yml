@@ -24,7 +24,12 @@ targets:
         SWIFT_VERSION: "5.0"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        # iPhone: no upside-down (standard for an iPhone app). iPad needs
+        # all four, including upside-down, or App Store Connect rejects
+        # the upload -- iPad multitasking/Split View can present the app
+        # in any rotation.
         INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations~ipad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_NSCameraUsageDescription: "Spell With Speagle uses the camera so a grown-up can take a photo of a spelling list to import it."
         INFOPLIST_KEY_NSFaceIDUsageDescription: "Spell With Speagle uses Face ID to verify it's a grown-up before resetting the PIN."
   SpellWellUITests:
