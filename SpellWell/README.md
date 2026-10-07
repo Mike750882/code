@@ -8,9 +8,9 @@ PIN gate, Add spelling list, Rewards, Settings).
 Renamed from "SpellWell" to "Spell With Speagle" for the app's new mascot
 (see "Speagle the eagle mascot" below). This is a **display-name-only**
 rename: the Xcode project, target, scheme, bundle identifier
-(`com.yourcompany.SpellWell`), and folder names are all unchanged, so
-existing Signing & Capabilities setup, CloudKit container, and any
-already-installed builds aren't affected. `project.yml`'s
+(`com.cdm.SpellWell`), and folder names are all unchanged, so existing
+Signing & Capabilities setup, CloudKit container, and any already-installed
+builds aren't affected. `project.yml`'s
 `PRODUCT_NAME`/`INFOPLIST_KEY_CFBundleDisplayName` are what make the Home
 Screen and everywhere in-app read "Spell With Speagle."
 
@@ -30,11 +30,11 @@ structural, but don't be surprised by a typo or an API signature mismatch.
 1. `cd SpellWell && xcodegen generate` — generates `SpellWell.xcodeproj` from
    `project.yml`.
 2. Open `SpellWell.xcodeproj` in Xcode.
-3. In **Signing & Capabilities**, set your own Team. Xcode will prompt you to
-   fix the bundle identifier (`com.yourcompany.SpellWell`) and the iCloud
-   container identifier (`iCloud.com.yourcompany.SpellWell`, in
-   `SpellWell/SpellWell.entitlements`) to match your account — replace
-   `com.yourcompany` throughout with your real reverse-DNS prefix.
+3. In **Signing & Capabilities**, set your own Team. The bundle identifier
+   (`com.cdm.SpellWell`) and iCloud container identifier
+   (`iCloud.com.cdm.SpellWell`, in `SpellWell/SpellWell.entitlements`)
+   are already set to match the developer account this app ships under —
+   Xcode should accept them as-is once your Team is selected.
 4. Build and run on an iPad or iPhone simulator (or a device signed into
    iCloud, to exercise CloudKit sync).
 

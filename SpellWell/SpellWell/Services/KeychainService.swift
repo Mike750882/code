@@ -10,7 +10,7 @@ import Security
 /// just gets its own PIN now, the same way each iPad already keeps its own
 /// active student profile.
 enum KeychainService {
-    private static let service = "com.yourcompany.SpellWell.parentPIN"
+    private static let service = "com.cdm.SpellWell.parentPIN"
 
     static func savePIN(_ pin: String) {
         let data = Data(pin.utf8)
