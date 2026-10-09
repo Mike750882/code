@@ -254,8 +254,12 @@ fun SettingsScreen(
                 }
             }
             item {
-                TextButton(onClick = onBack) {
-                    Text("Back to Home", color = SpellTheme.colors.textSecondary)
+                Button(
+                    onClick = onBack,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = SpellTheme.colors.primary)
+                ) {
+                    Text("Back to Home")
                 }
             }
         }
