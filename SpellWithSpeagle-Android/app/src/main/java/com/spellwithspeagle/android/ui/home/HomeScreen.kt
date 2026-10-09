@@ -8,7 +8,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,8 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -187,8 +184,8 @@ fun HomeScreen(
             }
 
             Text("This week", style = SpellTheme.display(18.sp, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(vertical = 4.dp)) {
-                items(state.dayGrades) { day ->
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                state.dayGrades.forEach { day ->
                     DayGradeCard(
                         day = day,
                         onClick = {
@@ -237,37 +234,39 @@ fun HomeScreen(
 
 @Composable
 private fun DayGradeCard(day: DayGradeUi, onClick: () -> Unit, onBadgeClick: () -> Unit) {
-    Box(
+    Row(
         modifier = Modifier
-            .size(110.dp)
+            .fillMaxWidth()
             .clip(RoundedCornerShape(SpellTheme.cardCornerRadius))
             .background(SpellTheme.colors.surface)
             .clickable(enabled = day.missedWordIds.isNotEmpty()) { onClick() }
-            .padding(12.dp)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxSize()) {
-            Text(day.label, style = SpellTheme.body(13.sp, FontWeight.Bold), color = SpellTheme.colors.textSecondary)
-            Spacer(Modifier.height(4.dp))
-            if (day.percent != null) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(day.label, style = SpellTheme.body(14.sp, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
+            if (day.missedWordIds.isNotEmpty()) {
+                Text("Retake ${day.missedWordIds.size} missed", style = SpellTheme.body(12.sp), color = SpellTheme.colors.action)
+            }
+        }
+        if (day.percent != null) {
+            Column(horizontalAlignment = Alignment.End) {
                 Text(Grading.letter(day.percent), style = SpellTheme.display(22.sp, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
                 Text("${day.percent}%", style = SpellTheme.body(12.sp), color = SpellTheme.colors.textSecondary)
-            } else {
-                Text("No test yet", style = SpellTheme.body(12.sp), color = SpellTheme.colors.textSecondary)
             }
-            if (day.missedWordIds.isNotEmpty()) {
-                Text("Retake ${day.missedWordIds.size} missed", style = SpellTheme.body(11.sp), color = SpellTheme.colors.action)
-            }
+        } else {
+            Text("No test yet", style = SpellTheme.body(13.sp), color = SpellTheme.colors.textSecondary)
         }
         if (day.rewardEarned) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
+                    .padding(start = 10.dp)
                     .clip(RoundedCornerShape(50))
                     .background(SpellTheme.colors.reward)
                     .clickable { onBadgeClick() }
-                    .padding(horizontal = 6.dp, vertical = 3.dp)
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                Text("★", color = androidx.compose.ui.graphics.Color.Black, style = SpellTheme.body(10.sp))
+                Text("★", color = androidx.compose.ui.graphics.Color.Black, style = SpellTheme.body(12.sp))
             }
         }
     }
