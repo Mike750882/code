@@ -65,7 +65,6 @@ class PracticeViewModel(
                 bankLetters = firstWordSetup.bankLetters,
                 bankUsed = firstWordSetup.bankUsed
             )
-            speakCurrentWord()
         }
     }
 
@@ -230,7 +229,6 @@ class PracticeViewModel(
                 bankUsed = setup.bankUsed,
                 fillOrder = emptyList()
             )
-            speakCurrentWord()
         }
     }
 }
