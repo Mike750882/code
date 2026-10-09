@@ -12,10 +12,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -93,7 +96,13 @@ private fun EmptyWordsMessage(onGoHome: () -> Unit) {
 @Composable
 private fun PracticeBody(state: PracticeUiState, viewModel: PracticeViewModel, onGoHome: () -> Unit) {
     val word = state.currentWord ?: return
-    Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .imePadding()
+            .padding(24.dp)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             IconButton(onClick = onGoHome) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Home", tint = SpellTheme.colors.textPrimary)
@@ -104,8 +113,7 @@ private fun PracticeBody(state: PracticeUiState, viewModel: PracticeViewModel, o
         Spacer(Modifier.height(24.dp))
 
         Column(
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Speagle(pose = SpeaglePose.THINK, size = 100.dp)
@@ -160,6 +168,8 @@ private fun PracticeBody(state: PracticeUiState, viewModel: PracticeViewModel, o
                 }
             }
         }
+
+        Spacer(Modifier.height(24.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
             if (state.mode == PracticeMode.PRACTICE) {
