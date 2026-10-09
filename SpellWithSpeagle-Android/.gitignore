@@ -11,3 +11,7 @@ local.properties
 app/schemas/
 app/build/
 /*/build/
+
+# Firebase config -- project/environment-specific, not secret but not
+# something to keep in version control either (same spirit as local.properties).
+app/google-services.json

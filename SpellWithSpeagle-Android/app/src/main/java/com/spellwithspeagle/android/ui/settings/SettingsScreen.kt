@@ -227,6 +227,10 @@ fun SettingsScreen(
             }
 
             item {
+                SyncSection(state = state, viewModel = viewModel)
+            }
+
+            item {
                 Button(
                     onClick = onOpenProfiles,
                     modifier = Modifier.fillMaxWidth(),
@@ -364,6 +368,41 @@ private fun formatTime(hour: Int, minute: Int): String {
         set(Calendar.MINUTE, minute)
     }
     return SimpleDateFormat("h:mm a", Locale.getDefault()).format(calendar.time)
+}
+
+@Composable
+private fun SyncSection(state: SettingsUiState, viewModel: SettingsViewModel) {
+    val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        viewModel.handleSignInResult(result.data)
+    }
+
+    SettingsSection(title = "Sync across devices") {
+        if (state.signedInEmail == null) {
+            Text(
+                "Keeps word lists, rewards, and progress the same on every family device.",
+                color = SpellTheme.colors.textSecondary,
+                style = SpellTheme.body(13.sp)
+            )
+            Button(
+                onClick = { signInLauncher.launch(viewModel.signInIntent()) },
+                colors = ButtonDefaults.buttonColors(containerColor = SpellTheme.colors.primary)
+            ) {
+                Text("Sign in with Google")
+            }
+        } else {
+            Text(state.signedInEmail, style = SpellTheme.body(14.sp, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
+            val (statusText, statusColor) = when (state.syncStatus) {
+                SyncStatus.SYNCING -> "Syncing..." to SpellTheme.colors.textSecondary
+                SyncStatus.UP_TO_DATE -> "Up to date" to SpellTheme.colors.textSecondary
+                SyncStatus.FAILED -> "Couldn't sync -- check your connection" to SpellTheme.colors.error
+                SyncStatus.SIGNED_OUT -> "Not synced yet" to SpellTheme.colors.textSecondary
+            }
+            Text(statusText, style = SpellTheme.body(13.sp), color = statusColor)
+            TextButton(onClick = { viewModel.signOut() }) {
+                Text("Sign out", color = SpellTheme.colors.textSecondary)
+            }
+        }
+    }
 }
 
 @Composable

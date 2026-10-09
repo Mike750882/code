@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Sync across devices (Firebase Auth + Firestore) -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Friday test reminder notification -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Add List photo import -->

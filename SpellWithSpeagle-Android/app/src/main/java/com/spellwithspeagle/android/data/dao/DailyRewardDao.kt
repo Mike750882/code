@@ -18,4 +18,7 @@ interface DailyRewardDao {
 
     @Update
     suspend fun update(reward: DailyReward)
+
+    @Query("DELETE FROM daily_rewards WHERE id = :id")
+    suspend fun deleteById(id: String)
 }

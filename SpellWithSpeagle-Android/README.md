@@ -141,12 +141,35 @@ signature mismatch), same caveat the iOS README carries for Xcode.
   tool (right-click `res` -> New -> Image Asset) once a dedicated
   foreground/background split exists, the same way the iOS README notes
   the launcher icon is swappable.
+- **Sync across devices** (`service/AuthService.kt`, `service/SyncService.kt`)
+  -- Google Sign-In + Firebase Auth, then a Firestore mirror of all six
+  Room tables scoped under `users/{uid}/...`. Unlike iOS's CloudKit sync
+  (automatic, tied to whichever Apple ID the device is already signed
+  into), there's no Android equivalent of "already signed into iCloud,"
+  so this is a one-time, explicit, opt-in sign-in from Settings' new
+  "Sync across devices" section instead. Once signed in: the first
+  device for an account pushes its local data up as the new baseline; a
+  second device signing into the *same* account pulls that down and
+  overwrites its own local copy (see the doc comment on
+  `SyncService.onSignedIn` for this tradeoff); from then on, Firestore
+  snapshot listeners keep every signed-in device in sync live, with
+  simple last-write-wins conflict handling -- the same default behavior
+  CloudKit itself falls back to, since neither does field-level merging.
+  **Requires a one-time Firebase project setup**: a `google-services.json`
+  dropped into `app/`, Google enabled under Authentication -> Sign-in
+  method, and a Firestore database created (see the Firebase console's
+  own setup wizard -- "Add app" -> Android, package
+  `com.spellwithspeagle.android`). The console's test-mode Firestore
+  rules (open read/write for 30 days) are fine for one family's own
+  testing but should be locked down before wider use, e.g.:
+  ```
+  match /users/{userId}/{document=**} {
+    allow read, write: if request.auth != null && request.auth.uid == userId;
+  }
+  ```
 
 ## What's next
 
-- **iCloud/cross-device sync** -- intentionally out of scope for this
-  port; iOS's CloudKit sync has no direct Android equivalent and each
-  platform's data stays device-local.
 - Known open bug report: the Settings voice "Preview" button was reported
   not working by a user; unconfirmed whether word playback in Practice is
   also affected. Needs a Logcat capture (filtered on "TextToSpeech") to

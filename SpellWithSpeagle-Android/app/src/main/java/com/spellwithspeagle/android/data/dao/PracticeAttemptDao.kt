@@ -2,6 +2,7 @@ package com.spellwithspeagle.android.data.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.spellwithspeagle.android.data.model.PracticeAttempt
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,10 @@ interface PracticeAttemptDao {
 
     @Insert
     suspend fun insert(attempt: PracticeAttempt)
+
+    /** Idempotent, unlike [insert] -- used when applying a remote change that may already exist locally. */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(attempt: PracticeAttempt)
 
     @Query("SELECT * FROM practice_attempts WHERE wordId IN (:wordIds)")
     fun observeForWords(wordIds: List<String>): Flow<List<PracticeAttempt>>

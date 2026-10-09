@@ -38,7 +38,13 @@ object AppViewModelProvider {
             RewardsViewModel(spellApp().repository, spellApp().activeChildStore)
         }
         initializer {
-            SettingsViewModel(spellApp().repository, spellApp().activeChildStore, spellApp().speechService)
+            SettingsViewModel(
+                spellApp().repository,
+                spellApp().activeChildStore,
+                spellApp().speechService,
+                spellApp().authService,
+                spellApp().syncService
+            )
         }
         initializer {
             ProfilesViewModel(spellApp().repository, spellApp().activeChildStore)

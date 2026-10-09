@@ -28,4 +28,7 @@ interface WeekListDao {
 
     @Delete
     suspend fun delete(weekList: WeekList)
+
+    @Query("DELETE FROM week_lists WHERE id = :id")
+    suspend fun deleteById(id: String)
 }

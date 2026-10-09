@@ -18,4 +18,7 @@ interface WeeklyPrizeDao {
 
     @Update
     suspend fun update(prize: WeeklyPrize)
+
+    @Query("DELETE FROM weekly_prizes WHERE id = :id")
+    suspend fun deleteById(id: String)
 }

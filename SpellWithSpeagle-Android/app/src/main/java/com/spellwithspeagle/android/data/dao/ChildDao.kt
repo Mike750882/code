@@ -31,4 +31,7 @@ interface ChildDao {
 
     @Query("SELECT COUNT(*) FROM children")
     suspend fun count(): Int
+
+    @Query("DELETE FROM children WHERE id = :id")
+    suspend fun deleteById(id: String)
 }
