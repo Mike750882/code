@@ -1,10 +1,14 @@
-# Apple's current App Store Connect device-size requirements: a 6.9" iPhone
-# and a 13" iPad cover every other size's screenshots too, so these two
-# devices are enough. If your installed Xcode's Simulator runtime names
-# these differently, update the strings below to match `xcrun simctl list
-# devicetypes` -- fastlane needs an exact name match.
+# App Store Connect requires separately-sized iPhone screenshots per size
+# tier -- it does not scale a larger device's screenshots down to fit a
+# smaller slot. "iPhone 17 Pro Max" covers the 6.9" large-display slot;
+# "iPhone 17 Pro" covers the 6.1"/6.3" medium-display (Dynamic Island)
+# slot. "iPad Pro 13-inch (M5)" covers the 13" iPad slot. If your
+# installed Xcode's Simulator runtime names these differently, update the
+# strings below to match `xcrun simctl list devicetypes` -- fastlane
+# needs an exact name match.
 devices([
   "iPhone 17 Pro Max",
+  "iPhone 17 Pro",
   "iPad Pro 13-inch (M5)"
 ])
 
