@@ -15,3 +15,9 @@ app/build/
 # Firebase config -- project/environment-specific, not secret but not
 # something to keep in version control either (same spirit as local.properties).
 app/google-services.json
+
+# Release signing -- genuinely secret; losing these means losing the
+# ability to ever update a published app. Never committed, ever.
+keystore.properties
+*.jks
+*.keystore
