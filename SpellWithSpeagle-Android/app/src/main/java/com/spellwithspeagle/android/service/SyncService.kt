@@ -34,7 +34,7 @@ private const val WEEKLY_PRIZES = "weeklyPrizes"
  * simple last-write-wins conflict handling, the same default behavior
  * CloudKit itself falls back to since nothing here does field-level merge.
  *
- * Every push*/delete* method below is safe to call even while signed out
+ * Every push/delete method below is safe to call even while signed out
  * -- it just no-ops -- so [SpellingRepository] can call them after every
  * local write unconditionally, without checking sign-in state itself.
  */
