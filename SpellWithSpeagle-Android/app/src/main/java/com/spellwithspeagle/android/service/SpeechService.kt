@@ -23,9 +23,26 @@ class SpeechService(context: Context) {
         isReady = status == TextToSpeech.SUCCESS
         if (isReady) {
             tts.language = Locale.getDefault()
+            // Some engines leave tts.voice effectively silent until it's
+            // explicitly assigned -- relying on the engine's own implicit
+            // default meant speech only started working once a user opened
+            // Settings and picked a voice (which does set it explicitly).
+            // Setting a real default here up front means it just works.
+            bestDefaultVoice()?.let { tts.voice = it }
             pending.forEach { it() }
             pending.clear()
         }
+    }
+
+    /** Best on-device (non-network) voice for the device's language, used as the default until a user picks one in Settings. */
+    private fun bestDefaultVoice(): Voice? {
+        val installed = runCatching { tts.voices ?: emptySet() }.getOrDefault(emptySet())
+        val deviceLanguage = Locale.getDefault().language
+        return installed
+            .filterNot { it.isNetworkConnectionRequired }
+            .filter { it.locale.language == deviceLanguage }
+            .maxByOrNull { it.quality }
+            ?: installed.filterNot { it.isNetworkConnectionRequired }.maxByOrNull { it.quality }
     }
 
     /**
