@@ -43,7 +43,7 @@ object AppViewModelProvider {
                 spellApp().activeChildStore,
                 spellApp().speechService,
                 spellApp().authService,
-                spellApp().syncService
+                spellApp().driveBackupService
             )
         }
         initializer {

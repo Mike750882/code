@@ -227,7 +227,7 @@ fun SettingsScreen(
             }
 
             item {
-                SyncSection(state = state, viewModel = viewModel)
+                BackupSection(state = state, viewModel = viewModel)
             }
 
             item {
@@ -371,15 +371,15 @@ private fun formatTime(hour: Int, minute: Int): String {
 }
 
 @Composable
-private fun SyncSection(state: SettingsUiState, viewModel: SettingsViewModel) {
+private fun BackupSection(state: SettingsUiState, viewModel: SettingsViewModel) {
     val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         viewModel.handleSignInResult(result.data)
     }
 
-    SettingsSection(title = "Sync across devices") {
+    SettingsSection(title = "Backup to Google Drive") {
         if (state.signedInEmail == null) {
             Text(
-                "Keeps word lists, rewards, and progress the same on every family device.",
+                "Save a copy of word lists, rewards, and progress to your own Google Drive, so you can restore them on a new device. Your family's data is never stored anywhere except your own Drive.",
                 color = SpellTheme.colors.textSecondary,
                 style = SpellTheme.body(13.sp)
             )
@@ -391,13 +391,30 @@ private fun SyncSection(state: SettingsUiState, viewModel: SettingsViewModel) {
             }
         } else {
             Text(state.signedInEmail, style = SpellTheme.body(14.sp, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
-            val (statusText, statusColor) = when (state.syncStatus) {
-                SyncStatus.SYNCING -> "Syncing..." to SpellTheme.colors.textSecondary
-                SyncStatus.UP_TO_DATE -> "Up to date" to SpellTheme.colors.textSecondary
-                SyncStatus.FAILED -> "Couldn't sync -- check your connection" to SpellTheme.colors.error
-                SyncStatus.SIGNED_OUT -> "Not synced yet" to SpellTheme.colors.textSecondary
+
+            val isBusy = state.backupStatus == BackupStatus.BACKING_UP || state.backupStatus == BackupStatus.RESTORING
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = { viewModel.backUpNow() },
+                    enabled = !isBusy,
+                    colors = ButtonDefaults.buttonColors(containerColor = SpellTheme.colors.tile)
+                ) {
+                    Text(if (state.backupStatus == BackupStatus.BACKING_UP) "Backing up..." else "Back up now")
+                }
+                Button(
+                    onClick = { viewModel.restoreNow() },
+                    enabled = !isBusy,
+                    colors = ButtonDefaults.buttonColors(containerColor = SpellTheme.colors.tile)
+                ) {
+                    Text(if (state.backupStatus == BackupStatus.RESTORING) "Restoring..." else "Restore")
+                }
             }
-            Text(statusText, style = SpellTheme.body(13.sp), color = statusColor)
+
+            val statusColor = if (state.backupStatus == BackupStatus.FAILED) SpellTheme.colors.error else SpellTheme.colors.textSecondary
+            state.backupMessage?.let { message ->
+                Text(message, style = SpellTheme.body(13.sp), color = statusColor)
+            }
+
             TextButton(onClick = { viewModel.signOut() }) {
                 Text("Sign out", color = SpellTheme.colors.textSecondary)
             }

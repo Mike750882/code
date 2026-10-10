@@ -141,36 +141,39 @@ signature mismatch), same caveat the iOS README carries for Xcode.
   tool (right-click `res` -> New -> Image Asset) once a dedicated
   foreground/background split exists, the same way the iOS README notes
   the launcher icon is swappable.
-- **Sync across devices** (`service/AuthService.kt`, `service/SyncService.kt`)
-  -- Google Sign-In + Firebase Auth, then a Firestore mirror of all six
-  Room tables scoped under `users/{uid}/...`. Unlike iOS's CloudKit sync
-  (automatic, tied to whichever Apple ID the device is already signed
-  into), there's no Android equivalent of "already signed into iCloud,"
-  so this is a one-time, explicit, opt-in sign-in from Settings' new
-  "Sync across devices" section instead. Once signed in: the first
-  device for an account pushes its local data up as the new baseline; a
-  second device signing into the *same* account pulls that down and
-  overwrites its own local copy (see the doc comment on
-  `SyncService.onSignedIn` for this tradeoff); from then on, Firestore
-  snapshot listeners keep every signed-in device in sync live, with
-  simple last-write-wins conflict handling -- the same default behavior
-  CloudKit itself falls back to, since neither does field-level merging.
-  **Requires a one-time Firebase project setup**: a `google-services.json`
-  dropped into `app/`, Google enabled under Authentication -> Sign-in
-  method, and a Firestore database created (see the Firebase console's
-  own setup wizard -- "Add app" -> Android, package
-  `com.spellwithspeagle.android`). The console's test-mode Firestore
-  rules (open read/write for 30 days) are fine for one family's own
-  testing but should be locked down before wider use, e.g.:
-  ```
-  match /users/{userId}/{document=**} {
-    allow read, write: if request.auth != null && request.auth.uid == userId;
-  }
-  ```
+- **Backup to Google Drive** (`service/AuthService.kt`,
+  `service/DriveBackupService.kt`) -- an explicit, user-triggered
+  "Back up now" / "Restore" pair in Settings' "Backup to Google Drive"
+  section, not a live/automatic sync. All six Room tables are gathered
+  into one JSON file (`spellwithspeagle-backup.json`) written to the
+  signed-in family's own Google Drive -- never to any server of ours.
+  Deliberately chosen over a Firebase/Firestore-style live sync so that
+  a family's data exists only where they can see and delete it
+  themselves (in their own Drive), and removing the app never leaves
+  anything behind for us to be responsible for.
+
+  Auth is plain Google Sign-In (`AuthService`) requesting the
+  `drive.file` scope, which limits the app to only ever seeing files it
+  creates itself -- never the rest of a family's Drive. `AuthService`
+  then exchanges that for a raw OAuth2 bearer token
+  (`GoogleAuthUtil.getToken`) that `DriveBackupService` uses to talk to
+  the Drive v3 REST API directly over `HttpURLConnection` (`files.list`
+  to find the backup file, `files.create`/`files.update` to write it,
+  `files.get?alt=media` to read it back) -- no Firebase, no Google API
+  client library, no server of ours in the loop at all.
+
+  **One-time setup**: the Google Drive API needs to be enabled for the
+  app's existing Google Cloud project (the same project Google
+  Sign-In's OAuth client already lives in -- console.cloud.google.com ->
+  select the project -> "APIs & Services" -> "Enable APIs and Services"
+  -> search "Google Drive API" -> Enable). No `google-services.json`,
+  no Firestore database, and nothing else to configure.
 
 ## What's next
 
-- Known open bug report: the Settings voice "Preview" button was reported
-  not working by a user; unconfirmed whether word playback in Practice is
-  also affected. Needs a Logcat capture (filtered on "TextToSpeech") to
-  diagnose further.
+- Restoring only ever adds/updates rows (a backup file has no way to
+  signal "this was deleted on another device"), so a restore can't
+  remove a child profile or word list that existed locally but isn't in
+  the backup. Fine for the current "back up before getting a new phone,
+  restore on it" use case; would need a smarter merge if this ever grows
+  into something closer to live sync.

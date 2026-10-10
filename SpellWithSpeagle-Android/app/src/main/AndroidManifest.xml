@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Sync across devices (Firebase Auth + Firestore) -->
+    <!-- Backup/restore to the family's own Google Drive -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Friday test reminder notification -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />

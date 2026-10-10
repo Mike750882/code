@@ -9,15 +9,15 @@ import com.spellwithspeagle.android.data.repository.SpellingRepository
 import com.spellwithspeagle.android.domain.WeekUtils
 import com.spellwithspeagle.android.service.ActiveChildStore
 import com.spellwithspeagle.android.service.AuthService
+import com.spellwithspeagle.android.service.DriveBackupService
 import com.spellwithspeagle.android.service.SpeechService
-import com.spellwithspeagle.android.service.SyncService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-enum class SyncStatus { SIGNED_OUT, SYNCING, UP_TO_DATE, FAILED }
+enum class BackupStatus { IDLE, BACKING_UP, RESTORING, SUCCESS, FAILED }
 
 data class SettingsUiState(
     val isLoading: Boolean = true,
@@ -27,7 +27,8 @@ data class SettingsUiState(
     val thisWeekCorrect: Int = 0,
     val thisWeekTotal: Int = 0,
     val signedInEmail: String? = null,
-    val syncStatus: SyncStatus = SyncStatus.SIGNED_OUT
+    val backupStatus: BackupStatus = BackupStatus.IDLE,
+    val backupMessage: String? = null
 )
 
 class SettingsViewModel(
@@ -35,12 +36,13 @@ class SettingsViewModel(
     private val activeChildStore: ActiveChildStore,
     private val speechService: SpeechService,
     private val authService: AuthService,
-    private val syncService: SyncService
+    private val driveBackupService: DriveBackupService
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
+        _uiState.value = _uiState.value.copy(signedInEmail = authService.currentAccount?.email)
         viewModelScope.launch {
             val id = activeChildStore.activeChildId.first() ?: return@launch
             val child = repository.observeChild(id).first() ?: return@launch
@@ -60,43 +62,52 @@ class SettingsViewModel(
                 thisWeekTotal = attempts.size
             )
         }
-        viewModelScope.launch {
-            authService.authState.collect { user ->
-                _uiState.value = _uiState.value.copy(
-                    signedInEmail = user?.email,
-                    syncStatus = when {
-                        user == null -> SyncStatus.SIGNED_OUT
-                        _uiState.value.syncStatus == SyncStatus.SIGNED_OUT -> SyncStatus.UP_TO_DATE
-                        else -> _uiState.value.syncStatus
-                    }
-                )
-            }
-        }
     }
 
     fun signInIntent(): Intent = authService.signInIntent()
 
-    /** Call with the result [Intent] from the sign-in [android.content.Intent] launcher's callback. */
+    /** Call with the result [Intent] from the sign-in launcher's callback. */
     fun handleSignInResult(data: Intent?) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(syncStatus = SyncStatus.SYNCING)
-            val result = authService.handleSignInResult(data)
-            val user = result.getOrNull()
-            if (user == null) {
-                _uiState.value = _uiState.value.copy(syncStatus = SyncStatus.FAILED)
-                return@launch
-            }
-            runCatching { syncService.onSignedIn(user.uid, repository) }
-                .onSuccess { _uiState.value = _uiState.value.copy(syncStatus = SyncStatus.UP_TO_DATE) }
-                .onFailure { _uiState.value = _uiState.value.copy(syncStatus = SyncStatus.FAILED) }
+            val account = authService.handleSignInResult(data).getOrNull()
+            _uiState.value = _uiState.value.copy(signedInEmail = account?.email)
         }
     }
 
     fun signOut() {
         viewModelScope.launch {
-            syncService.onSignedOut()
             authService.signOut()
-            _uiState.value = _uiState.value.copy(signedInEmail = null, syncStatus = SyncStatus.SIGNED_OUT)
+            _uiState.value = _uiState.value.copy(
+                signedInEmail = null,
+                backupStatus = BackupStatus.IDLE,
+                backupMessage = null
+            )
+        }
+    }
+
+    fun backUpNow() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(backupStatus = BackupStatus.BACKING_UP, backupMessage = null)
+            driveBackupService.backup(repository)
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(backupStatus = BackupStatus.SUCCESS, backupMessage = "Backed up just now")
+                }
+                .onFailure {
+                    _uiState.value = _uiState.value.copy(backupStatus = BackupStatus.FAILED, backupMessage = it.message)
+                }
+        }
+    }
+
+    fun restoreNow() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(backupStatus = BackupStatus.RESTORING, backupMessage = null)
+            driveBackupService.restore(repository)
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(backupStatus = BackupStatus.SUCCESS, backupMessage = "Restored just now")
+                }
+                .onFailure {
+                    _uiState.value = _uiState.value.copy(backupStatus = BackupStatus.FAILED, backupMessage = it.message)
+                }
         }
     }
 
