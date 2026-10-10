@@ -3,6 +3,7 @@ package com.spellwithspeagle.android.ui.practice
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -39,15 +40,26 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spellwithspeagle.android.data.model.PracticeMode
 import com.spellwithspeagle.android.data.model.WordInputMode
@@ -57,6 +69,7 @@ import com.spellwithspeagle.android.ui.speagle.Speagle
 import com.spellwithspeagle.android.ui.speagle.SpeaglePose
 import com.spellwithspeagle.android.ui.theme.SpeagleBackground
 import com.spellwithspeagle.android.ui.theme.SpellTheme
+import kotlin.math.roundToInt
 
 @Composable
 fun PracticeScreen(
@@ -221,8 +234,30 @@ private fun tileMetrics(availableWidth: Dp, tileCount: Int): TileMetrics {
     return TileMetrics(width, IDEAL_TILE_HEIGHT * scale, spacing, (IDEAL_TILE_FONT.value * scale).sp)
 }
 
+/**
+ * Minimum finger movement before a touch on a bank tile counts as a drag
+ * rather than a tap -- below this, [BankTile]'s gesture handler treats it
+ * as a tap (fills the first empty blank), same as iOS's 8pt threshold.
+ */
+private val TAP_VS_DRAG_THRESHOLD = 8.dp
+
 @Composable
 private fun TileAnswerArea(state: PracticeUiState, viewModel: PracticeViewModel) {
+    val tapThresholdPx = with(LocalDensity.current) { TAP_VS_DRAG_THRESHOLD.toPx() }
+
+    // Which bank tile (if any) is mid-drag, how far it's moved from its
+    // start position, and which empty slot it's currently hovering over
+    // (for a highlight) -- all reset once the drag ends or is cancelled.
+    var draggingBankIndex by remember { mutableStateOf<Int?>(null) }
+    var dragOffset by remember { mutableStateOf(Offset.Zero) }
+    var dragTargetSlot by remember { mutableStateOf<Int?>(null) }
+
+    // Each tile's on-screen bounds, captured as they're laid out, so a
+    // drag's current position (start bounds + accumulated offset) can be
+    // tested against every slot to find which one it's over.
+    val slotBounds = remember { mutableMapOf<Int, Rect>() }
+    val bankTileBounds = remember { mutableMapOf<Int, Rect>() }
+
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val metrics = tileMetrics(maxWidth, state.slots.size)
         Column(
@@ -232,13 +267,57 @@ private fun TileAnswerArea(state: PracticeUiState, viewModel: PracticeViewModel)
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(metrics.spacing)) {
                 state.slots.forEachIndexed { index, slot ->
-                    SlotTile(slot = slot, bankLetters = state.bankLetters, metrics = metrics, onClick = { viewModel.tapSlot(index) })
+                    SlotTile(
+                        slot = slot,
+                        bankLetters = state.bankLetters,
+                        metrics = metrics,
+                        isTargeted = dragTargetSlot == index,
+                        onPositioned = { slotBounds[index] = it },
+                        onClick = { viewModel.tapSlot(index) }
+                    )
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(metrics.spacing)) {
                 state.bankLetters.forEachIndexed { index, letter ->
                     if (index < state.bankUsed.size && !state.bankUsed[index]) {
-                        BankTile(letter = letter, metrics = metrics, onClick = { viewModel.tapBankTile(index) })
+                        BankTile(
+                            letter = letter,
+                            metrics = metrics,
+                            dragOffset = if (draggingBankIndex == index) dragOffset else Offset.Zero,
+                            isDragging = draggingBankIndex == index,
+                            onPositioned = { bankTileBounds[index] = it },
+                            onDragStart = {
+                                draggingBankIndex = index
+                                dragOffset = Offset.Zero
+                            },
+                            onDrag = { amount ->
+                                dragOffset += amount
+                                val start = bankTileBounds[index]
+                                dragTargetSlot = if (start != null) {
+                                    val currentCenter = start.center + dragOffset
+                                    slotBounds.entries.firstOrNull { (slotIndex, bounds) ->
+                                        bounds.contains(currentCenter) && state.slots.getOrNull(slotIndex) is SlotState.Empty
+                                    }?.key
+                                } else {
+                                    null
+                                }
+                            },
+                            onDragEnd = {
+                                if (dragOffset.getDistance() < tapThresholdPx) {
+                                    viewModel.tapBankTile(index)
+                                } else {
+                                    dragTargetSlot?.let { target -> viewModel.placeInSlot(index, target) }
+                                }
+                                draggingBankIndex = null
+                                dragOffset = Offset.Zero
+                                dragTargetSlot = null
+                            },
+                            onDragCancel = {
+                                draggingBankIndex = null
+                                dragOffset = Offset.Zero
+                                dragTargetSlot = null
+                            }
+                        )
                     }
                 }
             }
@@ -252,18 +331,30 @@ private fun TileAnswerArea(state: PracticeUiState, viewModel: PracticeViewModel)
 }
 
 @Composable
-private fun SlotTile(slot: SlotState, bankLetters: List<Char>, metrics: TileMetrics, onClick: () -> Unit) {
+private fun SlotTile(
+    slot: SlotState,
+    bankLetters: List<Char>,
+    metrics: TileMetrics,
+    isTargeted: Boolean,
+    onPositioned: (Rect) -> Unit,
+    onClick: () -> Unit
+) {
     val text = when (slot) {
         is SlotState.Prefilled -> slot.char.toString()
         is SlotState.Filled -> bankLetters.getOrNull(slot.bankIndex)?.toString().orEmpty()
         SlotState.Empty -> ""
     }
-    val background = if (slot is SlotState.Prefilled) SpellTheme.colors.surfaceRaised else SpellTheme.colors.surface
+    val background = when {
+        slot is SlotState.Prefilled -> SpellTheme.colors.surfaceRaised
+        isTargeted -> SpellTheme.colors.tile.copy(alpha = 0.15f)
+        else -> SpellTheme.colors.surface
+    }
     var modifier = Modifier
         .size(width = metrics.width, height = metrics.height)
+        .onGloballyPositioned { onPositioned(it.boundsInWindow()) }
         .clip(RoundedCornerShape(8.dp))
         .background(background)
-        .border(2.dp, SpellTheme.colors.tile, RoundedCornerShape(8.dp))
+        .border(if (isTargeted) 3.dp else 2.dp, SpellTheme.colors.tile, RoundedCornerShape(8.dp))
     if (slot is SlotState.Filled) modifier = modifier.clickable(onClick = onClick)
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
@@ -271,15 +362,46 @@ private fun SlotTile(slot: SlotState, bankLetters: List<Char>, metrics: TileMetr
     }
 }
 
+/**
+ * Tappable (fills the first empty blank) and draggable (slides with the
+ * finger and drops into whichever empty blank it's released over) --
+ * [onDragStart]/[onDrag]/[onDragEnd]/[onDragCancel] all come from a single
+ * [detectDragGestures], the same way iOS treats a tap as just a drag that
+ * ends with barely any movement, rather than two separate gesture
+ * recognizers that could conflict.
+ */
 @Composable
-private fun BankTile(letter: Char, metrics: TileMetrics, onClick: () -> Unit) {
+private fun BankTile(
+    letter: Char,
+    metrics: TileMetrics,
+    dragOffset: Offset,
+    isDragging: Boolean,
+    onPositioned: (Rect) -> Unit,
+    onDragStart: () -> Unit,
+    onDrag: (Offset) -> Unit,
+    onDragEnd: () -> Unit,
+    onDragCancel: () -> Unit
+) {
     Box(
         modifier = Modifier
             .size(width = metrics.width, height = metrics.height)
+            .onGloballyPositioned { onPositioned(it.boundsInWindow()) }
+            .offset { IntOffset(dragOffset.x.roundToInt(), dragOffset.y.roundToInt()) }
+            .zIndex(if (isDragging) 1f else 0f)
             .clip(RoundedCornerShape(8.dp))
             .background(SpellTheme.colors.tile.copy(alpha = 0.15f))
             .border(2.dp, SpellTheme.colors.tile, RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick),
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragStart = { onDragStart() },
+                    onDrag = { change, amount ->
+                        change.consume()
+                        onDrag(amount)
+                    },
+                    onDragEnd = { onDragEnd() },
+                    onDragCancel = { onDragCancel() }
+                )
+            },
         contentAlignment = Alignment.Center
     ) {
         Text(letter.toString(), style = SpellTheme.display(metrics.fontSize, FontWeight.Bold), color = SpellTheme.colors.textPrimary)

@@ -125,6 +125,17 @@ class PracticeViewModel(
         _uiState.value = state.copy(slots = slots, bankUsed = bankUsed, fillOrder = state.fillOrder + firstEmpty)
     }
 
+    /** Dragging a bank tile onto a specific blank fills that one -- unlike [tapBankTile], not necessarily the first empty one. No-op if that slot isn't empty or the tile's already used. */
+    fun placeInSlot(bankIndex: Int, slotIndex: Int) {
+        val state = _uiState.value
+        if (bankIndex !in state.bankUsed.indices || state.bankUsed[bankIndex]) return
+        if (slotIndex !in state.slots.indices || state.slots[slotIndex] !is SlotState.Empty) return
+
+        val slots = state.slots.toMutableList().apply { this[slotIndex] = SlotState.Filled(bankIndex) }
+        val bankUsed = state.bankUsed.toMutableList().apply { this[bankIndex] = true }
+        _uiState.value = state.copy(slots = slots, bankUsed = bankUsed, fillOrder = state.fillOrder + slotIndex)
+    }
+
     /** Tapping a filled slot clears just that letter back to the bank. */
     fun tapSlot(slotIndex: Int) {
         val state = _uiState.value
