@@ -5,8 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,6 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -193,32 +195,64 @@ private fun PracticeBody(state: PracticeUiState, viewModel: PracticeViewModel, o
     }
 }
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+/** Width/height/spacing/font a tile row renders at, shrunk just enough that every tile for the word fits on one line -- never wraps, however long the word is. */
+private data class TileMetrics(val width: Dp, val height: Dp, val spacing: Dp, val fontSize: TextUnit)
+
+private val IDEAL_TILE_WIDTH = 44.dp
+private val IDEAL_TILE_HEIGHT = 52.dp
+private val IDEAL_TILE_SPACING = 6.dp
+private val IDEAL_TILE_FONT = 24.sp
+private val MIN_TILE_WIDTH = 18.dp
+private val MIN_TILE_SPACING = 2.dp
+
+private fun tileMetrics(availableWidth: Dp, tileCount: Int): TileMetrics {
+    if (tileCount <= 0 || availableWidth <= 0.dp) {
+        return TileMetrics(IDEAL_TILE_WIDTH, IDEAL_TILE_HEIGHT, IDEAL_TILE_SPACING, IDEAL_TILE_FONT)
+    }
+    val count = tileCount.toFloat()
+    val gaps = (count - 1).coerceAtLeast(0f)
+    val idealTotal = IDEAL_TILE_WIDTH * count + IDEAL_TILE_SPACING * gaps
+    if (idealTotal <= availableWidth) {
+        return TileMetrics(IDEAL_TILE_WIDTH, IDEAL_TILE_HEIGHT, IDEAL_TILE_SPACING, IDEAL_TILE_FONT)
+    }
+    val spacing = maxOf(MIN_TILE_SPACING, IDEAL_TILE_SPACING * (availableWidth / idealTotal))
+    val width = maxOf(MIN_TILE_WIDTH, (availableWidth - spacing * gaps) / count)
+    val scale = width / IDEAL_TILE_WIDTH
+    return TileMetrics(width, IDEAL_TILE_HEIGHT * scale, spacing, (IDEAL_TILE_FONT.value * scale).sp)
+}
+
 @Composable
 private fun TileAnswerArea(state: PracticeUiState, viewModel: PracticeViewModel) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            state.slots.forEachIndexed { index, slot ->
-                SlotTile(slot = slot, bankLetters = state.bankLetters, onClick = { viewModel.tapSlot(index) })
-            }
-        }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            state.bankLetters.forEachIndexed { index, letter ->
-                if (index < state.bankUsed.size && !state.bankUsed[index]) {
-                    BankTile(letter = letter, onClick = { viewModel.tapBankTile(index) })
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val metrics = tileMetrics(maxWidth, state.slots.size)
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(metrics.spacing)) {
+                state.slots.forEachIndexed { index, slot ->
+                    SlotTile(slot = slot, bankLetters = state.bankLetters, metrics = metrics, onClick = { viewModel.tapSlot(index) })
                 }
             }
-        }
-        if (state.fillOrder.isNotEmpty()) {
-            TextButton(onClick = { viewModel.takeOneBack() }) {
-                Text("Take one back", color = SpellTheme.colors.primary)
+            Row(horizontalArrangement = Arrangement.spacedBy(metrics.spacing)) {
+                state.bankLetters.forEachIndexed { index, letter ->
+                    if (index < state.bankUsed.size && !state.bankUsed[index]) {
+                        BankTile(letter = letter, metrics = metrics, onClick = { viewModel.tapBankTile(index) })
+                    }
+                }
+            }
+            if (state.fillOrder.isNotEmpty()) {
+                TextButton(onClick = { viewModel.takeOneBack() }) {
+                    Text("Take one back", color = SpellTheme.colors.primary)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun SlotTile(slot: SlotState, bankLetters: List<Char>, onClick: () -> Unit) {
+private fun SlotTile(slot: SlotState, bankLetters: List<Char>, metrics: TileMetrics, onClick: () -> Unit) {
     val text = when (slot) {
         is SlotState.Prefilled -> slot.char.toString()
         is SlotState.Filled -> bankLetters.getOrNull(slot.bankIndex)?.toString().orEmpty()
@@ -226,29 +260,29 @@ private fun SlotTile(slot: SlotState, bankLetters: List<Char>, onClick: () -> Un
     }
     val background = if (slot is SlotState.Prefilled) SpellTheme.colors.surfaceRaised else SpellTheme.colors.surface
     var modifier = Modifier
-        .size(width = 44.dp, height = 52.dp)
+        .size(width = metrics.width, height = metrics.height)
         .clip(RoundedCornerShape(8.dp))
         .background(background)
         .border(2.dp, SpellTheme.colors.tile, RoundedCornerShape(8.dp))
     if (slot is SlotState.Filled) modifier = modifier.clickable(onClick = onClick)
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        Text(text, style = SpellTheme.display(24.sp, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
+        Text(text, style = SpellTheme.display(metrics.fontSize, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
     }
 }
 
 @Composable
-private fun BankTile(letter: Char, onClick: () -> Unit) {
+private fun BankTile(letter: Char, metrics: TileMetrics, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(width = 44.dp, height = 52.dp)
+            .size(width = metrics.width, height = metrics.height)
             .clip(RoundedCornerShape(8.dp))
             .background(SpellTheme.colors.tile.copy(alpha = 0.15f))
             .border(2.dp, SpellTheme.colors.tile, RoundedCornerShape(8.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(letter.toString(), style = SpellTheme.display(24.sp, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
+        Text(letter.toString(), style = SpellTheme.display(metrics.fontSize, FontWeight.Bold), color = SpellTheme.colors.textPrimary)
     }
 }
 
